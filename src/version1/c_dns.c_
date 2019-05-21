@@ -1,0 +1,108 @@
+// TODO: an asychronous dns yuno
+
+/***************************************************************************
+ *  getaddrinfo cb
+ ***************************************************************************/
+PRIVATE void on_resolved_cb(uv_getaddrinfo_t* resolver, int status, struct addrinfo* res)
+{
+    hgobj gobj = resolver->data;
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if (status != 0) {
+        log_error(1,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgid",        "%s", MSGID_LIBUV_ERROR,
+            "msg",          "%s", "getaddrinfo ERROR",
+            "host",         "%s", priv->host,
+            "port",         "%s", priv->port,
+            "uv_error",     "%s", uv_err_name(status),
+            NULL);
+        gobj_send_event(gobj, "EV_DISCONNECTED", 0, gobj);
+        return;
+    }
+
+    //TODO how I know if it's ip4 or ip6?
+    priv->ip_port.sockaddr.ip4 = *((struct sockaddr_in *)(res->ai_addr));
+
+    uv_freeaddrinfo(res);
+
+    set_timer(gobj, priv->timeout_waiting_connected);
+    gobj_send_event(priv->gsock, "EV_CONNECT", (json_t *)&priv->ip_port, gobj);
+
+}
+
+/***************************************************************************
+ *  Connect
+ ***************************************************************************/
+PRIVATE void lm_connect(hgobj gobj)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    destination destination = get_next_dst(gobj);
+
+    struct addrinfo hints;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = 0;
+
+    if(0) {
+        /*
+         *  Use thread
+         */
+        priv->resolver.data = gobj;
+        int r = uv_getaddrinfo(
+            yuno_uv_event_loop(gobj),
+            &priv->resolver,
+            on_resolved_cb,
+            destination.host,
+            destination.port,
+            &hints
+        );
+        if(r) {
+            log_error(1,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgid",        "%s", MSGID_LIBUV_ERROR,
+                "msg",          "%s", "uv_getaddrinfo() FAILED",
+                "host",         "%s", destination.host,
+                "port",         "%s", destination.port,
+                "uv_error",     "%s", uv_err_name(r),
+                NULL);
+            gobj_send_event(gobj, "EV_DISCONNECTED", 0, gobj);
+            return;
+        }
+    } else {
+        /*
+         *  Use block call
+         */
+        struct addrinfo *res;
+        int r = getaddrinfo(
+            destination.host,
+            destination.port,
+            &hints,
+            &res
+        );
+        if(r) {
+            log_error(1,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgid",        "%s", MSGID_LIBUV_ERROR,
+                "msg",          "%s", "uv_getaddrinfo() FAILED",
+                "host",         "%s", destination.host,
+                "port",         "%s", destination.port,
+                "uv_error",     "%s", uv_err_name(r),
+                NULL);
+            gobj_send_event(gobj, "EV_DISCONNECTED", 0, gobj);
+            return;
+        }
+        //TODO how I know if it's ip4 or ip6?
+        priv->ip_port.sockaddr.ip4 = *((struct sockaddr_in *)(res->ai_addr));
+
+        set_timer(gobj, priv->timeout_waiting_connected);
+        gobj_send_event(priv->gsock, "EV_CONNECT", (json_t *)&priv->ip_port, gobj);
+        freeaddrinfo(res);
+    }
+}
