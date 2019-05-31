@@ -1175,6 +1175,17 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE int ac_drop(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    drop(gobj);
+
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     /*
@@ -1191,6 +1202,7 @@ PRIVATE const EVENT input_events[] = {
     // top input
     // bottom input
     I_IOGATE_SUBSCRIPTIONS
+    {"EV_DROP",             0,  0,  0},
     {"EV_TIMEOUT",          0,  0,  0},
     {"EV_STOPPED",          0,  0,  0},
     // internal
@@ -1222,6 +1234,7 @@ PRIVATE EV_ACTION ST_WAIT_IDENTITY_CARD[] = {
     {"EV_IDENTITY_CARD",        ac_identity_card,       0},
     {"EV_GOODBYE",              ac_goodbye,             0},
     {"EV_ON_CLOSE",             ac_on_close,            "ST_DISCONNECTED"},
+    {"EV_DROP",                 ac_drop,                0},
     {"EV_TIMEOUT",              ac_timeout_wait_idGot,  0},
     {0,0,0}
 };
@@ -1232,6 +1245,7 @@ PRIVATE EV_ACTION ST_SESSION[] = {
     {"EV_IDENTITY_CARD",        ac_identity_card,       0},
     {"EV_GOODBYE",              ac_goodbye,             0},
     {"EV_ON_CLOSE",             ac_on_close,            "ST_DISCONNECTED"},
+    {"EV_DROP",                 ac_drop,                0},
     {"EV_STOPPED",              ac_stopped,             0}, // puede llegar por aquí en un gobj_stop_tree()
     {0,0,0}
 };
