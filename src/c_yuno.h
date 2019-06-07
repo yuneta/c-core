@@ -123,10 +123,10 @@ PUBLIC uint64_t gobj_get_qs(qs_type_t qs_type);
 /*--------------------------------------------------*
  *  New Stats functions, using json
  *--------------------------------------------------*/
-PUBLIC json_int_t yuno_set_stat(const char *key, json_int_t value); // return old value
-PUBLIC json_int_t yuno_incr_stat(const char *key, json_int_t value); // return new value
-PUBLIC json_int_t yuno_decr_stat(const char *key, json_int_t value); // return new value
-PUBLIC json_int_t yuno_get_stat(const char *key);
+PUBLIC json_int_t yuno_set_stat(const char *path, json_int_t value); // return old value
+PUBLIC json_int_t yuno_incr_stat(const char *path, json_int_t value); // return new value
+PUBLIC json_int_t yuno_decr_stat(const char *path, json_int_t value); // return new value
+PUBLIC json_int_t yuno_get_stat(const char *path);
 
 #ifdef __cplusplus
 }

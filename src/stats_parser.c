@@ -58,6 +58,21 @@ PUBLIC json_t * stats_parser(hgobj gobj,
 /****************************************************************************
  *  Build stats from gobj's attributes with SFD_STATS flag.
  ****************************************************************************/
+PRIVATE int reset_stats_callback(json_t *kw, const char *key, json_t *value)
+{
+    // TODO uso un default? de un schema? gobj_read_default_attr_value(gobj, it->name);
+    if(json_is_array(value)) {
+        json_object_set_new(kw, key, json_array());
+    } else if(json_is_integer(value)) {
+        json_object_set_new(kw, key, json_integer(0));
+    } else if(json_is_boolean(value)) {
+        json_object_set_new(kw, key, json_false());
+    } else if(json_is_real(value)) {
+        json_object_set_new(kw, key, json_real(0));
+    } else if(json_is_null(value)) {
+    }
+    return 0;
+}
 PUBLIC json_t * build_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src)
 {
     if(!gobj) {
@@ -69,7 +84,7 @@ PUBLIC json_t * build_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src
     const sdata_desc_t *it;
     if(stats && strcmp(stats, "__reset__")==0) {
         /*-------------------------*
-         *      Stats in sdata
+         *  Reset Stats in sdata
          *-------------------------*/
         it = sdesc;
         while(it && it->name) {
@@ -89,14 +104,10 @@ PUBLIC json_t * build_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src
         }
 
         /*----------------------------*
-         *      Stats in jn_stats
+         *  Reset Stats in jn_stats
          *----------------------------*/
-        const char *key;
-        json_t *v;
         json_t *jn_stats = gobj_jn_stats(gobj);
-        json_object_foreach(jn_stats, key, v) {
-            json_object_set_new(jn_stats, key, json_integer(0));
-        }
+        kw_walk(jn_stats, reset_stats_callback);
 
         stats = "";
     }
