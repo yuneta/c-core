@@ -68,6 +68,9 @@ PUBLIC json_t * build_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src
     const sdata_desc_t *sdesc = sdata_schema(gobj_hsdata(gobj));
     const sdata_desc_t *it;
     if(stats && strcmp(stats, "__reset__")==0) {
+        /*-------------------------*
+         *      Stats in sdata
+         *-------------------------*/
         it = sdesc;
         while(it && it->name) {
             if(!ASN_IS_NUMBER(it->type)) {
@@ -84,11 +87,28 @@ PUBLIC json_t * build_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src
             }
             it++;
         }
+
+        /*----------------------------*
+         *      Stats in jn_stats
+         *----------------------------*/
+        const char *key;
+        json_t *v;
+        json_t *jn_stats = gobj_jn_stats(gobj);
+        json_object_foreach(jn_stats, key, v) {
+            json_object_set_new(jn_stats, key, json_integer(0));
+        }
+
         stats = "";
     }
 
+    /*-------------------------*
+     *  Create stats json
+     *-------------------------*/
     json_t *jn_data = json_object();
 
+    /*-------------------------*
+     *      Stats in sdata
+     *-------------------------*/
     it = sdesc;
     while(it && it->name) {
         if(!(ASN_IS_NUMBER(it->type) || ASN_IS_STRING(it->type))) {
@@ -96,7 +116,7 @@ PUBLIC json_t * build_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src
             continue;
         }
         if(!empty_string(stats)) {
-            if(!strstr(stats, it->name)) {
+            if(!strstr(stats, it->name)) { // Parece que es para seleccionar por prefijo
                 char prefix[32];
                 char *p = strchr(it->name, '_');
                 if(p) {
@@ -133,6 +153,22 @@ PUBLIC json_t * build_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src
         }
         it++;
     }
+
+    /*----------------------------*
+     *      Stats in jn_stats
+     *----------------------------*/
+    const char *key;
+    json_t *v;
+    json_t *jn_stats = gobj_jn_stats(gobj);
+    json_object_foreach(jn_stats, key, v) {
+        if(!empty_string(stats)) {
+            if(strstr(stats, key)==0) {
+                continue;
+            }
+        }
+        json_object_set(jn_data, key, v);
+    }
+
     KW_DECREF(kw);
     return jn_data;
 }
