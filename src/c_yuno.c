@@ -388,6 +388,13 @@ SDATA_END()
 };
 
 /*---------------------------------------------*
+ *      Yuno stats
+ *---------------------------------------------*/
+// TODO Deberían ser punteros a los atributos, porque al resetear las stats no coge el valor por defecto.
+// Afecta a QS_LOWER_RESPONSE_TIME que tiene por defecto -1
+PRIVATE uint64_t __qs__[QS__LAST_ITEM__];
+
+/*---------------------------------------------*
  *      GClass trace levels
  *---------------------------------------------*/
 enum {
@@ -560,7 +567,6 @@ PRIVATE void mt_gobj_created(hgobj gobj, hgobj gobj_created)
 {
 }
 
-
 /***************************************************************************
  *      Framework Method destroy
  ***************************************************************************/
@@ -578,7 +584,6 @@ PRIVATE void mt_destroy(hgobj gobj)
             NULL
         );
     }
-
 }
 
 /***************************************************************************
@@ -4253,13 +4258,6 @@ PUBLIC int run_executable(
 }
 
 /***************************************************************************
- *              Data
- ***************************************************************************/
-// TODO Deberían ser punteros a los atributos, porque al resetear las stats no coge el valor por defecto.
-// Afecta a QS_LOWER_RESPONSE_TIME que tiene por defecto -1
-PRIVATE uint64_t __qs__[QS__LAST_ITEM__];
-
-/***************************************************************************
  *
  ***************************************************************************/
 PUBLIC int gobj_set_qs(qs_type_t qs_type, uint64_t value)
@@ -4309,3 +4307,34 @@ PUBLIC uint64_t gobj_get_qs(qs_type_t qs_type)
     return __qs__[qs_type-1];
 }
 
+/***************************************************************************
+ *  New Stats functions, using json
+ ***************************************************************************/
+PUBLIC json_int_t yuno_set_stat(const char *key, json_int_t value)
+{
+    return gobj_set_stat(gobj_yuno(), key, value);
+}
+
+/***************************************************************************
+ *  New Stats functions, using json
+ ***************************************************************************/
+PUBLIC json_int_t yuno_incr_stat(const char *key, json_int_t value)
+{
+    return gobj_incr_stat(gobj_yuno(), key, value);
+}
+
+/***************************************************************************
+ *  New Stats functions, using json
+ ***************************************************************************/
+PUBLIC json_int_t yuno_decr_stat(const char *key, json_int_t value)
+{
+    return gobj_decr_stat(gobj_yuno(), key, value);
+}
+
+/***************************************************************************
+ *  New Stats functions, using json
+ ***************************************************************************/
+PUBLIC json_int_t yuno_get_stat(const char *key)
+{
+    return gobj_get_stat(gobj_yuno(), key);
+}
