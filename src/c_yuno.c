@@ -4338,3 +4338,35 @@ PUBLIC json_int_t yuno_get_stat(const char *path)
 {
     return gobj_get_stat(gobj_yuno(), path);
 }
+
+/***************************************************************************
+ *  New Stats functions, using json
+ ***************************************************************************/
+PUBLIC json_int_t default_service_set_stat(const char *path, json_int_t value)
+{
+    return gobj_set_stat(gobj_default_service(), path, value);
+}
+
+/***************************************************************************
+ *  New Stats functions, using json
+ ***************************************************************************/
+PUBLIC json_int_t default_service_incr_stat(const char *path, json_int_t value)
+{
+    return gobj_incr_stat(gobj_default_service(), path, value);
+}
+
+/***************************************************************************
+ *  New Stats functions, using json
+ ***************************************************************************/
+PUBLIC json_int_t default_service_decr_stat(const char *path, json_int_t value)
+{
+    return gobj_decr_stat(gobj_default_service(), path, value);
+}
+
+/***************************************************************************
+ *  New Stats functions, using json
+ ***************************************************************************/
+PUBLIC json_int_t default_service_get_stat(const char *path)
+{
+    return gobj_get_stat(gobj_default_service(), path);
+}

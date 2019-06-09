@@ -128,6 +128,11 @@ PUBLIC json_int_t yuno_incr_stat(const char *path, json_int_t value); // return 
 PUBLIC json_int_t yuno_decr_stat(const char *path, json_int_t value); // return new value
 PUBLIC json_int_t yuno_get_stat(const char *path);
 
+PUBLIC json_int_t default_service_set_stat(const char *path, json_int_t value); // return old value
+PUBLIC json_int_t default_service_incr_stat(const char *path, json_int_t value); // return new value
+PUBLIC json_int_t default_service_decr_stat(const char *path, json_int_t value); // return new value
+PUBLIC json_int_t default_service_get_stat(const char *path);
+
 #ifdef __cplusplus
 }
 #endif
