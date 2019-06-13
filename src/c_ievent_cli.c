@@ -673,22 +673,31 @@ PRIVATE int ac_identity_card_ack(hgobj gobj, const char *event, json_t *kw, hgob
     gobj_write_str_attr(gobj, "remote_yuno_role", src_role);
     gobj_write_str_attr(gobj, "remote_yuno_service", src_service);
 
-    gobj_change_state(gobj, "ST_SESSION");
+    // TODO comprueba result, ahora puede venir negativo
+    int result = kw_get_int(kw, "result", -1, 0);
+    if(result < 0) {
+        gobj_send_event(get_bottom_gobj(gobj), "EV_DROP", 0, gobj);
+    } else {
+        json_t *jn_data = kw_get_dict_value(kw, "data", 0, 0);
 
-    if(!priv->inform_on_close) {
-        priv->inform_on_close = TRUE;
-        json_t *kw_on_open = json_pack("{s:s, s:s, s:s}",
-            "remote_yuno_name", gobj_read_str_attr(gobj, "remote_yuno_name"),
-            "remote_yuno_role", gobj_read_str_attr(gobj, "remote_yuno_role"),
-            "remote_yuno_service", gobj_read_str_attr(gobj, "remote_yuno_service")
-        );
-        gobj_publish_event(gobj, "EV_ON_OPEN", kw_on_open);
+        gobj_change_state(gobj, "ST_SESSION");
+
+        if(!priv->inform_on_close) {
+            priv->inform_on_close = TRUE;
+            json_t *kw_on_open = json_pack("{s:s, s:s, s:s, s:O}",
+                "remote_yuno_name", gobj_read_str_attr(gobj, "remote_yuno_name"),
+                "remote_yuno_role", gobj_read_str_attr(gobj, "remote_yuno_role"),
+                "remote_yuno_service", gobj_read_str_attr(gobj, "remote_yuno_service"),
+                "data", jn_data?jn_data:json_null()
+            );
+            gobj_publish_event(gobj, "EV_ON_OPEN", kw_on_open);
+        }
+
+        /*
+        *  Resend subscriptions
+        */
+        resend_subscriptions(gobj);
     }
-
-    /*
-     *  Resend subscriptions
-     */
-    resend_subscriptions(gobj);
 
     JSON_DECREF(jn_ievent_id);
     KW_DECREF(kw);
