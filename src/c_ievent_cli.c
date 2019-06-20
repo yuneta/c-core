@@ -673,7 +673,7 @@ PRIVATE int ac_identity_card_ack(hgobj gobj, const char *event, json_t *kw, hgob
     gobj_write_str_attr(gobj, "remote_yuno_role", src_role);
     gobj_write_str_attr(gobj, "remote_yuno_service", src_service);
 
-    // TODO comprueba result, ahora puede venir negativo
+    // WARNING comprueba result, ahora puede venir negativo
     int result = kw_get_int(kw, "result", -1, 0);
     if(result < 0) {
         gobj_send_event(get_bottom_gobj(gobj), "EV_DROP", 0, gobj);

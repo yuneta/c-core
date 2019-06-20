@@ -1908,8 +1908,10 @@ PRIVATE int ac_drop(hgobj gobj, const char *event, json_t *kw, hgobj src)
     i_child = gobj_first_child(gobj, &child);
 
     while(i_child) {
-        if(gobj_read_bool_attr(child, "opened")) {
-            gobj_send_event(child, "EV_DROP", 0, gobj);
+        if(gobj_typeof_gclass(child, GCLASS_CHANNEL_NAME)) {
+            if(gobj_read_bool_attr(child, "opened")) {
+                gobj_send_event(child, "EV_DROP", 0, gobj);
+            }
         }
 
         i_child = gobj_next_child(i_child, &child);
