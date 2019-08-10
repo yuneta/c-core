@@ -54,10 +54,11 @@ PRIVATE void free_channels(hgobj gobj);
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 SDATA (ASN_OCTET_STR,   "url",                  SDF_RD, 0, "url of udp server"),
-SDATA (ASN_COUNTER,     "txMsgs",               SDF_RD, 0, "Messages transmitted"),
-SDATA (ASN_COUNTER,     "rxMsgs",               SDF_RD, 0, "Messages received"),
+SDATA (ASN_COUNTER,     "txMsgs",               SDF_RD|SDF_RSTATS, 0, "Messages transmitted"),
+SDATA (ASN_COUNTER,     "rxMsgs",               SDF_RD|SDF_RSTATS, 0, "Messages received"),
 SDATA (ASN_INTEGER,     "timeout_base",         SDF_RD,  5*1000, "timeout base"),
-SDATA (ASN_INTEGER,     "seconds_inactivity",   SDF_RD,  1*60, "Seconds to consider a gossamer close"),
+SDATA (ASN_INTEGER,     "seconds_inactivity",   SDF_RD,  5*60, "Seconds to consider a gossamer close"),
+SDATA (ASN_BOOLEAN,     "disable_end_of_frame", SDF_RD|SDF_STATS, 0, "Disable null as end of frame"),
 SDATA (ASN_OCTET_STR,   "on_open_event_name",   SDF_RD,  "EV_ON_OPEN", "Must be empty if you don't want receive this event"),
 SDATA (ASN_OCTET_STR,   "on_close_event_name",  SDF_RD,  "EV_ON_CLOSE", "Must be empty if you don't want receive this event"),
 SDATA (ASN_OCTET_STR,   "on_message_event_name",SDF_RD,  "EV_ON_MESSAGE", "Must be empty if you don't want receive this event"),
@@ -92,6 +93,7 @@ typedef struct _PRIVATE_DATA {
     // Data oid
     uint32_t *ptxMsgs;
     uint32_t *prxMsgs;
+    BOOL disable_end_of_frame;
 
     hgobj gobj_udp_s;
     hgobj timer;
@@ -126,6 +128,7 @@ PRIVATE void mt_create(hgobj gobj)
     SET_PRIV(on_open_event_name,    gobj_read_str_attr)
     SET_PRIV(on_close_event_name,   gobj_read_str_attr)
     SET_PRIV(on_message_event_name, gobj_read_str_attr)
+    SET_PRIV(disable_end_of_frame,  gobj_read_bool_attr)
 
     json_t *kw_udps = json_pack("{s:s}",
         "url", gobj_read_str_attr(gobj, "url")
@@ -253,6 +256,9 @@ PRIVATE UDP_CHANNEL *find_udp_channel(hgobj gobj, const char *name)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
     UDP_CHANNEL *ch;
 
+    if(!name) {
+        return 0;
+    }
     ch = dl_first(&priv->dl_channel);
     while(ch) {
         if(strcmp(ch->name, name)==0) {
@@ -291,6 +297,10 @@ PRIVATE int ac_rx_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
         }
     }
     ch->t_inactivity = start_sectimer(priv->seconds_inactivity);
+
+    if(priv->disable_end_of_frame) {
+        return gobj_publish_event(gobj, priv->on_message_event_name, kw);
+    }
 
     char *p;
     while((p=gbuf_get(gbuf, 1))) {
@@ -355,9 +365,23 @@ PRIVATE int ac_rx_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    //TODO
-    KW_DECREF(kw);
-    return 0;
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+    GBUFFER *gbuf = (GBUFFER *)(size_t)kw_get_int(kw, "gbuffer", 0, FALSE);
+    const char *udp_channel = gbuf_getlabel(gbuf);
+
+    UDP_CHANNEL *ch = find_udp_channel(gobj, udp_channel);
+    if(ch) {
+    } else {
+        log_error(0,
+            "gobj",                 "%s", gobj_full_name(gobj),
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_PARAMETER_ERROR,
+            "msg",                  "%s", "UDP channel NOT FOUND",
+            "udp_channel",          "%s", udp_channel?udp_channel:"",
+            NULL
+        );
+    }
+    return gobj_send_event(priv->gobj_udp_s, "EV_TX_DATA", kw, gobj);
 }
 
 /***************************************************************************
