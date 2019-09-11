@@ -32,7 +32,7 @@ PRIVATE BOOL _locate_subdirs_cb(
     wd_found_type type,
     const char *fullpath,
     const char *directory,
-    const char *name,
+    char *name,             // dname[255]
     int level,
     int index
 );
@@ -252,7 +252,7 @@ PRIVATE BOOL _locate_subdirs_cb(
     wd_found_type type,
     const char *fullpath,
     const char *directory,
-    const char *filename,
+    char *name,             // dname[255]
     int level,
     int index)
 {

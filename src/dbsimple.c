@@ -143,7 +143,7 @@ PRIVATE BOOL read_json_cb(
     wd_found_type type,     // type found
     const char *fullpath,   // directory+filename found
     const char *directory,  // directory of found filename
-    const char *name,       // name of type found
+    char *name,             // dname[255]
     int level,              // level of tree where file found
     int index               // index of file inside of directory, relative to 0
 )
