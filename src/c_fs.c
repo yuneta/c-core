@@ -30,7 +30,7 @@ PRIVATE void destroy_subdir_watch(SUBDIR_WATCH * sw);
 PRIVATE BOOL _locate_subdirs_cb(
     void *user_data,
     wd_found_type type,
-    const char *fullpath,
+    char *fullpath,
     const char *directory,
     char *name,             // dname[255]
     int level,
@@ -250,7 +250,7 @@ PRIVATE void destroy_subdir_watch(SUBDIR_WATCH * sw)
 PRIVATE BOOL _locate_subdirs_cb(
     void *user_data,
     wd_found_type type,
-    const char *fullpath,
+    char *fullpath,
     const char *directory,
     char *name,             // dname[255]
     int level,

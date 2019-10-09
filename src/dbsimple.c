@@ -141,7 +141,7 @@ PUBLIC int db_remove_persistent_attrs(hgobj gobj)
 PRIVATE BOOL read_json_cb(
     void *user_data,
     wd_found_type type,     // type found
-    const char *fullpath,   // directory+filename found
+    char *fullpath,         // directory+filename found
     const char *directory,  // directory of found filename
     char *name,             // dname[255]
     int level,              // level of tree where file found
