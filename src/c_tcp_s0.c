@@ -255,29 +255,29 @@ PRIVATE int mt_start(hgobj gobj)
     priv->uv_socket_open = TRUE;
 
     if(gobj_read_bool_attr(gobj, "shared")) {
-// TODO FALTA CHEQUEAR si el S.O. lo soporta. Como no lo uso todavía, lo quito.
-//         int sfd;
-//         uv_fileno((const uv_handle_t *) &priv->uv_socket, &sfd);
-//         int optval = 1;
-//         if(setsockopt(sfd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval))<0) {
-//             log_error(0,
-//                 "gobj",         "%s", gobj_full_name(gobj),
-//                 "function",     "%s", __FUNCTION__,
-//                 "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
-//                 "msg",          "%s", "setsockopt() FAILED",
-//                 "url",          "%s", priv->url,
-//                 "error",        "%d", errno,
-//                 "serror",       "%s", strerror(errno),
-//                 NULL
-//             );
-//             if(priv->exitOnError) {
-//                 exit(0); //WARNING exit with 0 to stop daemon watcher!
-//             } else {
-//                 uv_close((uv_handle_t *)&priv->uv_socket, 0);
-//                 priv->uv_socket_open = 0;
-//                 return -1;
-//             }
-//         }
+        // TODO FALTA CHEQUEAR si el S.O. lo soporta.
+        int sfd;
+        uv_fileno((const uv_handle_t *) &priv->uv_socket, &sfd);
+        int optval = 1;
+        if(setsockopt(sfd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval))<0) {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
+                "msg",          "%s", "setsockopt() FAILED",
+                "url",          "%s", priv->url,
+                "error",        "%d", errno,
+                "serror",       "%s", strerror(errno),
+                NULL
+            );
+            if(priv->exitOnError) {
+                exit(0); //WARNING exit with 0 to stop daemon watcher!
+            } else {
+                uv_close((uv_handle_t *)&priv->uv_socket, 0);
+                priv->uv_socket_open = 0;
+                return -1;
+            }
+        }
     }
 
     r = uv_tcp_bind(&priv->uv_socket, res->ai_addr, 0);
