@@ -250,7 +250,8 @@ PRIVATE int mt_start(hgobj gobj)
     if(gobj_trace_level(gobj) & TRACE_UV) {
         log_debug_printf(0, ">>> uv_init tcpS p=%p", &priv->uv_socket);
     }
-    uv_tcp_init(yuno_uv_event_loop(), &priv->uv_socket);
+    //uv_tcp_init(yuno_uv_event_loop(), &priv->uv_socket);
+    uv_tcp_init_ex(yuno_uv_event_loop(), &priv->uv_socket, AF_INET);
     priv->uv_socket.data = gobj;
     priv->uv_socket_open = TRUE;
 
@@ -266,6 +267,7 @@ PRIVATE int mt_start(hgobj gobj)
                 "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
                 "msg",          "%s", "setsockopt() FAILED",
                 "url",          "%s", priv->url,
+                "fd",           "%d", sfd,
                 "error",        "%d", errno,
                 "serror",       "%s", strerror(errno),
                 NULL
