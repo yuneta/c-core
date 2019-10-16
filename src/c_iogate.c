@@ -1430,9 +1430,6 @@ PRIVATE int trace_off_channels(hgobj gobj, const char* cmd, json_t* kw, hgobj sr
         i_hs = rc_next_instance(i_hs, (rc_resource_t **)&hs);
     }
 
-    /*
-     *  Inform
-     */
     rc_free_iter(iter, TRUE, 0);
 
     return 0;
@@ -1512,7 +1509,29 @@ PRIVATE hgobj get_next_destination(hgobj gobj)
     return channel_gobj;
 }
 
+/***************************************************************************
+ *  How many channel opened?
+ ***************************************************************************/
+PRIVATE int channels_opened(hgobj gobj)
+{
+    int opened = 0;
 
+    dl_list_t *dl_childs = gobj_match_childs_tree_by_strict_gclass(gobj, "Channel");
+    hgobj child; rc_instance_t *i_hs;
+    i_hs = rc_first_instance(dl_childs, (rc_resource_t **)&child);
+    while(i_hs) {
+        if(gobj_read_bool_attr(child, "opened") && !gobj_read_bool_attr(child, "disabled")) {
+            opened++;
+            break;
+        }
+
+        i_hs = rc_next_instance(i_hs, (rc_resource_t **)&child);
+    }
+
+    rc_free_iter(dl_childs, TRUE, 0);
+
+    return opened;
+}
 
 
             /***************************
@@ -1543,9 +1562,16 @@ PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
         );
     }
 
+    int opened = channels_opened(gobj);
     if(!kw) {
         kw = json_object();
     }
+    kw_set_subdict_value(
+        kw,
+        "__temp__",
+        "channels_opened",
+        json_integer(opened)
+    );
     kw_set_subdict_value(
         kw,
         "__temp__",
@@ -1583,9 +1609,16 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
         );
     }
 
+    int opened = channels_opened(gobj);
     if(!kw) {
         kw = json_object();
     }
+    kw_set_subdict_value(
+        kw,
+        "__temp__",
+        "channels_opened",
+        json_integer(opened)
+    );
     kw_set_subdict_value(
         kw,
         "__temp__",
