@@ -1502,6 +1502,7 @@ PRIVATE hgobj get_next_destination(hgobj gobj)
                 break;
             }
         }
+        size--;
     }
     rc_free_iter(iter_open, TRUE, 0);
     rc_free_iter(iter, TRUE, 0);
@@ -1520,11 +1521,9 @@ PRIVATE int channels_opened(hgobj gobj)
     hgobj child; rc_instance_t *i_hs;
     i_hs = rc_first_instance(dl_childs, (rc_resource_t **)&child);
     while(i_hs) {
-        if(gobj_read_bool_attr(child, "opened") && !gobj_read_bool_attr(child, "disabled")) {
+        if(gobj_read_bool_attr(child, "opened")) {
             opened++;
-            break;
         }
-
         i_hs = rc_next_instance(i_hs, (rc_resource_t **)&child);
     }
 
