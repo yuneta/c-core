@@ -311,7 +311,7 @@ PRIVATE int ac_rx_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
          *  Use a temporal gbuf, to save data until arrive of null.
          */
         if(!ch->gbuf) {
-            size_t size = MIN(64*1024L, gbmem_get_maximum_block());
+            size_t size = MIN(1*1024L*1024L, gbmem_get_maximum_block());
             ch->gbuf = gbuf_create(size, size, 0, 0);
             if(!ch->gbuf) {
                 log_error(0,
