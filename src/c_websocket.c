@@ -1597,6 +1597,9 @@ PRIVATE int ac_process_handshake(hgobj gobj, const char *event, json_t *kw, hgob
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
     GBUFFER *gbuf = (GBUFFER *)(size_t)kw_get_int(kw, "gbuffer", 0, FALSE);
 
+    if(priv->timer) {
+        clear_timeout(priv->timer);
+    }
     if (priv->iamServer) {
         /*
          * analyze the request and respond
@@ -1655,6 +1658,7 @@ PRIVATE int ac_process_handshake(hgobj gobj, const char *event, json_t *kw, hgob
 
                 priv->close_frame_sent = TRUE;
                 priv->on_close_broadcasted = TRUE;
+                gobj_send_event(priv->tcp0, "EV_DROP", 0, gobj);
                 ws_close(gobj, STATUS_PROTOCOL_ERROR, 0);
             }
         }
