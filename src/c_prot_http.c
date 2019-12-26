@@ -315,17 +315,20 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
     if(kw_has_key(kw, "body")) {
         // New method
         const char *code = kw_get_str(kw, "code", "200 OK", 0);
+        const char *headers = kw_get_str(kw, "headers", "", 0);
         json_t *jn_body = kw_duplicate(kw_get_dict_value(kw, "body", json_object(), KW_REQUIRED));
         char *resp = json2str(jn_body);
-        int len = strlen(resp);
+        int len = strlen(resp) + strlen(headers);
         kw_decref(jn_body);
 
         gbuf = gbuf_create(256+len, 256+len, 0, 0);
         gbuf_printf(gbuf,
             "HTTP/1.1 %s\r\n"
+            "%s"
             "Content-Type: application/json; charset=utf-8\r\n"
             "Content-Length: %d\r\n\r\n",
             code,
+            headers,
             len
         );
         gbuf_append(gbuf, resp, len);
