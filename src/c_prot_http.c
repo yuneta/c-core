@@ -310,23 +310,46 @@ PRIVATE int ac_rx_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ********************************************************************/
 PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    json_t *kw_resp = msg_iev_pure_clone(
-        kw  // NO owned
-    );
+    GBUFFER *gbuf = 0;
 
-    char *resp = json2str(kw_resp);
-    int len = strlen(resp);
-    kw_decref(kw_resp);
+    if(kw_has_key(kw, "body")) {
+        // New method
+        const char *code = kw_get_str(kw, "code", "200 OK", 0);
+        json_t *jn_body = kw_duplicate(kw_get_dict(kw, "body", json_object(), KW_REQUIRED));
+        char *resp = json2str(jn_body);
+        int len = strlen(resp);
+        kw_decref(jn_body);
 
-    GBUFFER *gbuf = gbuf_create(256+len, 256+len, 0, 0);
-    gbuf_printf(gbuf,
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: application/json; charset=utf-8\r\n"
-        "Content-Length: %d\r\n\r\n",
-        len
-    );
-    gbuf_append(gbuf, resp, len);
-    gbmem_free(resp);
+        gbuf = gbuf_create(256+len, 256+len, 0, 0);
+        gbuf_printf(gbuf,
+            "HTTP/1.1 %s\r\n"
+            "Content-Type: application/json; charset=utf-8\r\n"
+            "Content-Length: %d\r\n\r\n",
+            code,
+            len
+        );
+        gbuf_append(gbuf, resp, len);
+        gbmem_free(resp);
+    } else  {
+        // Old method
+        json_t *kw_resp = msg_iev_pure_clone(
+            kw  // NO owned
+        );
+
+        char *resp = json2str(kw_resp);
+        int len = strlen(resp);
+        kw_decref(kw_resp);
+
+        gbuf = gbuf_create(256+len, 256+len, 0, 0);
+        gbuf_printf(gbuf,
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: application/json; charset=utf-8\r\n"
+            "Content-Length: %d\r\n\r\n",
+            len
+        );
+        gbuf_append(gbuf, resp, len);
+        gbmem_free(resp);
+    }
 
     json_t *kw_response = json_pack("{s:I}",
         "gbuffer", (json_int_t)(size_t)gbuf
@@ -375,21 +398,21 @@ PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
 PRIVATE const EVENT input_events[] = {
     // top input
     // bottom input
-    {"EV_RX_DATA",          0,  0,  0},
-    {"EV_SEND_MESSAGE",     0,  0,  0},
-    {"EV_CONNECTED",        0,  0,  0},
-    {"EV_DISCONNECTED",     0,  0,  0},
-    {"EV_DROP",             0,  0,  0},
-    {"EV_TIMEOUT",          0,  0,  0},
-    {"EV_TX_READY",         0,  0,  0},
-    {"EV_STOPPED",          0,  0,  0},
+    {"EV_RX_DATA",          0,                  0,  0},
+    {"EV_SEND_MESSAGE",     EVF_PUBLIC_EVENT,   0,  0},
+    {"EV_CONNECTED",        0,                  0,  0},
+    {"EV_DISCONNECTED",     0,                  0,  0},
+    {"EV_DROP",             EVF_PUBLIC_EVENT,   0,  0},
+    {"EV_TIMEOUT",          0,                  0,  0},
+    {"EV_TX_READY",         0,                  0,  0},
+    {"EV_STOPPED",          0,                  0,  0},
     // internal
     {NULL, 0, 0, 0}
 };
 PRIVATE const EVENT output_events[] = {
-    {"EV_ON_OPEN",          0,  0,  0},
-    {"EV_ON_CLOSE",         0,  0,  0},
-    {"EV_ON_MESSAGE",       0,  0,  0},
+    {"EV_ON_OPEN",          EVF_PUBLIC_EVENT,   0,  0},
+    {"EV_ON_CLOSE",         EVF_PUBLIC_EVENT,   0,  0},
+    {"EV_ON_MESSAGE",       EVF_PUBLIC_EVENT,   0,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const char *state_names[] = {
