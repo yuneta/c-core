@@ -138,7 +138,7 @@ PRIVATE int frame_completed(hgobj gobj);
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag------------------------default---------description---------- */
 SDATA (ASN_BOOLEAN,     "connected",        SDF_RD,                     0,              ""),
-SDATA (ASN_INTEGER,     "pingT",            SDF_RD,                     5*60*1000,      "Ping interval. If value <= 0 then No ping"),
+SDATA (ASN_INTEGER,     "pingT",            SDF_RD,                     50*1000,      "Ping interval. If value <= 0 then No ping"),
 SDATA (ASN_POINTER,     "tcp0",             0,                          0,              "Tcp0 connection"),
 SDATA (ASN_POINTER,     "user_data",        0,                          0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                          0,              "more user data"),
