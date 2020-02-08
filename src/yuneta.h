@@ -39,6 +39,7 @@ extern "C"{
 /*
  *  Gadgets
  */
+#include "c_qiogate.h"
 #include "c_iogate.h"
 #include "c_channel.h"
 #include "c_counter.h"
