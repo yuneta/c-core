@@ -14,8 +14,6 @@
 #include "yuneta_version.h"
 #include "yuneta_register.h"
 #include "yuneta_environment.h"
-#include "command_parser.h"
-#include "stats_parser.h"
 #include "dbsimple.h"
 #include "c_yuno.h"         // the grandmother
 

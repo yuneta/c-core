@@ -10,8 +10,6 @@
 #define _C_IOGATE_H 1
 
 #include <ginsfsm.h>
-#include "msg_ievent.h"
-#include "command_parser.h"
 #include "c_channel.h"
 #include "c_resource.h"
 

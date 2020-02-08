@@ -14,7 +14,6 @@
  */
 
 #include <ginsfsm.h>
-#include "msg_ievent.h"
 #include "c_tcp0.h"
 #include "c_timer.h"
 

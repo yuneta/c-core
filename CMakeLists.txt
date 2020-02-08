@@ -43,8 +43,6 @@ include_directories(BEFORE /yuneta/development/output/include)
 set (SRCS
     src/yuneta_environment.c
     src/yuneta_register.c
-    src/command_parser.c
-    src/stats_parser.c
     src/dbsimple.c
 
     # Daemon/CLI builders
@@ -55,7 +53,6 @@ set (SRCS
 
     # Services          # service, gotter or spider or gateway.
     src/c_resource.c
-    src/msg_ievent.c
     src/c_ievent_srv.c
     src/c_ievent_cli.c
 #     src/c_store.c
@@ -101,8 +98,6 @@ set (HDRS
     src/yuneta_environment.h
     src/yuneta_register.h
     src/msglog_yuneta.h
-    src/command_parser.h
-    src/stats_parser.h
     src/dbsimple.h
 
     # Daemon/CLI builders
@@ -113,7 +108,6 @@ set (HDRS
 
     # Services          # service, gotter or spider or gateway.
     src/c_resource.h
-    src/msg_ievent.h
     src/c_ievent_srv.h
     src/c_ievent_cli.h
 #     src/c_store.h

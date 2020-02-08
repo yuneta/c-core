@@ -50,8 +50,6 @@
 
 #include <ginsfsm.h>
 #include "yuneta_environment.h"
-#include "msg_ievent.h"
-#include "command_parser.h"
 #include "c_timer.h"
 #include "yuneta_version.h"
 

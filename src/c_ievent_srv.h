@@ -14,7 +14,6 @@
 #include "msglog_yuneta.h"
 #include "c_iogate.h"
 #include "c_timer.h"
-#include "msg_ievent.h"
 
 #ifdef __cplusplus
 extern "C"{

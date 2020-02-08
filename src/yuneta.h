@@ -23,8 +23,6 @@ extern "C"{
  */
 #include "yuneta_version.h"
 #include "msglog_yuneta.h"
-#include "command_parser.h"
-#include "msg_ievent.h"
 #include "c_yuno.h"         // the grandmother
 #include "dbsimple.h"
 
