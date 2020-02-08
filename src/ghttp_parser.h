@@ -23,6 +23,7 @@ typedef struct _GHTTP_PARSER {
     http_parser http_parser;
     hgobj gobj;
     char *on_message_event;
+    BOOL send_event;
 
     enum http_parser_type type;
     char message_completed;
@@ -43,7 +44,8 @@ typedef struct _GHTTP_PARSER {
 PUBLIC GHTTP_PARSER *ghttp_parser_create(
     hgobj gobj,
     enum http_parser_type type,
-    const char *on_message_event    // Not empty if you want publish event
+    const char *on_message_event,    // Event to publish or send
+    BOOL send_event  // TRUE: use gobj_send_event(), FALSE: use gobj_publish_event()
 );
 PUBLIC int ghttp_parser_received( /* Return bytes consumed or -1 if error */
     GHTTP_PARSER *parser,

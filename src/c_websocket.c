@@ -211,8 +211,8 @@ PRIVATE void mt_create(hgobj gobj)
     priv->iamServer = gobj_read_bool_attr(gobj, "iamServer");
 
     priv->timer = gobj_create("ws", GCLASS_TIMER, 0, gobj);
-    priv->parsing_request = ghttp_parser_create(gobj, HTTP_REQUEST, 0);
-    priv->parsing_response = ghttp_parser_create(gobj, HTTP_RESPONSE, 0);
+    priv->parsing_request = ghttp_parser_create(gobj, HTTP_REQUEST, 0, 0);
+    priv->parsing_response = ghttp_parser_create(gobj, HTTP_RESPONSE, 0, 0);
 
     priv->istream_frame = istream_create(gobj, 14, 14, 0,0);
     if(!priv->istream_frame) {

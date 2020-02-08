@@ -47,7 +47,8 @@ PRIVATE http_parser_settings settings = {
 PUBLIC GHTTP_PARSER *ghttp_parser_create(
     hgobj gobj,
     enum http_parser_type type,
-    const char *on_message_event    // Not empty if you want publish event
+    const char *on_message_event,    // Event to publish or send
+    BOOL send_event  // TRUE: use gobj_send_event(), FALSE: use gobj_publish_event()
 )
 {
     GHTTP_PARSER *parser;
@@ -71,6 +72,8 @@ PUBLIC GHTTP_PARSER *ghttp_parser_create(
     parser->gobj = gobj;
     parser->type = type;
     parser->on_message_event = on_message_event?gbmem_strdup(on_message_event):0;
+    parser->send_event = send_event;
+
     http_parser_init(&parser->http_parser, type);
     parser->http_parser.data = parser;
 
@@ -206,7 +209,11 @@ PRIVATE int on_message_complete(http_parser* http_parser)
                 }
             }
             ghttp_parser_reset(parser);
-            gobj_publish_event(gobj, parser->on_message_event, kw_http);
+            if(parser->send_event) {
+                gobj_send_event(gobj, parser->on_message_event, kw_http, gobj);
+            } else {
+                gobj_publish_event(gobj, parser->on_message_event, kw_http);
+            }
         }
     }
     return 0;

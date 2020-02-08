@@ -33,6 +33,7 @@
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag------------default---------description---------- */
 SDATA (ASN_BOOLEAN,     "iamServer",        SDF_RD,         0,              "What side? server or client"),
+SDATA (ASN_BOOLEAN,     "send_event",       SDF_RD,         0,              "TRUE send_event, FALSE publish_event"),
 SDATA (ASN_OCTET_STR,   "resource",         SDF_RD,         "/",            "Resource when iam client"),
 SDATA (ASN_JSON,        "kw_connex",        SDF_RD,         0,              "Kw to create connex if client"),
 SDATA (ASN_BOOLEAN,     "connected",        SDF_RD,         0,              "Connection state. Important filter!"),
@@ -96,8 +97,12 @@ PRIVATE void mt_create(hgobj gobj)
     priv->iamServer = gobj_read_bool_attr(gobj, "iamServer");
 
     priv->timer = gobj_create("http", GCLASS_TIMER, 0, gobj);
-    priv->parsing_request = ghttp_parser_create(gobj, HTTP_REQUEST, "EV_ON_MESSAGE");
-    priv->parsing_response = ghttp_parser_create(gobj, HTTP_RESPONSE, "EV_ON_MESSAGE");
+    priv->parsing_request = ghttp_parser_create(
+        gobj, HTTP_REQUEST, "EV_ON_MESSAGE", gobj_read_bool_attr(gobj, "send_event")
+    );
+    priv->parsing_response = ghttp_parser_create(
+        gobj, HTTP_RESPONSE, "EV_ON_MESSAGE", gobj_read_bool_attr(gobj, "send_event")
+    );
 
     /*
      *  CHILD subscription model
