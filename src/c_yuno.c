@@ -947,7 +947,7 @@ PRIVATE json_t *cmd_view_attrs(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         }
     }
 
-    json_t *jn_data = sdata2json(gobj_hsdata(gobj2view), SDF_RD|SDF_WR|SDF_STATS, 0);
+    json_t *jn_data = sdata2json(gobj_hsdata(gobj2view), ATTR_READABLE|ATTR_WRITABLE, 0);
     append_yuno_metadata(gobj2view, jn_data, cmd);
     return msg_iev_build_webix(
         gobj,
@@ -1301,7 +1301,7 @@ PRIVATE json_t *cmd_write_bool(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
     }
     gobj_save_persistent_attrs(gobj2write);
 
-    json_t *jn_data = sdata2json(gobj_hsdata(gobj2write), SDF_RD|SDF_WR|SDF_STATS, 0);
+    json_t *jn_data = sdata2json(gobj_hsdata(gobj2write), ATTR_READABLE|ATTR_WRITABLE, 0);
     return msg_iev_build_webix(
         gobj,
         0,
@@ -1418,7 +1418,7 @@ PRIVATE json_t *cmd_write_str(hgobj gobj, const char *cmd, json_t *kw, hgobj src
     }
     gobj_save_persistent_attrs(gobj2write);
 
-    json_t *jn_data = sdata2json(gobj_hsdata(gobj2write), SDF_RD|SDF_WR|SDF_STATS, 0);
+    json_t *jn_data = sdata2json(gobj_hsdata(gobj2write), ATTR_READABLE|ATTR_WRITABLE, 0);
     return msg_iev_build_webix(
         gobj,
         0,
@@ -1558,7 +1558,7 @@ PRIVATE json_t *cmd_write_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src
     }
     gobj_save_persistent_attrs(gobj2write);
 
-    json_t *jn_data = sdata2json(gobj_hsdata(gobj2write), SDF_RD|SDF_WR|SDF_STATS, 0);
+    json_t *jn_data = sdata2json(gobj_hsdata(gobj2write), ATTR_READABLE|ATTR_WRITABLE, 0);
     return msg_iev_build_webix(
         gobj,
         0,
