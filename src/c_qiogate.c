@@ -678,8 +678,6 @@ PRIVATE int send_message_to_bottom_side(hgobj gobj, q_msg msg)
     json_t *jn_msg = trq_msg_json(msg);
 
     json_t *kw_clone = kw_duplicate(jn_msg);
-    kw_set_dict_value(kw_clone, "_msg_ref_", json_integer(rowid));
-
     trq_set_metadata(kw_clone, "__msg_key__", json_integer(rowid));
 
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
