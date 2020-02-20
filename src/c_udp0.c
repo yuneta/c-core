@@ -44,8 +44,8 @@ PRIVATE int get_sock_name(hgobj gobj);
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name--------------------flag--------default-description---------- */
 SDATA (ASN_UNSIGNED,    "connxs",               SDF_RD,     0,      "Current connections"),
-SDATA (ASN_COUNTER,     "txBytes",              SDF_RD,     0,      "Bytes transmitted by this socket"),
-SDATA (ASN_COUNTER,     "rxBytes",              SDF_RD,     0,      "Bytes received by this socket"),
+SDATA (ASN_COUNTER64,   "txBytes",              SDF_RD,     0,      "Bytes transmitted by this socket"),
+SDATA (ASN_COUNTER64,   "rxBytes",              SDF_RD,     0,      "Bytes received by this socket"),
 SDATA (ASN_OCTET_STR,   "lHost",                SDF_RD,     0,      "local ip"),
 SDATA (ASN_OCTET_STR,   "lPort",                SDF_RD,     0,      "local port"),
 SDATA (ASN_OCTET_STR,   "rHost",                SDF_RD,     0,      "remote ip"),
@@ -64,10 +64,12 @@ SDATA_END()
  *      GClass trace levels
  *---------------------------------------------*/
 enum {
-    TRACE_DUMP_TRAFFIC = 0x0001,
+    TRACE_CONNECT_DISCONNECT    = 0x0001,
+    TRACE_DUMP_TRAFFIC          = 0x0002,
 };
 PRIVATE const trace_level_t s_user_trace_level[16] = {
-{"traffic",     "Trace traffic"},
+{"connections",         "Trace connections and desconections"},
+{"traffic",             "Trace dump traffic"},
 {0, 0},
 };
 
@@ -85,8 +87,6 @@ typedef struct _PRIVATE_DATA {
     // Data oid
     uint64_t *ptxBytes;
     uint64_t *prxBytes;
-    uint64_t *ptxMsgs;
-    uint64_t *prxMsgs;
 
     uv_udp_t uv_udp;
     uv_udp_send_t req_send;
@@ -132,8 +132,6 @@ PRIVATE void mt_create(hgobj gobj)
 
     priv->ptxBytes = gobj_danger_attr_ptr(gobj, "txBytes");
     priv->prxBytes = gobj_danger_attr_ptr(gobj, "rxBytes");
-    priv->ptxMsgs = gobj_danger_attr_ptr(gobj, "txMsgs");
-    priv->prxMsgs = gobj_danger_attr_ptr(gobj, "rxMsgs");
 
     /*
      *  Do copy of heavy used parameters, for quick access.
@@ -181,6 +179,7 @@ PRIVATE int mt_start(hgobj gobj)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
     uv_loop_t *loop = yuno_uv_event_loop();
     struct addrinfo hints;
+    struct addrinfo *res;
     int r;
 
     if(gobj_in_this_state(gobj, "ST_OPENED")) {
@@ -194,50 +193,54 @@ PRIVATE int mt_start(hgobj gobj)
         return 0;
     }
 
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;  /* Allow IPv4 or IPv6 */
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_protocol = IPPROTO_UDP;
-    hints.ai_flags = 0;
-    struct addrinfo *res;
-
-    r = getaddrinfo(
-        priv->lHost,
-        priv->lPort,
-        &hints,
-        &res
-    );
-    if(r!=0) {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "getaddrinfo() FAILED",
-            "lHost",        "%s", priv->lHost,
-            "lPort",        "%s", priv->lPort,
-            "errno",        "%d", errno,
-            "strerror",     "%s", strerror(errno),
-            NULL
-        );
-        return -1;
-    }
-
     uv_udp_init(loop, &priv->uv_udp);
     priv->uv_udp.data = gobj;
     uv_udp_set_broadcast(&priv->uv_udp, 0);
 
-    r = uv_udp_bind(&priv->uv_udp, res->ai_addr, 0);
-    if(r<0) {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
-            "msg",          "%s", "uv_udp_bind() FAILED",
-            "lHost",        "%s", priv->lHost,
-            "lPort",        "%s", priv->lPort,
-            "uv_error",     "%s", uv_err_name(r),
-            NULL);
-        return -1;
+    /*
+     *  Bind if local ip
+     */
+    if(!empty_string(priv->lHost)) {
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_UNSPEC;  /* Allow IPv4 or IPv6 */
+        hints.ai_socktype = SOCK_DGRAM;
+        hints.ai_protocol = IPPROTO_UDP;
+        hints.ai_flags = 0;
+
+        r = getaddrinfo(
+            priv->lHost,
+            priv->lPort,
+            &hints,
+            &res
+        );
+        if(r!=0) {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+                "msg",          "%s", "getaddrinfo() FAILED",
+                "lHost",        "%s", priv->lHost,
+                "lPort",        "%s", priv->lPort,
+                "errno",        "%d", errno,
+                "strerror",     "%s", strerror(errno),
+                NULL
+            );
+            return -1;
+        }
+
+        r = uv_udp_bind(&priv->uv_udp, res->ai_addr, 0);
+        if(r<0) {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
+                "msg",          "%s", "uv_udp_bind() FAILED",
+                "lHost",        "%s", priv->lHost,
+                "lPort",        "%s", priv->lPort,
+                "uv_error",     "%s", uv_err_name(r),
+                NULL);
+            return -1;
+        }
     }
 
     /*
@@ -266,28 +269,49 @@ PRIVATE int mt_start(hgobj gobj)
     memcpy(&priv->raddr, res->ai_addr, sizeof(priv->raddr));
     get_sock_name(gobj);
 
-    /*
-     *  Info of "listening..."
-     */
-    log_info(0,
-        "gobj",         "%s", gobj_full_name(gobj),
-        "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
-        "msg",          "%s", "UDP client ...",
-        "lHost",        "%s", priv->lHost,
-        "lPort",        "%s", priv->lPort,
-        "rHost",        "%s", priv->rHost,
-        "rPort",        "%s", priv->rPort,
-        "sockname",     "%s", priv->sockname,
-        NULL
-    );
+    r = uv_udp_connect((uv_udp_t *)&priv->uv_udp, res->ai_addr); // null to disconnect
+    if(r!=0) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msg",          "%s", "uv_udp_connect() FAILED",
+            "rHost",        "%s", priv->rHost,
+            "rPort",        "%s", priv->rPort,
+            "uv_error",     "%s", uv_err_name(r),
+            NULL
+        );
+        return -1;
+    }
 
-    if(gobj_trace_level(gobj) & TRACE_UV) {
-        log_debug_printf(0, ">>>start_read(%s:%s)",
-            gobj_gclass_name(gobj), gobj_name(gobj)
+    /*
+     *  Info of "connecting..."
+     */
+    if(gobj_trace_level(gobj) & TRACE_CONNECT_DISCONNECT) {
+        log_info(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
+            "msg",          "%s", "UDP Connecting...",
+            "rHost",        "%s", priv->rHost,
+            "rPort",        "%s", priv->rPort,
+            "lHost",        "%s", priv->lHost,
+            "lPort",        "%s", priv->lPort,
+            NULL
         );
     }
-    uv_udp_recv_start(&priv->uv_udp, on_alloc_cb, on_read_cb);
+
+    if(!empty_string(priv->lHost)) {
+
+        if(gobj_trace_level(gobj) & TRACE_UV) {
+            log_debug_printf(0, ">>>start_read(%s:%s)",
+                gobj_gclass_name(gobj), gobj_name(gobj)
+            );
+        }
+        uv_udp_recv_start(&priv->uv_udp, on_alloc_cb, on_read_cb);
+    }
+
     gobj_change_state(gobj, "ST_OPENED");
+
     return 0;
 }
 
@@ -314,6 +338,24 @@ PRIVATE int mt_stop(hgobj gobj)
             gobj_gclass_name(gobj), gobj_name(gobj)
         );
     }
+
+    /*
+     *  Info of "disconnecting..."
+     */
+    if(gobj_trace_level(gobj) & TRACE_CONNECT_DISCONNECT) {
+        log_info(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
+            "msg",          "%s", "UDP Disconnecting...",
+            "rHost",        "%s", priv->rHost,
+            "rPort",        "%s", priv->rPort,
+            "lHost",        "%s", priv->lHost,
+            "lPort",        "%s", priv->lPort,
+            NULL
+        );
+    }
+    uv_udp_connect((uv_udp_t *)&priv->uv_udp, NULL); // null to disconnect
+
     uv_udp_recv_stop((uv_udp_t *)&priv->uv_udp);
 
     if(gobj_trace_level(gobj) & TRACE_UV) {
@@ -449,7 +491,7 @@ PRIVATE void on_read_cb(
     ipp.is_ip6 = priv->ipp_sockname.is_ip6;
     memcpy(&ipp.sa.ip, addr, sizeof(ipp.sa.ip));
     char peername[60];
-    get_ipp_url(&ipp, peername, sizeof(peername));
+    get_ipp_url(&ipp, peername, sizeof(peername)); // TODO mucho proceso en cada rx
 
     if(gobj_trace_level(gobj) & TRACE_DUMP_TRAFFIC) {
         char temp[256];

@@ -634,7 +634,7 @@ PRIVATE int do_connect(hgobj gobj)
         log_info(0,
             "gobj",         "%s", gobj_full_name(gobj),
             "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
-            "msg",          "%s", "Connecting...",
+            "msg",          "%s", "TCP Connecting...",
             "rHost",        "%s", priv->rHost,
             "rPort",        "%s", priv->rPort,
             "lHost",        "%s", priv->lHost,
@@ -897,7 +897,7 @@ PRIVATE void do_shutdown(hgobj gobj)
         log_info(0,
             "gobj",         "%s", gobj_full_name(gobj),
             "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
-            "msg",          "%s", "Disconnecting...",
+            "msg",          "%s", "TCP Disconnecting...",
             "rHost",        "%s", priv->rHost,
             "rPort",        "%s", priv->rPort,
             NULL);

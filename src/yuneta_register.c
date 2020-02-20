@@ -59,7 +59,7 @@ PUBLIC int yuneta_register_c_core(void)
     gobj_register_gclass(GCLASS_TCP0);
     gobj_register_gclass(GCLASS_TCP_S0);
     gobj_register_gclass(GCLASS_UDP_S0);
-//     gobj_register_gclass(GCLASS_UDP_C0);
+    gobj_register_gclass(GCLASS_UDP0);
     gobj_register_gclass(GCLASS_TIMETRANSITION);
     gobj_register_gclass(GCLASS_TIMER);
     gobj_register_gclass(GCLASS_FS);
