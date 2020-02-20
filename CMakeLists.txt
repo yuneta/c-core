@@ -84,7 +84,7 @@ set (SRCS
     # Mixin uv-gobj
     src/c_tcp0.c
     src/c_tcp_s0.c
-#     src/c_udp_c0.c
+    src/c_udp0.c
     src/c_udp_s0.c
     src/c_timer.c
     src/c_fs.c
@@ -140,7 +140,7 @@ set (HDRS
     # Mixin uv-gobj
     src/c_tcp0.h
     src/c_tcp_s0.h
-#     src/c_udp_c0.h
+    src/c_udp0.h
     src/c_udp_s0.h
     src/c_timer.h
     src/c_fs.h

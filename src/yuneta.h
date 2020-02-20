@@ -61,7 +61,7 @@ extern "C"{
 
 #include "c_gss_udp_s0.h"   // gossamer
 
-// #include "c_udp_c0.h"       // mixin uv-gobj
+#include "c_udp0.h"         // mixin uv-gobj
 #include "c_udp_s0.h"       // mixin uv-gobj
 #include "c_timer.h"        // mixin uv-gobj
 #include "c_fs.h"           // mixin uv-gobj
