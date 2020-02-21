@@ -137,6 +137,7 @@ TOP Output Events (Publications)
   * EV_ON_OPEN
   * EV_ON_CLOSE
   * EV_ON_MESSAGE
+  * EV_ON_ID        same flow as EV_ON_MESSAGE
 
 
 **rst**/
@@ -149,6 +150,7 @@ TOP Output Events (Publications)
  */
 #define I_IOGATE_SUBSCRIPTIONS  \
     {"EV_ON_MESSAGE",       0,  0,  0}, \
+    {"EV_ON_ID",            0,  0,  0}, \
     {"EV_ON_OPEN",          0,  0,  0}, \
     {"EV_ON_CLOSE",         0,  0,  0},
 
