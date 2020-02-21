@@ -259,6 +259,7 @@ PRIVATE int mt_start(hgobj gobj)
     uv_udp_set_broadcast(&priv->uv_udp, 0);
 
     r = uv_udp_bind(&priv->uv_udp, res->ai_addr, 0);
+    freeaddrinfo(res);
     if(r<0) {
         log_error(0,
             "gobj",         "%s", gobj_full_name(gobj),

@@ -229,6 +229,7 @@ PRIVATE int mt_start(hgobj gobj)
         }
 
         r = uv_udp_bind(&priv->uv_udp, res->ai_addr, 0);
+        freeaddrinfo(res);
         if(r<0) {
             log_error(0,
                 "gobj",         "%s", gobj_full_name(gobj),
@@ -238,7 +239,8 @@ PRIVATE int mt_start(hgobj gobj)
                 "lHost",        "%s", priv->lHost,
                 "lPort",        "%s", priv->lPort,
                 "uv_error",     "%s", uv_err_name(r),
-                NULL);
+                NULL
+            );
             return -1;
         }
     }
@@ -246,6 +248,12 @@ PRIVATE int mt_start(hgobj gobj)
     /*
      *  Set remote addr for quick transmit
      */
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;  /* Allow IPv4 or IPv6 */
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = IPPROTO_UDP;
+    hints.ai_flags = 0;
+
     r = getaddrinfo(
         priv->rHost,
         priv->rPort,
@@ -267,9 +275,10 @@ PRIVATE int mt_start(hgobj gobj)
         return -1;
     }
     memcpy(&priv->raddr, res->ai_addr, sizeof(priv->raddr));
+    freeaddrinfo(res);
     get_sock_name(gobj);
 
-    r = uv_udp_connect((uv_udp_t *)&priv->uv_udp, res->ai_addr); // null to disconnect
+    r = uv_udp_connect((uv_udp_t *)&priv->uv_udp, &priv->raddr);
     if(r!=0) {
         log_error(0,
             "gobj",         "%s", gobj_full_name(gobj),
