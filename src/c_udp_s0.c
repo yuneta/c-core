@@ -79,7 +79,6 @@ typedef struct _PRIVATE_DATA {
 
     dl_list_t dl_tx;
     GBUFFER *gbuf_txing;
-    char uv_closed;
 
     char bfinput[BFINPUT_SIZE];
 

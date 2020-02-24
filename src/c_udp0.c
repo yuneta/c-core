@@ -21,7 +21,7 @@
 /***************************************************************************
  *              Prototypes
  ***************************************************************************/
-PRIVATE void close_uv(hgobj gobj, uv_close_cb close_cb);
+PRIVATE void on_close_cb(uv_handle_t* handle);
 PRIVATE void on_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf);
 PRIVATE void on_read_cb(
     uv_udp_t* handle,
@@ -52,6 +52,7 @@ SDATA (ASN_OCTET_STR,   "rHost",                SDF_RD,     0,      "remote ip")
 SDATA (ASN_OCTET_STR,   "rPort",                SDF_RD,     0,      "remote port"),
 SDATA (ASN_OCTET_STR,   "peername",             SDF_RD,     0,      "Peername"),
 SDATA (ASN_OCTET_STR,   "sockname",             SDF_RD,     0,      "Sockname"),
+SDATA (ASN_OCTET_STR,   "stopped_event_name",   SDF_RD,     "EV_STOPPED", "Stopped event name"),
 SDATA (ASN_OCTET_STR,   "tx_ready_event_name",  0,          "EV_TX_READY", "Must be empty if you don't want receive this event"),
 SDATA (ASN_OCTET_STR,   "rx_data_event_name",   0,          "EV_RX_DATA", "Must be empty if you don't want receive this event"),
 SDATA (ASN_POINTER,     "user_data",            0,          0,      "user data"),
@@ -105,7 +106,6 @@ typedef struct _PRIVATE_DATA {
 
     dl_list_t dl_tx;
     GBUFFER *gbuf_txing;
-    char uv_closed;
 
     char bfinput[BFINPUT_SIZE];
 
@@ -160,14 +160,7 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    IF_EQ_SET_PRIV(tx_ready_event_name,   gobj_read_str_attr)
-    ELIF_EQ_SET_PRIV(rx_data_event_name,            gobj_read_str_attr)
-    ELIF_EQ_SET_PRIV(peername,                      gobj_read_str_attr)
-    ELIF_EQ_SET_PRIV(sockname,                      gobj_read_str_attr)
-    ELIF_EQ_SET_PRIV(lHost,                         gobj_read_str_attr)
-    ELIF_EQ_SET_PRIV(lPort,                         gobj_read_str_attr)
-    ELIF_EQ_SET_PRIV(rHost,                         gobj_read_str_attr)
-    ELIF_EQ_SET_PRIV(rPort,                         gobj_read_str_attr)
+    IF_EQ_SET_PRIV(sockname,                      gobj_read_str_attr)
     END_EQ_SET_PRIV()
 }
 
@@ -181,17 +174,6 @@ PRIVATE int mt_start(hgobj gobj)
     struct addrinfo hints;
     struct addrinfo *res;
     int r;
-
-    if(gobj_in_this_state(gobj, "ST_OPENED")) {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
-            "msg",          "%s", "ALREADY start",
-            NULL
-        );
-        return 0;
-    }
 
     uv_udp_init(loop, &priv->uv_udp);
     priv->uv_udp.data = gobj;
@@ -276,7 +258,6 @@ PRIVATE int mt_start(hgobj gobj)
     }
     memcpy(&priv->raddr, res->ai_addr, sizeof(priv->raddr));
     freeaddrinfo(res);
-    get_sock_name(gobj);
 
     r = uv_udp_connect((uv_udp_t *)&priv->uv_udp, &priv->raddr);
     if(r!=0) {
@@ -292,6 +273,7 @@ PRIVATE int mt_start(hgobj gobj)
         );
         return -1;
     }
+    get_sock_name(gobj);
 
     /*
      *  Info of "connecting..."
@@ -301,25 +283,36 @@ PRIVATE int mt_start(hgobj gobj)
             "gobj",         "%s", gobj_full_name(gobj),
             "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
             "msg",          "%s", "UDP Connecting...",
-            "rHost",        "%s", priv->rHost,
-            "rPort",        "%s", priv->rPort,
             "lHost",        "%s", priv->lHost,
             "lPort",        "%s", priv->lPort,
+            "rHost",        "%s", priv->rHost,
+            "rPort",        "%s", priv->rPort,
             NULL
         );
     }
 
-    if(!empty_string(priv->lHost)) {
-
-        if(gobj_trace_level(gobj) & TRACE_UV) {
-            log_debug_printf(0, ">>>start_read(%s:%s)",
-                gobj_gclass_name(gobj), gobj_name(gobj)
-            );
-        }
-        uv_udp_recv_start(&priv->uv_udp, on_alloc_cb, on_read_cb);
+    if(gobj_trace_level(gobj) & TRACE_UV) {
+        log_debug_printf(0, ">>>start_read(%s:%s)",
+            gobj_gclass_name(gobj), gobj_name(gobj)
+        );
+    }
+    r = uv_udp_recv_start(&priv->uv_udp, on_alloc_cb, on_read_cb);
+    if(r!=0) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msg",          "%s", "uv_udp_recv_start() FAILED",
+            "lHost",        "%s", priv->lHost,
+            "lPort",        "%s", priv->lPort,
+            "rHost",        "%s", priv->rHost,
+            "rPort",        "%s", priv->rPort,
+            "uv_error",     "%s", uv_err_name(r),
+            NULL
+        );
     }
 
-    gobj_change_state(gobj, "ST_OPENED");
+    gobj_change_state(gobj, "ST_IDLE");
 
     return 0;
 }
@@ -331,50 +324,18 @@ PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(gobj_in_this_state(gobj, "ST_CLOSED")) {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
-            "msg",          "%s", "ALREADY stop",
-            NULL
-        );
-        return 0;
-    }
-
     if(gobj_trace_level(gobj) & TRACE_UV) {
-        log_debug_printf(0, ">>>udp_recv_stop(%s:%s)",
-            gobj_gclass_name(gobj), gobj_name(gobj)
-        );
+        log_debug_printf(0, ">>> uv_udp_recv_stop p=%p", &priv->uv_udp);
     }
-
-    /*
-     *  Info of "disconnecting..."
-     */
-    if(gobj_trace_level(gobj) & TRACE_CONNECT_DISCONNECT) {
-        log_info(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
-            "msg",          "%s", "UDP Disconnecting...",
-            "rHost",        "%s", priv->rHost,
-            "rPort",        "%s", priv->rPort,
-            "lHost",        "%s", priv->lHost,
-            "lPort",        "%s", priv->lPort,
-            NULL
-        );
-    }
+    uv_udp_recv_stop((uv_udp_t *)&priv->uv_udp);
     uv_udp_connect((uv_udp_t *)&priv->uv_udp, NULL); // null to disconnect
 
-    uv_udp_recv_stop((uv_udp_t *)&priv->uv_udp);
-
     if(gobj_trace_level(gobj) & TRACE_UV) {
-        log_debug_printf(0, ">>>close(%s:%s)",
-            gobj_gclass_name(gobj), gobj_name(gobj)
-        );
+        log_debug_printf(0, ">>> uv_close updS p=%p", &priv->uv_udp);
     }
-    uv_close((uv_handle_t *)&priv->uv_udp, NULL);
+    gobj_change_state(gobj, "ST_WAIT_STOPPED");
+    uv_close((uv_handle_t *)&priv->uv_udp, on_close_cb);
 
-    gobj_change_state(gobj, "ST_CLOSED");
     return 0;
 }
 
@@ -385,15 +346,14 @@ PRIVATE void mt_destroy(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(!priv->uv_closed) {
+    if(!gobj_in_this_state(gobj, "ST_STOPPED")) {
         log_error(0,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_LIBUV_ERROR,
-            "msg",          "%s", "UV NOT CLOSED",
+            "msg",          "%s", "GObj NOT STOPPED. UV handler ACTIVE!",
             NULL
         );
-        close_uv(gobj, 0);
     }
 
     GBUF_DECREF(priv->gbuf_txing);
@@ -413,21 +373,34 @@ PRIVATE void mt_destroy(hgobj gobj)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE void close_uv(hgobj gobj, uv_close_cb close_cb)
+PRIVATE void on_close_cb(uv_handle_t* handle)
 {
+    hgobj gobj = handle->data;
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(priv->uv_closed) {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_LIBUV_ERROR,
-            "msg",          "%s", "UV ALREADY CLOSED",
-            NULL
+    if(gobj_trace_level(gobj) & TRACE_UV) {
+        log_debug_printf(0, "<<< on_close_cb udp_s0 p=%p",
+            &priv->uv_udp
         );
     }
-    uv_close((uv_handle_t *)&priv->uv_udp, close_cb);
-    priv->uv_closed = 1;
+    gobj_change_state(gobj, "ST_STOPPED");
+
+    /*
+     *  Only NOW you can destroy this gobj,
+     *  when uv has released the handler.
+     */
+    const char *stopped_event_name = gobj_read_str_attr(
+        gobj,
+        "stopped_event_name"
+    );
+    if(!empty_string(stopped_event_name)) {
+        gobj_send_event(
+            gobj_parent(gobj),
+            stopped_event_name ,
+            0,
+            gobj
+        );
+    }
 }
 
 /***************************************************************************
@@ -561,7 +534,10 @@ PRIVATE void on_upd_send_cb(uv_udp_send_t* req, int status)
             "msgset",       "%s", MSGSET_LIBUV_ERROR,
             "msg",          "%s", "upd send FAILED",
             "uv_error",     "%s", uv_err_name(status),
-            NULL);
+            NULL
+        );
+        gobj_change_state(gobj, "ST_CLOSED");
+        return;
     }
 
     size_t ln = gbuf_chunk(priv->gbuf_txing);
@@ -657,7 +633,7 @@ PRIVATE int send_data(hgobj gobj, GBUFFER *gbuf)
         &priv->uv_udp,
         b,
         1,
-        &priv->raddr,
+        NULL, // For connected UDP handles, addr must be set to NULL, otherwise it will return UV_EISCONN error
         on_upd_send_cb
     );
     if(ret < 0) {
@@ -710,28 +686,35 @@ PRIVATE const EVENT input_events[] = {
     {NULL, 0, 0, ""}
 };
 PRIVATE const EVENT output_events[] = {
+    {"EV_STOPPED",      0},
     {"EV_RX_DATA",      0,  0,  ""},
     {"EV_TX_READY",     0,  0,  ""},
     {NULL, 0, 0, ""}
 };
 PRIVATE const char *state_names[] = {
-    "ST_CLOSED",
-    "ST_OPENED",
+    "ST_STOPPED",
+    "ST_WAIT_STOPPED",
+    "ST_IDLE",          /* H2UV handler for UV */
     NULL
 };
 
-PRIVATE EV_ACTION ST_CLOSED[] = {
+PRIVATE EV_ACTION ST_STOPPED[] = {
     {0,0,0}
 };
 
-PRIVATE EV_ACTION ST_OPENED[] = {
+PRIVATE EV_ACTION ST_WAIT_STOPPED[] = {
+    {0,0,0}
+};
+
+PRIVATE EV_ACTION ST_IDLE[] = {
     {"EV_TX_DATA",        ac_tx_data,       0},
     {0,0,0}
 };
 
 PRIVATE EV_ACTION *states[] = {
-    ST_CLOSED,
-    ST_OPENED,
+    ST_STOPPED,
+    ST_WAIT_STOPPED,
+    ST_IDLE,
     NULL
 };
 
