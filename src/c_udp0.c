@@ -582,16 +582,17 @@ PRIVATE int send_data(hgobj gobj, GBUFFER *gbuf)
     }
     size_t ln = gbuf_chunk(gbuf);
     if(ln > 1500) {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "UPD lenght must not be greater than 1500",
-            "ln",           "%d", ln,
-            "rHost",        "%s", priv->rHost,
-            "rPort",        "%s", priv->rPort,
-            NULL
-        );
+        // TODO aunque ponga un data_size de 1500 luego crece
+        //log_error(0,
+        //    "gobj",         "%s", gobj_full_name(gobj),
+        //    "function",     "%s", __FUNCTION__,
+        //    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+        //    "msg",          "%s", "UPD lenght must not be greater than 1500",
+        //    "ln",           "%d", ln,
+        //    "rHost",        "%s", priv->rHost,
+        //    "rPort",        "%s", priv->rPort,
+        //    NULL
+        //);
         ln = 1500;
     }
     char *bf = gbuf_get(gbuf, ln);
