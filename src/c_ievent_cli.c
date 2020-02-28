@@ -1115,7 +1115,9 @@ PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
 PRIVATE const EVENT input_events[] = {
     // top input
     // bottom input
-    I_IOGATE_SUBSCRIPTIONS
+    {"EV_ON_MESSAGE",       0,  0,  0},
+    {"EV_ON_OPEN",          0,  0,  0},
+    {"EV_ON_CLOSE",         0,  0,  0},
     {"EV_IDENTITY_CARD_ACK",        EVF_PUBLIC_EVENT,  0,  0},
     {"EV_PLAY_YUNO",                EVF_PUBLIC_EVENT,  0,  0},  // Extra events to let agent
     {"EV_PAUSE_YUNO",               EVF_PUBLIC_EVENT,  0,  0},  // request clients

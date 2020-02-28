@@ -1201,7 +1201,9 @@ PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
 PRIVATE const EVENT input_events[] = {
     // top input
     // bottom input
-    I_IOGATE_SUBSCRIPTIONS
+    {"EV_ON_MESSAGE",       0,  0,  0},
+    {"EV_ON_OPEN",          0,  0,  0},
+    {"EV_ON_CLOSE",         0,  0,  0},
     {"EV_DROP",             0,  0,  0},
     {"EV_TIMEOUT",          0,  0,  0},
     {"EV_STOPPED",          0,  0,  0},
