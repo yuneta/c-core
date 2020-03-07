@@ -121,25 +121,29 @@ PUBLIC int ghttp_parser_received(
         /* handle new protocol */
     } else if (nparsed != recved) {
         /* Handle error. Usually just close the connection. */
+        json_t *tt = json_sprintf("%s", http_errno_name(HTTP_PARSER_ERRNO(&parser->http_parser)));
         log_error(0,
             "gobj",         "%s", gobj_short_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
-            "msg",          "%j", json_sprintf("%s", http_errno_name(HTTP_PARSER_ERRNO(&parser->http_parser))),
+            "msg",          "%j", tt,
             "desc",         "%s", http_errno_description(HTTP_PARSER_ERRNO(&parser->http_parser)),
             NULL
         );
+        JSON_DECREF(tt);
         return -1;
     } else {
         if(HTTP_PARSER_ERRNO(&parser->http_parser) != HPE_OK) {
+            json_t *tt = json_sprintf("%s", http_errno_name(HTTP_PARSER_ERRNO(&parser->http_parser)));
             log_error(0,
                 "gobj",         "%s", gobj_short_name(gobj),
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
-                "msg",          "%j", json_sprintf("? %s", http_errno_name(HTTP_PARSER_ERRNO(&parser->http_parser))),
+                "msg",          "%j", tt,
                 "desc",         "%s", http_errno_description(HTTP_PARSER_ERRNO(&parser->http_parser)),
                 NULL
             );
+            JSON_DECREF(tt);
             return -1;
         }
     }
