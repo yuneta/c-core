@@ -41,10 +41,10 @@ PRIVATE BOOL __ordered_death__ = 1;  // WARNING Vamos a probar otra vez las muer
 
 PRIVATE int __print__ = 0;
 
-PRIVATE int (*__global_load_persistent_attrs__)(hgobj gobj) = 0;
-PRIVATE int (*__global_save_persistent_attrs__)(hgobj gobj) = 0;
-PRIVATE int (*__global_remove_persistent_attrs__)(hgobj gobj) = 0;
-PRIVATE json_t * (*__global_list_persistent_attrs__)(void) = 0;
+PRIVATE int (*__global_load_persistent_attrs_fn__)(hgobj gobj) = 0;
+PRIVATE int (*__global_save_persistent_attrs_fn__)(hgobj gobj) = 0;
+PRIVATE int (*__global_remove_persistent_attrs_fn__)(hgobj gobj) = 0;
+PRIVATE json_t * (*__global_list_persistent_attrs_fn__)(void) = 0;
 PRIVATE json_t * (*__global_command_parser_fn__)(
     hgobj gobj,
     const char *command,
@@ -269,10 +269,10 @@ PUBLIC int yuneta_set_gobj_startup_functions(
     json_function_t global_stats_parser
 )
 {
-    __global_load_persistent_attrs__ = load_persistent_attrs;
-    __global_save_persistent_attrs__ = save_persistent_attrs;
-    __global_remove_persistent_attrs__ = remove_persistent_attrs;
-    __global_list_persistent_attrs__ = list_persistent_attrs;
+    __global_load_persistent_attrs_fn__ = load_persistent_attrs;
+    __global_save_persistent_attrs_fn__ = save_persistent_attrs;
+    __global_remove_persistent_attrs_fn__ = remove_persistent_attrs;
+    __global_list_persistent_attrs_fn__ = list_persistent_attrs;
     __global_command_parser_fn__ = global_command_parser;
     __global_stats_parser_fn__ = global_stats_parser;
 
@@ -710,10 +710,10 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
     json_t *jn_global = kw_get_dict(__jn_config__, "global", 0, 0);
     gobj_start_up(
         jn_global,
-        __global_load_persistent_attrs__,
-        __global_save_persistent_attrs__,
-        __global_remove_persistent_attrs__,
-        __global_list_persistent_attrs__,
+        __global_load_persistent_attrs_fn__,
+        __global_save_persistent_attrs_fn__,
+        __global_remove_persistent_attrs_fn__,
+        __global_list_persistent_attrs_fn__,
         __global_command_parser_fn__,
         __global_stats_parser_fn__
     );
