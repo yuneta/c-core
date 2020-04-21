@@ -481,6 +481,11 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    /*---------------------------------------*
+     *  Clear timeout
+     *---------------------------------------*/
+    clear_timeout(priv->timer);
+
     /*
      *  Delete external subscriptions
      */
