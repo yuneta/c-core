@@ -1097,6 +1097,18 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
 }
 
 /***************************************************************************
+ *  For asynchronous responses
+ ***************************************************************************/
+PRIVATE int ac_send_command_answer(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    return send_static_iev(gobj,
+        "EV_MT_COMMAND_ANSWER",
+        kw,
+        src
+    );
+}
+
+/***************************************************************************
  *
  ***************************************************************************/
 PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
@@ -1123,6 +1135,7 @@ PRIVATE const EVENT input_events[] = {
     {"EV_PAUSE_YUNO",               EVF_PUBLIC_EVENT,  0,  0},  // request clients
     {"EV_MT_STATS",                 EVF_PUBLIC_EVENT,  0,  0},
     {"EV_MT_COMMAND",               EVF_PUBLIC_EVENT,  0,  0},
+    {"EV_SEND_COMMAND_ANSWER",      EVF_PUBLIC_EVENT,  0,  0},
     // internal
     {"EV_TIMEOUT",                  0,  0,  0},
     {"EV_STOPPED",                  0,  0,  0},
@@ -1156,6 +1169,7 @@ PRIVATE EV_ACTION ST_SESSION[] = {
     {"EV_ON_MESSAGE",           ac_on_message,          0},
     {"EV_MT_STATS",             ac_mt_stats,            0},
     {"EV_MT_COMMAND",           ac_mt_command,          0},
+    {"EV_SEND_COMMAND_ANSWER",  ac_send_command_answer, 0},
     {"EV_PLAY_YUNO",            ac_play_yuno,           0},
     {"EV_PAUSE_YUNO",           ac_pause_yuno,          0},
     {"EV_ON_CLOSE",             ac_on_close,            "ST_DISCONNECTED"},
