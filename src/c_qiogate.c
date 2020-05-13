@@ -689,7 +689,7 @@ PRIVATE int send_message_to_bottom_side(hgobj gobj, q_msg msg)
     }
 
     json_t *kw_send = json_pack("{s:I}",
-        "gbuffer", (json_int_t)json2gbuf(0, kw_clone, JSON_COMPACT)
+        "gbuffer", (json_int_t)(size_t)json2gbuf(0, kw_clone, JSON_COMPACT)
     );
     return gobj_send_event(priv->gobj_bottom_side, "EV_SEND_MESSAGE", kw_send, gobj);
 }
