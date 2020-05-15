@@ -352,6 +352,8 @@ PRIVATE hsdata mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
                     "msgset",       "%s", MSGSET_INTERNAL_ERROR,
                     "msg",          "%s", "new_id NOT MATCH",
                     "resource",     "%s", resource,
+                    "id",           "%d", id,
+                    "new_id",       "%d", new_id,
                     NULL
                 );
             }
