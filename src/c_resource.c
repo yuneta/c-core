@@ -1337,15 +1337,15 @@ PRIVATE int dba_load_child_record_cb(
 
     if(rc_instance_index(resource_iter, hs_child, 0)) {
         // 16-May-2020 ocurre con rc_treedb, ignora
-        log_error(0,
-            "gobj",             "%s", gobj_full_name(gobj),
-            "function",         "%s", __FUNCTION__,
-            "msgset",           "%s", MSGSET_INTERNAL_ERROR,
-            "msg",              "%s", "resource ALREADY in iter",
-            "resource",         "%s", resource,
-            "child_id",         "%d", (int)child_id,
-            NULL
-        );
+//         log_error(0,
+//             "gobj",             "%s", gobj_full_name(gobj),
+//             "function",         "%s", __FUNCTION__,
+//             "msgset",           "%s", MSGSET_INTERNAL_ERROR,
+//             "msg",              "%s", "resource ALREADY in iter",
+//             "resource",         "%s", resource,
+//             "child_id",         "%d", (int)child_id,
+//             NULL
+//         );
         KW_DECREF(kw);
         return 0; // Don't append record
     }
