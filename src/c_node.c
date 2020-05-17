@@ -35,6 +35,7 @@
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag----------------default---------description---------- */
 SDATA (ASN_JSON,        "treedb_schema",    SDF_REQUIRED,       0,              "Treedb schema"),
+SDATA (ASN_JSON,        "tranger",          0,                  0,              "TimeRanger"),
 SDATA (ASN_OCTET_STR,   "database",         SDF_RD,             0,              "Database name. Not empty to be persistent."),
 SDATA (ASN_OCTET_STR,   "service",          SDF_RD,             "",             "Service name for global store"),
 SDATA (ASN_OCTET_STR,   "filename_mask",    SDF_RD,            "%Y",            "Treedb filename mask"),
@@ -183,6 +184,7 @@ PRIVATE int mt_start(hgobj gobj)
             NULL
         );
     }
+    gobj_write_json_attr(gobj, "tranger", priv->tranger);
 
     JSON_INCREF(priv->treedb_schema);
     treedb_open_db( // Return IS NOT YOURS!
@@ -215,21 +217,53 @@ PRIVATE int mt_stop(hgobj gobj)
     JSON_DECREF(treedbs);
     EXEC_AND_RESET(tranger_shutdown, priv->tranger);
 
+    gobj_write_json_attr(gobj, "tranger", 0);
+
     return 0;
 }
 
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE json_t *mt_create_node(hgobj gobj, const char *topic_name, json_t *kw, const char *options)
+PRIVATE json_t *mt_create_node( // Return is NOT YOURS
+    hgobj gobj,
+    const char *topic_name,
+    json_t *kw, // owned
+    const char *options // "permissive"
+)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    json_t *record = treedb_create_node( // Return is NOT YOURS
+        priv->tranger,
+        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        topic_name,
+        kw, // owned
+        options
+    );
+    return record;
 }
 
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE json_t *mt_update_node(hgobj gobj, const char *topic_name, json_t *kw, const char *options)
+PRIVATE json_t *mt_update_node( // Return is NOT YOURS
+    hgobj gobj,
+    const char *topic_name,
+    json_t *kw,    // owned
+    const char *options // "create" ["permissive"], "clean"
+)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    json_t *record = treedb_update_node( // Return is NOT YOURS
+        priv->tranger,
+        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        topic_name,
+        kw, // owned
+        options
+    );
+    return record;
 }
 
 /***************************************************************************
@@ -237,6 +271,15 @@ PRIVATE json_t *mt_update_node(hgobj gobj, const char *topic_name, json_t *kw, c
  ***************************************************************************/
 PRIVATE int mt_delete_node(hgobj gobj, const char *topic_name, json_t *kw, const char *options)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return treedb_delete_node(
+        priv->tranger,
+        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        topic_name,
+        kw, // owned
+        options
+    );
 }
 
 /***************************************************************************
@@ -244,6 +287,14 @@ PRIVATE int mt_delete_node(hgobj gobj, const char *topic_name, json_t *kw, const
  ***************************************************************************/
 PRIVATE int mt_link_nodes(hgobj gobj, const char *hook, json_t *parent, json_t *child)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return treedb_link_nodes(
+        priv->tranger,
+        hook,
+        parent,
+        child
+    );
 }
 
 /***************************************************************************
@@ -251,6 +302,14 @@ PRIVATE int mt_link_nodes(hgobj gobj, const char *hook, json_t *parent, json_t *
  ***************************************************************************/
 PRIVATE int mt_link_nodes2(hgobj gobj, const char *parent_ref, const char *child_ref)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return treedb_link_nodes2(
+        priv->tranger,
+        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        parent_ref,
+        child_ref
+    );
 }
 
 /***************************************************************************
@@ -258,6 +317,14 @@ PRIVATE int mt_link_nodes2(hgobj gobj, const char *parent_ref, const char *child
  ***************************************************************************/
 PRIVATE int mt_unlink_nodes(hgobj gobj, const char *hook, json_t *parent, json_t *child)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return treedb_unlink_nodes(
+        priv->tranger,
+        hook,
+        parent,
+        child
+    );
 }
 
 /***************************************************************************
@@ -265,6 +332,14 @@ PRIVATE int mt_unlink_nodes(hgobj gobj, const char *hook, json_t *parent, json_t
  ***************************************************************************/
 PRIVATE int mt_unlink_nodes2(hgobj gobj, const char *parent_ref, const char *child_ref)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return treedb_unlink_nodes2(
+        priv->tranger,
+        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        parent_ref,
+        child_ref
+    );
 }
 
 /***************************************************************************
@@ -272,27 +347,66 @@ PRIVATE int mt_unlink_nodes2(hgobj gobj, const char *parent_ref, const char *chi
  ***************************************************************************/
 PRIVATE json_t *mt_get_node(hgobj gobj, const char *topic_name, const char *id)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return treedb_get_node(
+        priv->tranger,
+        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        topic_name,
+        id
+    );
 }
 
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE json_t *mt_list_nodes(hgobj gobj, const char *topic_name, json_t *jn_ids, json_t *jn_filter, json_t *jn_options)
+PRIVATE json_t *mt_list_nodes(
+    hgobj gobj,
+    const char *topic_name,
+    json_t *jn_ids,
+    json_t *jn_filter,
+    json_t *jn_options
+)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return treedb_list_nodes(
+        priv->tranger,
+        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        topic_name,
+        jn_ids,
+        jn_filter,
+        jn_options,
+        gobj_read_pointer_attr(gobj, "kw_match")
+    );
 }
 
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE int mt_snap_nodes(hgobj gobj, const char *name)
+PRIVATE int mt_snap_nodes(hgobj gobj, const char *tag)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return treedb_snap_nodes(
+        priv->tranger,
+        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        tag
+    );
 }
 
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE int mt_set_nodes_snap(hgobj gobj, const char *name)
+PRIVATE int mt_set_nodes_snap(hgobj gobj, const char *tag)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return treedb_set_nodes_snap(
+        priv->tranger,
+        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        tag
+    );
 }
 
 /***************************************************************************
@@ -300,6 +414,12 @@ PRIVATE int mt_set_nodes_snap(hgobj gobj, const char *name)
  ***************************************************************************/
 PRIVATE json_t *mt_list_nodes_snaps(hgobj gobj)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return treedb_list_nodes_snaps(
+        priv->tranger,
+        kw_get_str(priv->tranger, "database", "", KW_REQUIRED) // treedb_name
+    );
 }
 
 
