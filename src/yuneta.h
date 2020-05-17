@@ -29,6 +29,7 @@ extern "C"{
 /*
  *  Services
  */
+#include "c_node.h"
 #include "c_resource.h"
 #include "c_ievent_srv.h"
 #include "c_ievent_cli.h"

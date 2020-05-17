@@ -1,23 +1,16 @@
 /***********************************************************************
- *          C_RESOURCE.C
- *          Resource GClass.
+ *          C_RESOURCE2.C
+ *          Resource2 GClass.
  *
- *          Resource Controler
-
-Resources will be out of ginsfsm. It owns to yuneta.
-And, the parameters of commands will be defined with sdata!
-
-Commands are managed with SData.
-Then Resources commands acts like others command.
-
-
- *          Copyright (c) 2016,2018 Niyamaka.
+ *          Resources with treedb
+ *
+ *          Copyright (c) 2020 Niyamaka.
  *          All Rights Reserved.
  ***********************************************************************/
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
-#include "c_resource.h"
+#include "c_node.h"
 
 /***************************************************************************
  *              Constants
@@ -30,71 +23,24 @@ Then Resources commands acts like others command.
 /***************************************************************************
  *              Prototypes
  ***************************************************************************/
-PRIVATE int print_required_attr_not_found(void *user_data, const char *attr);
-PRIVATE int on_write_it_cb(void *user_data, const char *name);
-
-PRIVATE json_int_t kw_get_purechild_parent_id(
-    hgobj gobj,
-    const char *resource,
-    json_t *kw  // not owned
-);
-PRIVATE json_int_t get_grand_parent_id(hgobj gobj, hsdata hs, const char** parent_field);
-PRIVATE dl_list_t *get_resource_iter(
-    hgobj gobj,
-    const char *resource,
-    json_int_t parent_id,
-    BOOL *free_return_iter
-);
-
-PRIVATE void build_n_n_childs_tablename(
-    char *bf,
-    int bfsize,
-    const char *resource_parent,
-    const char *resource_child
-);
-/*
- *  resources_list():
- *      Return [""], a list of strings with the names of resources:
- */
-PRIVATE json_t * resources_list(hgobj gobj);
-
-PRIVATE int create_persistent_resources(hgobj gobj);
-PRIVATE int load_persistent_resources(hgobj gobj);
-PRIVATE int load_persistent_childs(hgobj gobj, hsdata hs);
-
 
 
 /***************************************************************************
  *          Data: config, public data, private data
  ***************************************************************************/
-/*
- *  HACK (id, parent_id, child_id) is the standard for paren->childs list.
- *  In the relational sql world, of course.
- */
-PRIVATE sdata_desc_t tb_parent_child[] = {
-/*-FIELD-type-----------name----------------flag------------------------schema----------header----------fillsp--description---------*/
-SDATADF (ASN_COUNTER64, "id",               SDF_PERSIST|SDF_PKEY,       0,              "Id",           8,      0),
-SDATADF (ASN_COUNTER64, "grand_parent_id",  SDF_PERSIST,                0,              "Grand Parent", 8,      0),
-SDATADF (ASN_COUNTER64, "parent_id",        SDF_PERSIST,                0,              "Parent",       8,      0),
-SDATADF (ASN_COUNTER64, "child_id",         SDF_PERSIST,                0,              "Child",        8,      0),
-SDATA_END()
-};
-
 
 /*---------------------------------------------*
  *      Attributes - order affect to oid's
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag----------------default---------description---------- */
-SDATA (ASN_POINTER,     "tb_resources",     SDF_REQUIRED,       0,              "Table with resource's schemas."),
+SDATA (ASN_JSON,        "treedb_schema",    SDF_REQUIRED,       0,              "Treedb schema"),
 SDATA (ASN_OCTET_STR,   "database",         SDF_RD,             0,              "Database name. Not empty to be persistent."),
-SDATA (ASN_JSON,        "properties",       SDF_RD,             0,              "Json with database properties. Specific of each database."),
-SDATA (ASN_POINTER,     "dba",              0,                  0,              "Table with persistent dba functions. Not empty to be persistent."),
 SDATA (ASN_OCTET_STR,   "service",          SDF_RD,             "",             "Service name for global store"),
+SDATA (ASN_OCTET_STR,   "filename_mask",    SDF_RD,            "%Y",            "Treedb filename mask"),
 SDATA (ASN_BOOLEAN,     "local_store",      SDF_RD,             0,              "True for local store (not clonable)"),
-
 SDATA (ASN_POINTER,     "kw_match",         0,                  kw_match_simple,"kw_match default function"),
-
+SDATA (ASN_INTEGER,     "exit_on_error",    0,                  LOG_OPT_EXIT_ZERO,"exit on error"),
 SDATA (ASN_POINTER,     "user_data",        0,                  0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                  0,              "more user data"),
 SDATA (ASN_POINTER,     "subscriber",       0,                  0,              "subscriber of output-events. Not a child gobj."),
@@ -105,10 +51,10 @@ SDATA_END()
  *      GClass trace levels
  *---------------------------------------------*/
 enum {
-    TRACE_SQL = 0x0001,
+    TRACE_MESSAGES = 0x0001,
 };
 PRIVATE const trace_level_t s_user_trace_level[16] = {
-{"sql",        "Trace sql sentences"},
+{"messages",        "Trace messages"},
 {0, 0},
 };
 
@@ -117,12 +63,11 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
  *              Private data
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
-    sdata_desc_t *tb_resources;
-    dba_persistent_t *dba;
+    json_t *treedb_schema;
     kw_match_fn kw_match;
-    void *pDb;
 
-    hsdata hs_resources;
+    json_t *tranger;
+    int32_t exit_on_error;
 } PRIVATE_DATA;
 
 
@@ -142,10 +87,8 @@ PRIVATE void mt_create(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    priv->treedb_schema = gobj_read_json_attr(gobj, "treedb_schema");
     priv->kw_match = gobj_read_pointer_attr(gobj, "kw_match");
-    priv->tb_resources = gobj_read_pointer_attr(gobj, "tb_resources");
-    priv->dba = gobj_read_pointer_attr(gobj, "dba");
-    priv->hs_resources = sdata_create(priv->tb_resources, gobj, on_write_it_cb, 0, 0, 0);
 
     /*
      *  SERVICE subscription model
@@ -159,7 +102,7 @@ PRIVATE void mt_create(hgobj gobj)
      *  Do copy of heavy used parameters, for quick access.
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
-    //SET_PRIV(timeout,               gobj_read_int32_attr)
+    SET_PRIV(exit_on_error,             gobj_read_int32_attr)
 }
 
 /***************************************************************************
@@ -178,18 +121,7 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
  ***************************************************************************/
 PRIVATE void mt_destroy(hgobj gobj)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-    if(priv->hs_resources) {
-        sdata_desc_t *it = priv->tb_resources;
-        while(it->name) {
-            dl_list_t *dl_iter = sdata_read_iter(priv->hs_resources, it->name);
-            // TODO review pure childs
-            rc_free_iter(dl_iter, FALSE, sdata_destroy);
-            it++;
-        }
-        sdata_destroy(priv->hs_resources);
-        priv->hs_resources = 0;
-    }
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 }
 
 /***************************************************************************
@@ -199,35 +131,69 @@ PRIVATE int mt_start(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(priv->dba) {
-        const char *database_ = gobj_read_str_attr(gobj, "database");
-        if(!empty_string(database_)) {
+    const char *database = gobj_read_str_attr(gobj, "database");
+    if(empty_string(database)) {
+        log_critical(priv->exit_on_error,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "database name EMPTY",
+            NULL
+        );
+        return -1;
+    }
+    const char *filename_mask = gobj_read_str_attr(gobj, "filename_mask");
+    if(empty_string(filename_mask)) {
+        log_critical(priv->exit_on_error,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "filename_mask EMPTY",
+            NULL
+        );
+        return -1;
+    }
 
-            BOOL local_store = gobj_read_bool_attr(gobj, "local_store");
-            char database[NAME_MAX];
-            if(local_store) {
-                yuneta_realm_file(database, sizeof(database), "store", database_, TRUE);
-            } else {
-                const char *service = gobj_read_str_attr(gobj, "service");
-                yuneta_store_file(database, sizeof(database), "resources", service, database_, TRUE);
-            }
+    BOOL local_store = gobj_read_bool_attr(gobj, "local_store");
+    char path[NAME_MAX];
+    if(local_store) {
+        yuneta_realm_dir(path, sizeof(path), "store", TRUE);
+    } else {
+        const char *service = gobj_read_str_attr(gobj, "service");
+        yuneta_store_dir(path, sizeof(path), "resources", service, TRUE);
+    }
 
-            json_t *jn_properties = gobj_read_json_attr(gobj, "properties");
-            JSON_INCREF(jn_properties);
-            priv->pDb = priv->dba->dba_open(gobj, database, jn_properties);
-            if(priv->pDb) {
-                create_persistent_resources(gobj); // IDEMPOTENTE.
-                load_persistent_resources(gobj);
-            }
-        } else {
-            log_error(0,
-                "gobj",         "%s", gobj_full_name(gobj),
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "database name EMPTY",
-                NULL
-            );
-        }
+    json_t *jn_tranger = json_pack("{s:s, s:s, s:s, s:b}",
+        "path", path,
+        "database", database,
+        "filename_mask", filename_mask,
+        "master", 1
+    );
+
+    priv->tranger = tranger_startup(
+        jn_tranger // owned
+    );
+
+    if(!priv->tranger) {
+        log_critical(priv->exit_on_error,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "tranger_startup() FAILED",
+            NULL
+        );
+    }
+
+    JSON_INCREF(priv->treedb_schema);
+    treedb_open_db( // Return IS NOT YOURS!
+        priv->tranger,
+        database,
+        priv->treedb_schema,  // owned
+        "persistent"
+    );
+    if(priv->tranger) {
+//      TODO       create_persistent_resources(gobj); // IDEMPOTENTE.
+//             load_persistent_resources(gobj);
     }
 
     return 0;
@@ -240,10 +206,15 @@ PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(priv->pDb) {
-        priv->dba->dba_close(gobj, priv->pDb);
-        priv->pDb = 0;
+    json_t *treedbs = treedb_list_treedb(priv->tranger);
+
+    int idx; json_t *jn_treedb;
+    json_array_foreach(treedbs, idx, jn_treedb) {
+        treedb_close_db(priv->tranger, json_string_value(jn_treedb));
     }
+    JSON_DECREF(treedbs);
+    EXEC_AND_RESET(tranger_shutdown, priv->tranger);
+
     return 0;
 }
 
@@ -255,7 +226,7 @@ PRIVATE hsdata mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     sdata_flag_t resource_flag;
-    const sdata_desc_t *schema = resource_schema(priv->tb_resources, resource, &resource_flag);
+    const sdata_desc_t *schema = resource_schema(priv->treedb_schema, resource, &resource_flag);
 
     json_int_t parent_id = 0;
     if((resource_flag & SDF_PURECHILD)) {
@@ -321,13 +292,13 @@ PRIVATE hsdata mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
         return (hsdata)0;
     }
 
-    if(priv->pDb) {
+    if(priv->tranger) {
         /*
          *  Creating a new persistent resource, convert hsdata to json.
          */
         json_t *kw_resource = sdata2json(hs, SDF_PERSIST, 0);
         uint64_t id = sdata_read_uint64(hs, "id");
-        uint64_t new_id = priv->dba->dba_create_record(gobj, priv->pDb, resource, kw_resource);
+        uint64_t new_id = priv->dba->dba_create_record(gobj, priv->tranger, resource, kw_resource);
         if(new_id == -1 || new_id == 0) {
             log_error(0,
                 "gobj",         "%s", gobj_full_name(gobj),
@@ -421,7 +392,7 @@ PRIVATE int mt_update_resource(hgobj gobj, hsdata hs)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(priv->pDb) {
+    if(priv->tranger) {
         /*
          *  Non-write fields must be checked at user level.
          */
@@ -445,7 +416,7 @@ PRIVATE int mt_update_resource(hgobj gobj, hsdata hs)
 
         return priv->dba->dba_update_record(
             gobj,
-            priv->pDb,
+            priv->tranger,
             resource,
             kw_filtro,
             kw_resource
@@ -463,7 +434,7 @@ PRIVATE int mt_delete_resource(hgobj gobj, hsdata hs)
 
     const char *resource = sdata_resource(hs);
     sdata_flag_t resource_flag;
-    const sdata_desc_t *schema = resource_schema(priv->tb_resources, resource, &resource_flag);
+    const sdata_desc_t *schema = resource_schema(priv->treedb_schema, resource, &resource_flag);
 
     /*
      *  Firstly remove childs of the deleting resource.
@@ -482,7 +453,7 @@ PRIVATE int mt_delete_resource(hgobj gobj, hsdata hs)
 
     int ret = 0;
 
-    if(priv->pDb) {
+    if(priv->tranger) {
         uint64_t id = sdata_read_uint64(hs, "id");
         if(!id) {
             log_error(0,
@@ -499,7 +470,7 @@ PRIVATE int mt_delete_resource(hgobj gobj, hsdata hs)
         json_object_set_new(kw_filtro, "id", json_integer(id));
         ret = priv->dba->dba_delete_record(
             gobj,
-            priv->pDb,
+            priv->tranger,
             resource,
             kw_filtro
         );
@@ -520,7 +491,7 @@ PRIVATE int mt_add_child_resource_link(hgobj gobj, hsdata hs_parent, hsdata hs_c
     const char *child_resource = sdata_resource(hs_child);
 
     sdata_flag_t parent_resource_flag;
-    const sdata_desc_t *parent_schema = resource_schema(priv->tb_resources, parent_resource, &parent_resource_flag);
+    const sdata_desc_t *parent_schema = resource_schema(priv->treedb_schema, parent_resource, &parent_resource_flag);
 
     /*
      *  Search the parent's field with the childs iter.
@@ -578,7 +549,7 @@ PRIVATE int mt_add_child_resource_link(hgobj gobj, hsdata hs_parent, hsdata hs_c
     /*
      *  Persistence
      */
-    if(priv->pDb) {
+    if(priv->tranger) {
         uint64_t parent_id = sdata_read_uint64(hs_parent, "id");
         uint64_t child_id = sdata_read_uint64(hs_child, "id");
         uint64_t grand_parent_id = 0;
@@ -594,7 +565,7 @@ PRIVATE int mt_add_child_resource_link(hgobj gobj, hsdata hs_parent, hsdata hs_c
         char childs_tablename[90];
         build_n_n_childs_tablename(childs_tablename, sizeof(childs_tablename), parent_resource, child_resource);
 
-        uint64_t new_id = priv->dba->dba_create_record(gobj, priv->pDb, childs_tablename, kw_relation);
+        uint64_t new_id = priv->dba->dba_create_record(gobj, priv->tranger, childs_tablename, kw_relation);
         if(new_id == -1 || new_id == 0) {
             rc_delete_instance(i_hs_child, 0);
             log_error(0,
@@ -626,7 +597,7 @@ PRIVATE int mt_delete_child_resource_link(hgobj gobj, hsdata hs_parent, hsdata h
     const char *child_resource = sdata_resource(hs_child);
 
     sdata_flag_t resource_flag;
-    const sdata_desc_t *parent_schema = resource_schema(priv->tb_resources, parent_resource, &resource_flag);
+    const sdata_desc_t *parent_schema = resource_schema(priv->treedb_schema, parent_resource, &resource_flag);
 
     /*
      *  Search the parent's field with the childs iter.
@@ -671,7 +642,7 @@ PRIVATE int mt_delete_child_resource_link(hgobj gobj, hsdata hs_parent, hsdata h
         return -1;
     }
 
-    if(priv->pDb) {
+    if(priv->tranger) {
         /*
          *  Delete sqlite sql
          */
@@ -693,7 +664,7 @@ PRIVATE int mt_delete_child_resource_link(hgobj gobj, hsdata hs_parent, hsdata h
         json_object_set_new(kw_filtro, "id", json_integer(id));
         priv->dba->dba_delete_record(
             gobj,
-            priv->pDb,
+            priv->tranger,
             childs_tablename,
             kw_filtro
         );
@@ -717,7 +688,7 @@ PRIVATE dl_list_t * mt_list_resource(hgobj gobj, const char *resource, json_t* j
     dl_list_t *user_iter = rc_init_iter(0);
 
     sdata_flag_t resource_flag;
-    const sdata_desc_t *schema = resource_schema(priv->tb_resources, resource, &resource_flag);
+    const sdata_desc_t *schema = resource_schema(priv->treedb_schema, resource, &resource_flag);
     if(!schema) {
         // Error already logged
         KW_DECREF(jn_filter);
@@ -922,7 +893,7 @@ PRIVATE void * resource_webix_schema(hgobj gobj, void *data)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     const char *resource = data;
-    const sdata_desc_t *it = resource_schema(priv->tb_resources, resource, 0);
+    const sdata_desc_t *it = resource_schema(priv->treedb_schema, resource, 0);
     json_t *jn_list = json_array();
     if(!it) {
         return jn_list;
@@ -1019,7 +990,7 @@ PRIVATE json_int_t kw_get_purechild_parent_id(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
     sdata_flag_t resource_flag;
-    const sdata_desc_t *schema = resource_schema(priv->tb_resources, resource, &resource_flag);
+    const sdata_desc_t *schema = resource_schema(priv->treedb_schema, resource, &resource_flag);
     if(!schema) {
         // Error already logged
         return 0;
@@ -1051,7 +1022,7 @@ PRIVATE json_int_t get_grand_parent_id(hgobj gobj, hsdata hs, const char **paren
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
     const char *resource = sdata_resource(hs);
     sdata_flag_t resource_flag;
-    const sdata_desc_t *schema = resource_schema(priv->tb_resources, resource, &resource_flag);
+    const sdata_desc_t *schema = resource_schema(priv->treedb_schema, resource, &resource_flag);
     if(!(resource_flag & SDF_PURECHILD)) {
         log_error(0,
             "gobj",         "%s", gobj_full_name(gobj),
@@ -1097,7 +1068,7 @@ PRIVATE dl_list_t *get_resource_iter(
     *free_return_iter = FALSE;
 
     sdata_flag_t resource_flag;
-    const sdata_desc_t *schema = resource_schema(priv->tb_resources, resource, &resource_flag);
+    const sdata_desc_t *schema = resource_schema(priv->treedb_schema, resource, &resource_flag);
     if(!schema) {
         // Error already logged
         return 0;
@@ -1196,7 +1167,7 @@ PRIVATE json_t * resources_list(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    const sdata_desc_t *it = priv->tb_resources;
+    const sdata_desc_t *it = priv->treedb_schema;
     json_t *jn_list = json_array();
     if(!it) {
         return jn_list;
@@ -1223,14 +1194,14 @@ PRIVATE int create_persistent_resources(hgobj gobj)
     json_array_foreach(jn_resources, index, jn_resource) {
         const char *resource = json_string_value(jn_resource);
         sdata_flag_t resource_flag;
-        const sdata_desc_t *items = resource_schema(priv->tb_resources, resource, &resource_flag);
+        const sdata_desc_t *items = resource_schema(priv->treedb_schema, resource, &resource_flag);
         if(!items) {
             // Error already logged
             continue;
         }
         const char *key;
         json_t *kw_fields = schema2json(items, &key);
-        priv->dba->dba_create_resource(gobj, priv->pDb, resource, key, kw_fields);
+        priv->dba->dba_create_resource(gobj, priv->tranger, resource, key, kw_fields);
 
         /*
          *  Create non-pure child tables (n-n relation).
@@ -1255,7 +1226,7 @@ PRIVATE int create_persistent_resources(hgobj gobj)
                 build_n_n_childs_tablename(childs_tablename, sizeof(childs_tablename), resource, it->resource);
 
                 kw_fields = schema2json(tb_parent_child, &key);
-                priv->dba->dba_create_resource(gobj, priv->pDb, childs_tablename, key, kw_fields);
+                priv->dba->dba_create_resource(gobj, priv->tranger, childs_tablename, key, kw_fields);
             }
             it++;
         }
@@ -1278,7 +1249,7 @@ PRIVATE int dba_load_record_cb(
     dl_list_t *resource_iter = user_data;
 
     sdata_flag_t resource_flag;
-    const sdata_desc_t *schema = resource_schema(priv->tb_resources, resource, &resource_flag);
+    const sdata_desc_t *schema = resource_schema(priv->treedb_schema, resource, &resource_flag);
 
     hsdata hs = sdata_create(schema, gobj, on_write_it_cb, 0, 0, resource);
     if(!hs)  {
@@ -1385,7 +1356,7 @@ PRIVATE int load_persistent_resources(hgobj gobj)
     json_array_foreach(jn_resources, index, jn_resource) {
         const char *resource = json_string_value(jn_resource);
         sdata_flag_t resource_flag;
-        const sdata_desc_t *schema = resource_schema(priv->tb_resources, resource, &resource_flag);
+        const sdata_desc_t *schema = resource_schema(priv->treedb_schema, resource, &resource_flag);
         if(!schema) {
             // Error already logged
             continue;
@@ -1403,7 +1374,7 @@ PRIVATE int load_persistent_resources(hgobj gobj)
 
         json_t *jn_list = priv->dba->dba_load_table(
             gobj,
-            priv->pDb,
+            priv->tranger,
             resource,
             resource,
             resource_iter,
@@ -1420,7 +1391,7 @@ PRIVATE int load_persistent_resources(hgobj gobj)
     json_array_foreach(jn_resources, index, jn_resource) {
         const char *resource = json_string_value(jn_resource);
         sdata_flag_t resource_flag;
-        const sdata_desc_t *schema = resource_schema(priv->tb_resources, resource, &resource_flag);
+        const sdata_desc_t *schema = resource_schema(priv->treedb_schema, resource, &resource_flag);
         if(!schema) {
             // Error already logged
             continue;
@@ -1459,7 +1430,7 @@ PRIVATE int load_persistent_childs(hgobj gobj, hsdata hs)
 
     const char *resource = sdata_resource(hs);
     sdata_flag_t resource_flag;
-    const sdata_desc_t *schema = resource_schema(priv->tb_resources, resource, &resource_flag);
+    const sdata_desc_t *schema = resource_schema(priv->treedb_schema, resource, &resource_flag);
 
     const sdata_desc_t *it = schema;
     while(it->name) {
@@ -1472,7 +1443,7 @@ PRIVATE int load_persistent_childs(hgobj gobj, hsdata hs)
                 /*
                  *  pure childs (n-1 relation)
                  */
-                const sdata_desc_t *child_schema = resource_schema(priv->tb_resources, it->resource, 0);
+                const sdata_desc_t *child_schema = resource_schema(priv->treedb_schema, it->resource, 0);
                 if(!child_schema) {
                     break;
                 }
@@ -1492,7 +1463,7 @@ PRIVATE int load_persistent_childs(hgobj gobj, hsdata hs)
 
                 json_t *jn_list = priv->dba->dba_load_table(
                     gobj,
-                    priv->pDb,
+                    priv->tranger,
                     it->resource,
                     it->resource,
                     child_iter,
@@ -1534,7 +1505,7 @@ PRIVATE int load_persistent_childs(hgobj gobj, hsdata hs)
 
                 json_t *jn_list = priv->dba->dba_load_table(
                     gobj,
-                    priv->pDb,
+                    priv->tranger,
                     childs_tablename,
                     it->resource,
                     childs_iter,
@@ -1606,7 +1577,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_RESOURCE_NAME,      // CHANGE WITH each gclass
+    GCLASS_RESOURCE2_NAME,      // CHANGE WITH each gclass
     &fsm,
     {
         mt_create,
@@ -1686,306 +1657,7 @@ PRIVATE GCLASS _gclass = {
 /***************************************************************************
  *              Public access
  ***************************************************************************/
-PUBLIC GCLASS *gclass_resource(void)
+PUBLIC GCLASS *gclass_resource2(void)
 {
     return &_gclass;
 }
-
-// /***************************************************************************
-//  *  Debug
-//  ***************************************************************************/
-// PUBLIC void resources_log(const char *prefix, hgobj gobj)
-// {
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-//
-//     sdata_desc_t *it = priv->tb_resources;
-//     while(it->name) {
-//         if(it->flag & SDF_RESOURCE) {
-//             dl_list_t *resource_iter = sdata_read_iter(priv->hs_resources, it->name);
-//             log_debug_sd_iter(prefix, 0, resource_iter);
-//         }
-//         it++;
-//     }
-// }
-
-// TODO Fuera load_db/save_db de agent
-// /***************************************************************************
-//  *
-//  ***************************************************************************/
-// PRIVATE json_t *cmd_load_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-// {
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-//
-//     const char *source = kw_get_str(kw, "source", 0, 0);
-//     if(!source) {
-//         return msg_iev_build_webix(
-//             gobj,
-//             -101,
-//             json_local_sprintf("What source?"),
-//             0,
-//             0,
-//             kw  // owned
-//         );
-//     }
-//
-//     char path[NAME_MAX];
-//     if(access(source, 0)==0) {
-//         snprintf(path, sizeof(path), "%s", source);
-//     } else {
-//         yuneta_store_file(path, sizeof(path), "backups", "", source, TRUE);
-//     }
-//     if(access(path, 0)!=0) {
-//         return msg_iev_build_webix(
-//             gobj,
-//             -102,
-//             json_local_sprintf("Cannot open '%s' source.", path),
-//             0,
-//             0,
-//             kw  // owned
-//         );
-//     }
-//     size_t flags = 0;
-//     json_error_t error;
-//     json_t *jn_config = json_load_file(path, flags, &error);
-//     if(!jn_config) {
-//         log_error(0,
-//             "gobj",         "%s", gobj_full_name(gobj),
-//             "function",     "%s", __FUNCTION__,
-//             "msgset",       "%s", MSGSET_JSON_ERROR,
-//             "msg",          "%s", "JSON data INVALID",
-//             "line",         "%d", error.line,
-//             "column",       "%d", error.column,
-//             "position",     "%d", error.position,
-//             "json",         "%s", error.text,
-//             "path",         "%s", path,
-//             NULL
-//         );
-//         return msg_iev_build_webix(
-//             gobj,
-//             -103,
-//             json_local_sprintf("Cannot load db. Bad json format in '%s' source.", path),
-//             0,
-//             0,
-//             kw  // owned
-//         );
-//     }
-//
-//     json_t *jn_resources = kw_get_dict_value(jn_config, "resources", 0, 0);
-//     json_t *jn_service = kw_get_dict_value(jn_resources, gobj_short_name(priv->resource), 0, 0);
-//     size_t n_records = 0;
-//     sdata_desc_t *it = tb_resources;
-//     if(jn_service) {
-//         while(it->name) {
-//             if((it->flag & SDF_PURECHILD)) {
-//                 it++;
-//                 continue;
-//             }
-//             const char *resource = it->name;
-//             json_t *jn_resource = kw_get_dict_value(jn_service, it->name, 0, 0);
-//             int index;
-//             json_t *jn_record;
-//             json_array_foreach(jn_resource, index, jn_record) {
-//                 /*
-//                  *  Add to database
-//                  */
-//                 json_incref(jn_record);
-//                 if(gobj_create_resource(priv->resource, resource, jn_record)) {
-//                     n_records ++;
-//                 }
-//             }
-//             it++;
-//         }
-//     }
-//     it = tb_resources;
-//     if(jn_service) {
-//         while(it->name) {
-//             if(!(it->flag & SDF_PURECHILD)) {
-//                 it++;
-//                 continue;
-//             }
-//             const char *resource = it->name;
-//             json_t *jn_resource = kw_get_dict_value(jn_service, it->name, 0, 0);
-//             int index;
-//             json_t *jn_record;
-//             json_array_foreach(jn_resource, index, jn_record) {
-//                 /*
-//                  *  Add to database
-//                  */
-//                 json_incref(jn_record);
-//                 if(gobj_create_resource(priv->resource, resource, jn_record)) {
-//                     n_records ++;
-//                 }
-//             }
-//             it++;
-//         }
-//     }
-//
-//     JSON_DECREF(jn_config);
-//
-//     return msg_iev_build_webix(
-//         gobj,
-//         0,
-//         json_local_sprintf("Loaded %d records.", n_records),
-//         0,
-//         0,
-//         kw  // owned
-//     );
-//     return 0;
-// }
-//
-// /***************************************************************************
-//  *
-//  ***************************************************************************/
-// PRIVATE BOOL some_pure_pure_child(const sdata_desc_t *schema)
-// {
-//     const sdata_desc_t *it = schema;
-//     while(it->name) {
-//         if((it->flag & SDF_PURECHILD)) { ?
-//             return TRUE;
-//         }
-//         it++;
-//     }
-//     return FALSE;
-// }
-//
-// /***************************************************************************
-//  *
-//  ***************************************************************************/
-// PRIVATE json_t *cmd_save_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-// {
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-//
-//     json_int_t realm_id = kw_get_int(kw, "realm_id", 0, 0);
-//
-//     /*----------------------------------*
-//      *      Build destination file
-//      *----------------------------------*/
-//     char fecha[32];
-//     char source_[NAME_MAX];
-//     const char *destination = kw_get_str(kw, "destination", 0, 0);
-//     if(empty_string(destination)) {
-//         /*
-//         *  Mask "DD/MM/CCYY-hh:mm:ss-w-ddd"
-//         */
-//         formatnowdatetime(fecha, sizeof(fecha), "DD-MM-CCYY");
-//         snprintf(source_, sizeof(source_), "%s.%s.json",
-//             gobj_yuno_role_plus_name(),
-//             fecha);
-//         destination = source_;
-//     }
-//     char path[NAME_MAX];
-//     yuneta_store_file(path, sizeof(path), "backups", "", destination, TRUE);
-//
-//     /*----------------------------------*
-//      *      Prepare json result
-//      *----------------------------------*/
-//     json_t *jn_save = json_object();
-//     json_t *jn_services = json_object();
-//     json_object_set_new(jn_save, "resources", jn_services);
-//     json_t *jn_service = json_object();
-//     json_object_set_new(jn_services, gobj_short_name(priv->resource), jn_service);
-//
-//     /*-------------------------------*
-//      *  Save root resources
-//      *-------------------------------*/
-//     json_t * jn_resources = resources_list(priv->resource);
-//     size_t index;
-//     json_t *jn_resource;
-//     json_array_foreach(jn_resources, index, jn_resource) {
-//         const char *resource = json_string_value(jn_resource);
-//         sdata_flag_t resource_flag;
-//         xxx_resource_schema(priv->resource, resource, &resource_flag);
-//         if((resource_flag & SDF_PURECHILD)) {
-//             continue;
-//         }
-//
-//         dl_list_t *iter = gobj_list_resource(priv->resource, resource, 0);
-//         if(iter) {
-//             json_t *jn_data = sdata_iter2json(iter, SDF_PERSIST|SDF_RESOURCE, SDF_PURECHILD);
-//             if(jn_data) {
-//                 json_object_set_new(jn_service, resource, jn_data);
-//             }
-//             rc_free_iter(iter, TRUE, 0);
-//         }
-//     }
-//
-//     /*-------------------------------*
-//      *  Save pure-child resources
-//      *-------------------------------*/
-//     json_array_foreach(jn_resources, index, jn_resource) {
-//         const char *resource = json_string_value(jn_resource);
-//         sdata_flag_t resource_flag;
-//         const sdata_desc_t *schema = xxx_resource_schema(priv->resource, resource, &resource_flag);
-//         if(!schema || !some_pure_pure_child(schema)) {
-//             continue;
-//         }
-//
-//         /*---------------------------------------*
-//          *  Poll root resource with pure childs
-//          *---------------------------------------*/
-//         dl_list_t *iter = gobj_list_resource(priv->resource, resource, 0);
-//         hsdata hs; rc_instance_t *i_hs;
-//         i_hs = rc_first_instance(iter, (rc_resource_t **)&hs);
-//         while(i_hs) {
-//             const sdata_desc_t *it = schema;
-//             while(it->name) {
-//                 if((it->flag & SDF_RESOURCE) && (it->flag & SDF_PURECHILD)) {
-//                     const char *purechild_resource = it->resource;
-//                     dl_list_t *purechild_iter = sdata_read_iter(hs, it->name);
-//
-//                     hsdata hs_child; rc_instance_t *i_hs_child;
-//                     i_hs_child = rc_first_instance(purechild_iter, (rc_resource_t **)&hs_child);
-//                     while(i_hs_child) {
-//                         /*---------------------------------------------------*
-//                          *  WARNING this code make this function
-//                          *  as a not generic function.
-//                          *  Esto se podría generalizar con kw que se
-//                          *  conviertan en hs_match.
-//                          *---------------------------------------------------*/
-//                         if(realm_id>0 && strcasecmp(purechild_resource, "yunos")==0) {
-//                             json_int_t realm_id_ = sdata_read_int64(hs_child, "realm_id");
-//                             if(realm_id_ != realm_id) {
-//                                 i_hs_child = rc_next_instance(i_hs_child, (rc_resource_t **)&hs_child);
-//                                 continue;
-//                             }
-//                         }
-//
-//                         json_t *jn_r = sdata2json(hs_child, SDF_PERSIST|SDF_RESOURCE, SDF_PURECHILD);
-//                         if(jn_r) {
-//                             json_t *jn_yunos = json_object_get(jn_service, purechild_resource);
-//                             if(!jn_yunos) {
-//                                 jn_yunos = json_array();
-//                                 json_array_append_new(jn_yunos, jn_r);
-//                                 json_object_set_new(jn_service, purechild_resource, jn_yunos);
-//                             } else {
-//                                 json_array_append_new(jn_yunos, jn_r);
-//                             }
-//                         }
-//                         i_hs_child = rc_next_instance(i_hs_child, (rc_resource_t **)&hs_child);
-//                     }
-//                 }
-//                 it++;
-//             }
-//             i_hs = rc_next_instance(i_hs, (rc_resource_t **)&hs);
-//         }
-//
-//         rc_free_iter(iter, TRUE, 0);
-//     }
-//
-//     JSON_DECREF(jn_resources);
-//
-//     /*-------------------------------*
-//      *  To file
-//      *-------------------------------*/
-//     json_dump_file(jn_save, path, JSON_ENCODE_ANY | JSON_INDENT(4));
-//     JSON_DECREF(jn_save);
-//
-//     return msg_iev_build_webix(
-//         gobj,
-//         0,
-//         json_local_sprintf("Configuration saved in '%s' destination.", path),
-//         0,
-//         0,
-//         kw  // owned
-//     );
-// }
