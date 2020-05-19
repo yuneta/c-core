@@ -225,6 +225,26 @@ PRIVATE int mt_stop(hgobj gobj)
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
+PRIVATE int mt_trace_on(hgobj gobj, const char *level, json_t *kw)
+{
+    treedb_set_trace(TRUE);
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE int mt_trace_off(hgobj gobj, const char *level, json_t *kw)
+{
+    treedb_set_trace(FALSE);
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
 PRIVATE json_t *mt_create_node( // Return is NOT YOURS
     hgobj gobj,
     const char *topic_name,
