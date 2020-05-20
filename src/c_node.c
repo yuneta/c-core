@@ -383,7 +383,6 @@ PRIVATE json_t *mt_get_node(hgobj gobj, const char *topic_name, const char *id)
 PRIVATE json_t *mt_list_nodes(
     hgobj gobj,
     const char *topic_name,
-    json_t *jn_ids,
     json_t *jn_filter,
     json_t *jn_options
 )
@@ -394,7 +393,6 @@ PRIVATE json_t *mt_list_nodes(
         priv->tranger,
         kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
         topic_name,
-        jn_ids,
         jn_filter,
         jn_options,
         gobj_read_pointer_attr(gobj, "kw_match")
