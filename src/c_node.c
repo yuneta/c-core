@@ -111,10 +111,10 @@ PRIVATE void mt_create(hgobj gobj)
  ***************************************************************************/
 PRIVATE void mt_writing(hgobj gobj, const char *path)
 {
-    //PRIVATE_DATA *priv = gobj_priv_data(gobj);
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    //IF_EQ_SET_PRIV(timeout,             gobj_read_int32_attr)
-    //END_EQ_SET_PRIV()
+    IF_EQ_SET_PRIV(tranger,             gobj_read_json_attr)
+    END_EQ_SET_PRIV()
 }
 
 /***************************************************************************
@@ -171,11 +171,11 @@ PRIVATE int mt_start(hgobj gobj)
         "master", 1
     );
 
-    priv->tranger = tranger_startup(
+    json_t *tranger = tranger_startup(
         jn_tranger // owned
     );
 
-    if(!priv->tranger) {
+    if(!tranger) {
         log_critical(priv->exit_on_error,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
@@ -184,16 +184,17 @@ PRIVATE int mt_start(hgobj gobj)
             NULL
         );
     }
-    gobj_write_json_attr(gobj, "tranger", priv->tranger);
+    gobj_write_json_attr(gobj, "tranger", tranger);
+    json_decref(tranger); // HACK solo una copia de tranger
 
     JSON_INCREF(priv->treedb_schema);
     treedb_open_db( // Return IS NOT YOURS!
-        priv->tranger,
+        tranger,
         database,
         priv->treedb_schema,  // owned
         "persistent"
     );
-    if(priv->tranger) {
+    if(tranger) {
 //      TODO       create_persistent_resources(gobj); // IDEMPOTENTE.
 //             load_persistent_resources(gobj);
     }
