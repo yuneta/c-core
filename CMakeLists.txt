@@ -110,6 +110,7 @@ set (HDRS
 
     # Services          # service, gotter or spider or gateway.
     src/c_node.h
+    src/c_resource.h
     src/c_ievent_srv.h
     src/c_ievent_cli.h
 #     src/c_store.h

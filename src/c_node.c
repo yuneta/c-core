@@ -216,6 +216,8 @@ PRIVATE int mt_stop(hgobj gobj)
         treedb_close_db(priv->tranger, json_string_value(jn_treedb));
     }
     JSON_DECREF(treedbs);
+
+    JSON_INCREF(priv->tranger);  // HACK copy of attr, the attr will decref
     EXEC_AND_RESET(tranger_shutdown, priv->tranger);
 
     gobj_write_json_attr(gobj, "tranger", 0);
