@@ -178,7 +178,7 @@ PRIVATE BOOL match_kw(
     json_t *value;
     json_object_foreach(jn_filters, key, value) {
         const char *field = key;
-        json_t *jn_field = json_object_get(event_kw, field);
+        json_t *jn_field = kw_get_dict_value(event_kw, field, 0, 0);
         if(!jn_field) {
             log_error(0,
                 "gobj",         "%s", gobj_full_name(gobj),
@@ -188,6 +188,7 @@ PRIVATE BOOL match_kw(
                 "field",        "%s", field,
                 NULL
             );
+            log_debug_json(0, event_kw, "filter field NOT in event kw");
             return FALSE;
         }
         if(json_is_string(value)) {
@@ -205,8 +206,8 @@ PRIVATE BOOL match_kw(
                         "field",        "%s", field,
                         NULL
                     );
-                    log_debug_json(0, "jn_filters", jn_filters);
-                    log_debug_json(0, "event_kw", event_kw);
+                    log_debug_json(0, jn_filters, "jn_filters");
+                    log_debug_json(0, event_kw, "event_kw");
                     return FALSE;
                 }
                 const char *value = json_string_value(jn_field);
@@ -235,8 +236,8 @@ PRIVATE BOOL match_kw(
                     "field",        "%s", field,
                     NULL
                 );
-                log_debug_json(0, "jn_filters", jn_filters);
-                log_debug_json(0, "event_kw", event_kw);
+                log_debug_json(0, jn_filters, "jn_filters");
+                log_debug_json(0, event_kw, "event_kw");
                 return FALSE;
             }
             json_int_t ik = json_integer_value(jn_field);

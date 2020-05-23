@@ -168,7 +168,7 @@ PRIVATE int mt_stop(hgobj gobj)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE BOOL match_kw(
+BOOL match_kw(
     hgobj gobj,
     const char *event,
     json_t * jn_filters,
@@ -350,7 +350,11 @@ PRIVATE int ac_count(hgobj gobj, const char *event, json_t *kw, hgobj src)
                 log_debug_json(0, kw, "kw");
             }
 
-            if(match_kw(gobj, event2count, jn_filters, kw)) {
+            //if(match_kw(gobj, event2count, jn_filters, kw)) {
+            // TODO quito match_kw, al incorporar realm_ref que tiene ^ el match falla
+            // por usar expresión regular. Pongo kw_match_simple V4.0.0
+            JSON_INCREF(jn_filters);
+            if(kw_match_simple(kw, jn_filters)) {
                 priv->cur_count++;
                 if(trace) {
                     log_debug_printf("match kw!", "count %d", priv->cur_count);
