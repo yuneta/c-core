@@ -30,13 +30,19 @@
  ***************************************************************************/
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_list_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_hooks(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_links(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE sdata_desc_t pm_help[] = {
@@ -46,17 +52,12 @@ SDATAPM (ASN_UNSIGNED,  "level",        0,              0,          "command sea
 SDATA_END()
 };
 
-PRIVATE sdata_desc_t pm_list_topics[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "treedb_name",  0,              0,          "Treedb name"),
-SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: 'dict'"),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_list_nodes[] = {
+PRIVATE sdata_desc_t pm_create_node[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
-SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Tree expanded"),
+SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Node content"),
+SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Node content in base64"),
+SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: \"permissive\""),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_update_node[] = {
@@ -78,17 +79,56 @@ SDATAPM (ASN_OCTET_STR, "parent_ref",   0,              0,          "Parent node
 SDATAPM (ASN_OCTET_STR, "child_ref",    0,              0,          "Child node ref"),
 SDATA_END()
 };
-PRIVATE sdata_desc_t pm_create_node[] = {
+
+PRIVATE sdata_desc_t pm_trace[] = {
+SDATAPM (ASN_BOOLEAN,   "set",          0,              0,          "Trace: set 1 o 0"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_topics[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: 'dict'"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_desc[] = {
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_hooks[] = {
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Full desc of hooks"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_links[] = {
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Full desc of links"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_parents[] = {
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "id",           0,              0,          "Node id"),
+SDATAPM (ASN_OCTET_STR, "link",         0,              0,          "Link port to parents"),
+SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Parent nodes expanded"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_childs[] = {
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "id",           0,              0,          "Node id"),
+SDATAPM (ASN_OCTET_STR, "hook",         0,              0,          "Hook port to childs"),
+SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Child nodes expanded"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_list_nodes[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Node content"),
-SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Node content in base64"),
-SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: \"permissive\""),
+SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
+SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Tree expanded"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_get_node[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "id",           0,              0,          "Record id"),
+SDATAPM (ASN_OCTET_STR, "id",           0,              0,          "Get node by his id"),
+SDATAPM (ASN_OCTET_STR, "ref",          0,              0,          "Get node by ref"),
+SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Tree expanded"),
 SDATA_END()
 };
 
@@ -105,9 +145,15 @@ SDATACM (ASN_SCHEMA,    "update-node",  0,  pm_update_node, cmd_update_node,    
 SDATACM (ASN_SCHEMA,    "delete-node",  0,  pm_delete_node, cmd_delete_node,    "Delete node"),
 SDATACM (ASN_SCHEMA,    "link-nodes",   0,  pm_link_nodes,  cmd_link_nodes,     "Link nodes"),
 SDATACM (ASN_SCHEMA,    "unlink-nodes", 0,  pm_link_nodes,  cmd_unlink_nodes,   "Unlink nodes"),
-SDATACM (ASN_SCHEMA,    "list-topics",  0,  pm_list_topics, cmd_list_topics,    "List topics"),
+SDATACM (ASN_SCHEMA,    "trace",        0,  pm_trace,       cmd_trace,          "Set trace"),
+SDATACM (ASN_SCHEMA,    "topics",       0,  pm_topics,      cmd_topics,         "List topics"),
+SDATACM (ASN_SCHEMA,    "desc",         0,  pm_desc,        cmd_desc,           "Schema of topic or full"),
+SDATACM (ASN_SCHEMA,    "hooks",        0,  pm_hooks,       cmd_hooks,          "Hooks of node"),
+SDATACM (ASN_SCHEMA,    "links",        0,  pm_links,       cmd_links,          "Links of node"),
+SDATACM (ASN_SCHEMA,    "parents",      0,  pm_parents,     cmd_parents,        "Parents of node"),
+SDATACM (ASN_SCHEMA,    "childs",       0,  pm_childs,      cmd_childs,         "Childs of node"),
 SDATACM (ASN_SCHEMA,    "list-nodes",   0,  pm_list_nodes,  cmd_list_nodes,     "List nodes"),
-SDATACM (ASN_SCHEMA,    "find-node",    0,  pm_get_node,    cmd_get_node,       "Get node"),
+SDATACM (ASN_SCHEMA,    "find-node",    0,  pm_get_node,    cmd_get_node,       "Get node by id or ref"),
 SDATA_END()
 };
 
@@ -928,13 +974,13 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE json_t *cmd_list_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     const char *options = kw_get_str(kw, "options", "", 0);
 
-    json_t *topics = treedb_list_topics(
+    json_t *topics = treedb_topics(
         priv->tranger,
         kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
         options
@@ -945,6 +991,237 @@ PRIVATE json_t *cmd_list_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         0,
         0,
         topics,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    if(!empty_string(topic_name)) {
+        json_t *desc = tranger_list_topic_desc(priv->tranger, topic_name);
+        return msg_iev_build_webix(
+            gobj,
+            0,
+            0,
+            0,
+            desc,
+            kw  // owned
+        );
+    } else {
+        json_t *schema = kw_get_dict(priv->tranger, "topics", 0, KW_REQUIRED);
+        return msg_iev_build_webix(
+            gobj,
+            0,
+            0,
+            0,
+            kw_incref(schema),
+            kw  // owned
+        );
+    }
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    BOOL set = kw_get_bool(kw, "set", 0, KW_WILD_NUMBER);
+
+    if(set) {
+        treedb_set_trace(TRUE);
+    } else {
+        treedb_set_trace(FALSE);
+    }
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        json_sprintf("Set trace %s", set?"on":"false"),
+        0,
+        0,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_links(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
+
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *links = treedb_get_topic_links(priv->tranger, topic_name);
+
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        0,
+        0,
+        links,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_hooks(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
+
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *hooks = treedb_get_topic_hooks(priv->tranger, topic_name);
+
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        0,
+        0,
+        hooks,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    const char *id = kw_get_str(kw, "id", "", 0);
+    const char *link = kw_get_str(kw, "link", "", 0);
+    BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
+
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    if(empty_string(id)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What node id?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    /*
+     *  If no link return all links
+     */
+
+    /*
+     *  Return a list of parent nodes pointed by the link (fkey)
+     */
+    json_t *node;
+    json_t *nodes = treedb_list_parents( // Return MUST be decref
+        priv->tranger,
+        link, // must be a fkey field
+        node, // not owned
+        json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
+    );
+
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        0,
+        0,
+        nodes,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    const char *id = kw_get_str(kw, "id", "", 0);
+    const char *hook = kw_get_str(kw, "hook", "", 0);
+    BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
+
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    if(empty_string(id)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What node id?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    /*
+     *  If no hook return all hooks
+     */
+
+    /*
+     *  Return a list of child nodes of the hook (WARNING ONLY first level)
+     */
+    json_t *node;
+    json_t *nodes = treedb_list_childs(
+        priv->tranger,
+        hook,
+        node, // not owned
+        json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
+    );
+
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        0,
+        0,
+        nodes,
         kw  // owned
     );
 }
@@ -1012,26 +1289,32 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *id = kw_get_str(kw, "id", "", 0);
+    const char *ref = kw_get_str(kw, "ref", "", 0);
+    BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
 
-    if(empty_string(topic_name)) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_local_sprintf("What topic_name?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-    if(empty_string(id)) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_local_sprintf("What id?"),
-            0,
-            0,
-            kw  // owned
-        );
+    if(!empty_string(ref)) {
+        // TODO get topic_name, id, hook, link
+    } else {
+        if(empty_string(topic_name)) {
+            return msg_iev_build_webix(
+                gobj,
+                -1,
+                json_local_sprintf("What topic_name?"),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+        if(!empty_string(id)) {
+            return msg_iev_build_webix(
+                gobj,
+                -1,
+                json_local_sprintf("What node id?"),
+                0,
+                0,
+                kw  // owned
+            );
+        }
     }
 
     json_t *node = gobj_get_node(
