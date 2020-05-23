@@ -28,122 +28,89 @@
 /***************************************************************************
  *          Data: config, public data, private data
  ***************************************************************************/
-// PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-// PRIVATE json_t *cmd_list_keycloak_users(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-// PRIVATE json_t *cmd_list_tasks(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-// PRIVATE json_t *cmd_enable_task(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-// PRIVATE json_t *cmd_disable_task(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-//
-// PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-// PRIVATE json_t *cmd_list_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-// PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-// PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-// PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-// PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-// PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-// PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-// PRIVATE json_t *cmd_find_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-// PRIVATE json_t *cmd_build_validation(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-// PRIVATE json_t *cmd_build_report(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-//
-// PRIVATE sdata_desc_t pm_help[] = {
-// /*-PM----type-----------name------------flag------------default-----description---------- */
-// SDATAPM (ASN_OCTET_STR, "cmd",          0,              0,          "command about you want help."),
-// SDATAPM (ASN_UNSIGNED,  "level",        0,              0,          "command search level in childs"),
-// SDATA_END()
-// };
-//
-// PRIVATE sdata_desc_t pm_task[] = {
-// /*-PM----type-----------name------------flag------------default-----description---------- */
-// SDATAPM (ASN_OCTET_STR, "username",     0,              0,          "User id"),
-// SDATAPM (ASN_OCTET_STR, "event",        0,              0,          "Event"),
-// SDATAPM (ASN_OCTET_STR, "task_name",    0,              0,          "Task name"),
-// SDATA_END()
-// };
-//
-// PRIVATE sdata_desc_t pm_list_topics[] = {
-// /*-PM----type-----------name------------flag------------default-----description---------- */
-// SDATAPM (ASN_OCTET_STR, "treedb_name",  0,              0,          "Treedb name"),
-// SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: 'dict'"),
-// SDATA_END()
-// };
-// PRIVATE sdata_desc_t pm_list_nodes[] = {
-// /*-PM----type-----------name------------flag------------default-----description---------- */
-// SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-// SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
-// SDATA_END()
-// };
-// PRIVATE sdata_desc_t pm_create_node[] = {
-// /*-PM----type-----------name------------flag------------default-----description---------- */
-// SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-// SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Node content"),
-// SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Node content in base64"),
-// SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: \"permissive\""),
-// SDATA_END()
-// };
-// PRIVATE sdata_desc_t pm_update_node[] = {
-// /*-PM----type-----------name------------flag------------default-----description---------- */
-// SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-// SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Node content"),
-// SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Node content in base64"),
-// SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: \"create\", \"clean\""),
-// SDATA_END()
-// };
-// PRIVATE sdata_desc_t pm_delete_node[] = {
-// SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-// SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
-// SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: \"force\""),
-// SDATA_END()
-// };
-// PRIVATE sdata_desc_t pm_link_nodes[] = {
-// SDATAPM (ASN_OCTET_STR, "parent",       0,              0,          "Parent node"),
-// SDATAPM (ASN_OCTET_STR, "child",        0,              0,          "Child node"),
-// SDATA_END()
-// };
-// PRIVATE sdata_desc_t pm_find_node[] = {
-// SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-// SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
-// SDATA_END()
-// };
-// PRIVATE sdata_desc_t pm_build_validation[] = {
-// SDATAPM (ASN_OCTET_STR, "username",     0,              0,          "Username (email)"),
-// SDATAPM (ASN_OCTET_STR, "date",         0,              0,          "YYYY-MM-DD"),
-// SDATAPM (ASN_OCTET_STR, "force",        0,              0,          "Re-build validation if exists"),
-// SDATA_END()
-// };
-// PRIVATE sdata_desc_t pm_build_report[] = {
-// SDATAPM (ASN_OCTET_STR, "username",     0,              0,          "Username (email)"),
-// SDATAPM (ASN_OCTET_STR, "date",         0,              0,          "YYYY-MM-DD"),
-// SDATAPM (ASN_OCTET_STR, "report",       0,              0,          "Report type: 'month'"),
-// SDATA_END()
-// };
-//
-// PRIVATE const char *a_help[] = {"h", "?", 0};
-//
-// PRIVATE sdata_desc_t command_table[] = {
-// /*-CMD---type-----------name----------------alias-------items-------json_fn---------description--*/
-// SDATACM (ASN_SCHEMA,    "help",             a_help,     pm_help,    cmd_help,       "Command's help"),
-// SDATACM (ASN_SCHEMA,    "list-keycloak-users",0,        0,          cmd_list_keycloak_users, "List keycloak users"),
-// SDATACM (ASN_SCHEMA,    "list-tasks",       0,          0,          cmd_list_tasks, "List task"),
-// SDATACM (ASN_SCHEMA,    "enable-task",      0,          pm_task,    cmd_enable_task,"Enable task"),
-// SDATACM (ASN_SCHEMA,    "disable-task",     0,          pm_task,    cmd_disable_task,"Disable task"),
-//
-// /*-CMD---type-----------name------------al--items-----------json_fn-------------description--*/
-// SDATACM (ASN_SCHEMA,    "print-tranger",0,  0,              cmd_print_tranger,  "Print tranger"),
-// SDATACM (ASN_SCHEMA,    "list-topics",  0,  pm_list_topics, cmd_list_topics,    "List topics"),
-// SDATACM (ASN_SCHEMA,    "list-nodes",   0,  pm_list_nodes,  cmd_list_nodes,     "List nodes"),
-// SDATACM (ASN_SCHEMA,    "find-node",    0,  pm_find_node,   cmd_find_node,      "Find node"),
-// SDATACM (ASN_SCHEMA,    "create-node",  0,  pm_create_node, cmd_create_node,    "Create node"),
-// SDATACM (ASN_SCHEMA,    "update-node",  0,  pm_update_node, cmd_update_node,    "Update node"),
-// SDATACM (ASN_SCHEMA,    "delete-node",  0,  pm_delete_node, cmd_delete_node,    "Delete node"),
-// SDATACM (ASN_SCHEMA,    "link-nodes",   0,  pm_link_nodes,  cmd_link_nodes,     "Link nodes"),
-// SDATACM (ASN_SCHEMA,    "unlink-nodes", 0,  pm_link_nodes,  cmd_unlink_nodes,   "Unlink nodes"),
-// SDATACM (ASN_SCHEMA,    "build_validation",0,pm_build_validation,cmd_build_validation,"Build validation"),
-// SDATACM (ASN_SCHEMA,    "build_report", 0,  pm_build_report,cmd_build_report,   "Build report"),
-//
-// SDATA_END()
-// };
-//
+PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_list_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+
+PRIVATE sdata_desc_t pm_help[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "cmd",          0,              0,          "command about you want help."),
+SDATAPM (ASN_UNSIGNED,  "level",        0,              0,          "command search level in childs"),
+SDATA_END()
+};
+
+PRIVATE sdata_desc_t pm_list_topics[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "treedb_name",  0,              0,          "Treedb name"),
+SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: 'dict'"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_list_nodes[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
+SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Tree expanded"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_update_node[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Node content"),
+SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Node content in base64"),
+SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: \"create\", \"clean\""),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_delete_node[] = {
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
+SDATAPM (ASN_BOOLEAN,   "force",        0,              0,          "Force delete"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_link_nodes[] = {
+SDATAPM (ASN_OCTET_STR, "parent_ref",   0,              0,          "Parent node ref"),
+SDATAPM (ASN_OCTET_STR, "child_ref",    0,              0,          "Child node ref"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_create_node[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Node content"),
+SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Node content in base64"),
+SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: \"permissive\""),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_get_node[] = {
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "id",           0,              0,          "Record id"),
+SDATA_END()
+};
+
+PRIVATE const char *a_help[] = {"h", "?", 0};
+
+PRIVATE sdata_desc_t command_table[] = {
+/*-CMD---type-----------name----------------alias-------items-------json_fn---------description--*/
+SDATACM (ASN_SCHEMA,    "help",             a_help,     pm_help,    cmd_help,       "Command's help"),
+
+/*-CMD---type-----------name------------al--items-----------json_fn-------------description--*/
+SDATACM (ASN_SCHEMA,    "print-tranger",0,  0,              cmd_print_tranger,  "Print tranger"),
+SDATACM (ASN_SCHEMA,    "create-node",  0,  pm_create_node, cmd_create_node,    "Create node"),
+SDATACM (ASN_SCHEMA,    "update-node",  0,  pm_update_node, cmd_update_node,    "Update node"),
+SDATACM (ASN_SCHEMA,    "delete-node",  0,  pm_delete_node, cmd_delete_node,    "Delete node"),
+SDATACM (ASN_SCHEMA,    "link-nodes",   0,  pm_link_nodes,  cmd_link_nodes,     "Link nodes"),
+SDATACM (ASN_SCHEMA,    "unlink-nodes", 0,  pm_link_nodes,  cmd_unlink_nodes,   "Unlink nodes"),
+SDATACM (ASN_SCHEMA,    "list-topics",  0,  pm_list_topics, cmd_list_topics,    "List topics"),
+SDATACM (ASN_SCHEMA,    "list-nodes",   0,  pm_list_nodes,  cmd_list_nodes,     "List nodes"),
+SDATACM (ASN_SCHEMA,    "find-node",    0,  pm_get_node,    cmd_get_node,       "Get node"),
+SDATA_END()
+};
+
 
 /*---------------------------------------------*
  *      Attributes - order affect to oid's
@@ -569,6 +536,522 @@ PRIVATE json_t *mt_list_nodes_snaps(hgobj gobj)
 
 
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    KW_INCREF(kw);
+    json_t *jn_resp = gobj_build_cmds_doc(gobj, kw);
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        jn_resp,
+        0,
+        0,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    json_t *tranger = kw_incref(priv->tranger);
+    return msg_iev_build_webix(gobj,
+        0,
+        0,
+        0,
+        tranger,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    const char *content = kw_get_str(kw, "content", "", 0);
+    const char *content64 = kw_get_str(kw, "content64", "", 0);
+    const char *options = kw_get_str(kw, "options", "", 0);
+
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    /*----------------------------------*
+     *  Get content
+     *  Priority: conten64, content
+     *----------------------------------*/
+    json_t *jn_content = 0;
+    if(!empty_string(content64)) {
+        /*
+         *  Get content in base64 and decode
+         */
+        GBUFFER *gbuf_content = gbuf_decodebase64string(content64);
+        jn_content = legalstring2json(gbuf_cur_rd_pointer(gbuf_content), TRUE);
+        GBUF_DECREF(gbuf_content);
+        if(!jn_content) {
+            return msg_iev_build_webix(
+                gobj,
+                -1,
+                json_local_sprintf("Can't decode json content64"),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+    }
+
+    if(!jn_content) {
+        if(!empty_string(content)) {
+            jn_content = legalstring2json(content, TRUE);
+            if(!jn_content) {
+                return msg_iev_build_webix(
+                    gobj,
+                    -1,
+                    json_local_sprintf("Can't decode json content"),
+                    0,
+                    0,
+                    kw  // owned
+                );
+            }
+        }
+    }
+
+    if(!jn_content) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What content?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *node = gobj_create_node(
+        gobj,
+        topic_name,
+        jn_content, // owned
+        options // options  "permissive"
+    );
+    JSON_INCREF(node);
+    return msg_iev_build_webix(gobj,
+        node?0:-1,
+        json_local_sprintf(node?"Node created!":log_last_message()),
+        0,
+        node,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    const char *content = kw_get_str(kw, "content", "", 0);
+    const char *content64 = kw_get_str(kw, "content64", "", 0);
+    const char *options = kw_get_str(kw, "options", "", 0);
+
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    /*----------------------------------*
+     *  Get content
+     *  Priority: conten64, content
+     *----------------------------------*/
+    json_t *jn_content = 0;
+    if(!empty_string(content64)) {
+        /*
+         *  Get content in base64 and decode
+         */
+        GBUFFER *gbuf_content = gbuf_decodebase64string(content64);
+        jn_content = legalstring2json(gbuf_cur_rd_pointer(gbuf_content), TRUE);
+        GBUF_DECREF(gbuf_content);
+        if(!jn_content) {
+            return msg_iev_build_webix(
+                gobj,
+                -1,
+                json_local_sprintf("Can't decode json content64"),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+    }
+
+    if(!jn_content) {
+        if(!empty_string(content)) {
+            jn_content = legalstring2json(content, TRUE);
+            if(!jn_content) {
+                return msg_iev_build_webix(
+                    gobj,
+                    -1,
+                    json_local_sprintf("Can't decode json content"),
+                    0,
+                    0,
+                    kw  // owned
+                );
+            }
+        }
+    }
+
+    if(!jn_content) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What content?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *node = gobj_update_node(
+        gobj,
+        topic_name,
+        jn_content, // owned
+        options // "permissive"
+    );
+    JSON_INCREF(node);
+    return msg_iev_build_webix(gobj,
+        node?0:-1,
+        json_local_sprintf(node?"Node update!":log_last_message()),
+        0,
+        node,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    const char *filter = kw_get_str(kw, "filter", "", 0);
+    BOOL force = kw_get_bool(kw, "force", 0, KW_WILD_NUMBER);
+
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *jn_filter = 0;
+    if(!empty_string(filter)) {
+        jn_filter = legalstring2json(filter, TRUE);
+        if(!jn_filter) {
+            return msg_iev_build_webix(
+                gobj,
+                -1,
+                json_local_sprintf("Can't decode filter json"),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+    }
+
+    /*
+     *  Get a iter of matched resources.
+     */
+    json_t *iter = gobj_list_nodes(
+        gobj,
+        topic_name,
+        jn_filter,  // filter
+        0
+    );
+
+    if(json_array_size(iter)==0) {
+        JSON_DECREF(iter);
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("Select one node please"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    /*
+     *  Delete
+     */
+    json_t *jn_data = json_array();
+    int idx; json_t *node;
+    json_array_foreach(iter, idx, node) {
+        const char *id = kw_get_str(node, "id", "", KW_REQUIRED);
+
+        if(gobj_delete_node(gobj, topic_name, node, force?"force":"")<0) {
+            JSON_DECREF(iter);
+            return msg_iev_build_webix(
+                gobj,
+                -1,
+                json_local_sprintf("Cannot delete the node %s^%s", topic_name, id),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+        json_array_append_new(jn_data, json_string(id));
+    }
+
+    JSON_DECREF(iter);
+
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        json_local_sprintf("%d nodes deleted", idx),
+        0,
+        jn_data,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    const char *parent = kw_get_str(kw, "parent", "", 0);
+    const char *child = kw_get_str(kw, "child", "", 0);
+
+    if(empty_string(parent)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What parent node?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    if(empty_string(child)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What child node?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    int result = gobj_link_nodes2(
+        gobj,
+        parent,
+        child
+    );
+
+    return msg_iev_build_webix(gobj,
+        result,
+        result<0?json_local_sprintf(log_last_message()):json_local_sprintf("Nodes linked!"),
+        0,
+        0,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    const char *parent = kw_get_str(kw, "parent", "", 0);
+    const char *child = kw_get_str(kw, "child", "", 0);
+
+    if(empty_string(parent)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What parent node?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    if(empty_string(child)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What child node?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    int result = gobj_unlink_nodes2(
+        gobj,
+        parent,
+        child
+    );
+
+    return msg_iev_build_webix(gobj,
+        result,
+        result<0?json_local_sprintf(log_last_message()):json_local_sprintf("Nodes unlinked!"),
+        0,
+        0,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_list_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *options = kw_get_str(kw, "options", "", 0);
+
+    json_t *topics = treedb_list_topics(
+        priv->tranger,
+        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        options
+    );
+
+    return msg_iev_build_webix(gobj,
+        0,
+        0,
+        0,
+        topics,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    const char *filter = kw_get_str(kw, "filter", "", 0);
+    BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
+
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *jn_filter = 0;
+    if(!empty_string(filter)) {
+        jn_filter = legalstring2json(filter, TRUE);
+        if(!jn_filter) {
+            return msg_iev_build_webix(
+                gobj,
+                -1,
+                json_local_sprintf("Can't decode filter json"),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+    }
+
+    json_t *nodes = gobj_list_nodes(
+        gobj,
+        topic_name,
+        jn_filter,  // owned
+        json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
+    );
+
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        json_local_sprintf("%d nodes", json_array_size(nodes)),
+        tranger_list_topic_desc(priv->tranger, topic_name),
+        nodes,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    const char *id = kw_get_str(kw, "id", "", 0);
+
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    if(empty_string(id)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What id?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *node = gobj_get_node(
+        gobj,
+        topic_name,
+        id
+    );
+
+    return msg_iev_build_webix(gobj,
+        0,
+        json_local_sprintf("Node found!"),
+        tranger_list_topic_desc(priv->tranger, topic_name),
+        kw_incref(node),
+        kw  // owned
+    );
+}
+
+
+
+
             /***************************
              *      Local Methods
              ***************************/
@@ -707,7 +1190,7 @@ PRIVATE GCLASS _gclass = {
     sizeof(PRIVATE_DATA),
     0,  // acl
     s_user_trace_level,
-    0,  // command_table
+    command_table,  // command_table
     0,  // gcflag
 };
 
