@@ -103,14 +103,14 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_parents[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "id",           0,              0,          "Node id"),
+SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_OCTET_STR, "link",         0,              0,          "Link port to parents"),
 SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Parent nodes expanded"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_childs[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "id",           0,              0,          "Node id"),
+SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_OCTET_STR, "hook",         0,              0,          "Hook port to childs"),
 SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Child nodes expanded"),
 SDATA_END()
@@ -124,7 +124,7 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_get_node[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "id",           0,              0,          "Get node by his id"),
+SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_OCTET_STR, "ref",          0,              0,          "Get node by ref"),
 SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Tree expanded"),
 SDATA_END()
@@ -151,7 +151,7 @@ SDATACM (ASN_SCHEMA,    "links",        0,  pm_links,       cmd_links,          
 SDATACM (ASN_SCHEMA,    "parents",      0,  pm_parents,     cmd_parents,        "Parents of node"),
 SDATACM (ASN_SCHEMA,    "childs",       0,  pm_childs,      cmd_childs,         "Childs of node"),
 SDATACM (ASN_SCHEMA,    "list-nodes",   0,  pm_list_nodes,  cmd_list_nodes,     "List nodes"),
-SDATACM (ASN_SCHEMA,    "find-node",    0,  pm_get_node,    cmd_get_node,       "Get node by id or ref"),
+SDATACM (ASN_SCHEMA,    "get-node",     0,  pm_get_node,    cmd_get_node,       "Get node by id or ref"),
 SDATA_END()
 };
 
@@ -452,7 +452,7 @@ PRIVATE int mt_unlink_nodes2(hgobj gobj, const char *parent_ref, const char *chi
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE json_t *mt_get_node(hgobj gobj, const char *topic_name, const char *id)
+PRIVATE json_t *mt_get_node(hgobj gobj, const char *topic_name, const char *id, json_t *jn_options)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
@@ -461,7 +461,7 @@ PRIVATE json_t *mt_get_node(hgobj gobj, const char *topic_name, const char *id)
         priv->treedb_name,
         topic_name,
         id,
-        0 // TODO options
+        jn_options
     );
 }
 
@@ -1012,18 +1012,31 @@ PRIVATE json_t *cmd_links(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
 
-    if(empty_string(topic_name)) {
+    if(!empty_string(topic_name)) {
+        json_t *links = treedb_get_topic_links(priv->tranger, topic_name);
         return msg_iev_build_webix(
             gobj,
-            -1,
-            json_local_sprintf("What topic_name?"),
             0,
             0,
+            0,
+            links,
             kw  // owned
         );
     }
 
-    json_t *links = treedb_get_topic_links(priv->tranger, topic_name);
+    // All topics
+    json_t *topics = treedb_list_topics(
+        priv->tranger,
+        priv->treedb_name,
+        "dict"
+    );
+
+    json_t *links = json_object();
+    json_t *topic;
+    json_object_foreach(topics, topic_name, topic) {
+        json_object_set_new(links, topic_name, treedb_get_topic_links(priv->tranger, topic_name));
+    }
+    JSON_DECREF(topics);
 
     return msg_iev_build_webix(
         gobj,
@@ -1043,18 +1056,31 @@ PRIVATE json_t *cmd_hooks(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
 
-    if(empty_string(topic_name)) {
+    if(!empty_string(topic_name)) {
+        json_t *hooks = treedb_get_topic_hooks(priv->tranger, topic_name);
         return msg_iev_build_webix(
             gobj,
-            -1,
-            json_local_sprintf("What topic_name?"),
             0,
             0,
+            0,
+            hooks,
             kw  // owned
         );
     }
 
-    json_t *hooks = treedb_get_topic_hooks(priv->tranger, topic_name);
+    // All topics
+    json_t *topics = treedb_list_topics(
+        priv->tranger,
+        priv->treedb_name,
+        "dict"
+    );
+
+    json_t *hooks = json_object();
+    json_t *topic;
+    json_object_foreach(topics, topic_name, topic) {
+        json_object_set_new(hooks, topic_name, treedb_get_topic_hooks(priv->tranger, topic_name));
+    }
+    JSON_DECREF(topics);
 
     return msg_iev_build_webix(
         gobj,
@@ -1074,7 +1100,7 @@ PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    const char *id = kw_get_str(kw, "id", "", 0);
+    const char *node_id = kw_get_str(kw, "node_id", "", 0);
     const char *link = kw_get_str(kw, "link", "", 0);
     BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
 
@@ -1088,7 +1114,7 @@ PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
             kw  // owned
         );
     }
-    if(empty_string(id)) {
+    if(empty_string(node_id)) {
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1098,27 +1124,69 @@ PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
             kw  // owned
         );
     }
-    /*
-     *  If no link return all links
-     */
+    json_t *node = treedb_get_node(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name,
+        node_id,
+        0  // jn_options, NOT "collapsed"
+    );
+    if(!node) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("Node not found"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
 
     /*
      *  Return a list of parent nodes pointed by the link (fkey)
      */
-    json_t *node;
-    json_t *nodes = treedb_list_parents( // Return MUST be decref
-        priv->tranger,
-        link, // must be a fkey field
-        node, // not owned
-        json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
-    );
+    if(!empty_string(link)) {
+        json_t *parents = treedb_list_parents( // Return MUST be decref
+            priv->tranger,
+            link, // must be a fkey field
+            node, // not owned
+            json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
+        );
+
+        return msg_iev_build_webix(
+            gobj,
+            parents?0:-1,
+            parents?0:json_string(log_last_message()),
+            0,
+            parents,
+            kw  // owned
+        );
+    }
+
+    /*
+     *  If no link return all links
+     */
+    json_t *parents = json_array();
+    json_t *links = treedb_get_topic_links(priv->tranger, topic_name);
+    int idx; json_t *jn_link;
+    json_array_foreach(links, idx, jn_link) {
+        json_t *parents_ = treedb_list_parents( // Return MUST be decref
+            priv->tranger,
+            json_string_value(jn_link), // must be a fkey field
+            node, // not owned
+            json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
+        );
+        json_array_extend(parents, parents_);
+        JSON_DECREF(parents_);
+    }
+    JSON_DECREF(links);
 
     return msg_iev_build_webix(
         gobj,
         0,
         0,
         0,
-        nodes,
+        parents,
         kw  // owned
     );
 }
@@ -1131,7 +1199,7 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    const char *id = kw_get_str(kw, "id", "", 0);
+    const char *node_id = kw_get_str(kw, "node_id", "", 0);
     const char *hook = kw_get_str(kw, "hook", "", 0);
     BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
 
@@ -1145,7 +1213,7 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
             kw  // owned
         );
     }
-    if(empty_string(id)) {
+    if(empty_string(node_id)) {
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1155,27 +1223,68 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
             kw  // owned
         );
     }
+    json_t *node = treedb_get_node(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name,
+        node_id,
+        json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
+    );
+    if(!node) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("Node not found: %s"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    /*
+     *  Return a list of child nodes of the hook
+     */
+    if(!empty_string(hook)) {
+        json_t *childs = treedb_list_childs( // Return MUST be decref
+            priv->tranger,
+            hook, // must be a fkey field
+            node, // not owned
+            json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
+        );
+
+        return msg_iev_build_webix(
+            gobj,
+            childs?0:-1,
+            childs?0:json_string(log_last_message()),
+            0,
+            childs,
+            kw  // owned
+        );
+    }
+
     /*
      *  If no hook return all hooks
      */
-
-    /*
-     *  Return a list of child nodes of the hook (WARNING ONLY first level)
-     */
-    json_t *node;
-    json_t *nodes = treedb_list_childs(
-        priv->tranger,
-        hook,
-        node, // not owned
-        json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
-    );
+    json_t *childs = json_array();
+    json_t *hooks = treedb_get_topic_hooks(priv->tranger, topic_name);
+    int idx; json_t *jn_hook;
+    json_array_foreach(hooks, idx, jn_hook) {
+        json_t *childs_ = treedb_list_childs( // Return MUST be decref
+            priv->tranger,
+            json_string_value(jn_hook), // must be a fkey field
+            node, // not owned
+            json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
+        );
+        json_array_extend(childs, childs_);
+        JSON_DECREF(childs_);
+    }
 
     return msg_iev_build_webix(
         gobj,
         0,
         0,
         0,
-        nodes,
+        childs,
         kw  // owned
     );
 }
@@ -1242,7 +1351,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    const char *id = kw_get_str(kw, "id", "", 0);
+    const char *node_id = kw_get_str(kw, "node_id", "", 0);
     const char *ref = kw_get_str(kw, "ref", "", 0);
     BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
 
@@ -1259,7 +1368,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
                 kw  // owned
             );
         }
-        if(!empty_string(id)) {
+        if(empty_string(node_id)) {
             return msg_iev_build_webix(
                 gobj,
                 -1,
@@ -1274,13 +1383,13 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     json_t *node = gobj_get_node(
         gobj,
         topic_name,
-        id,
+        node_id,
         json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
     );
 
     return msg_iev_build_webix(gobj,
-        0,
-        json_local_sprintf("Node found!"),
+        node?0:-1,
+        node?0:json_local_sprintf("Node not found"),
         tranger_list_topic_desc(priv->tranger, topic_name),
         kw_incref(node),
         kw  // owned

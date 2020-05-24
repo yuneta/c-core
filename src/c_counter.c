@@ -351,7 +351,7 @@ PRIVATE int ac_count(hgobj gobj, const char *event, json_t *kw, hgobj src)
             }
 
             //if(match_kw(gobj, event2count, jn_filters, kw)) {
-            // TODO quito match_kw, al incorporar realm_ref que tiene ^ el match falla
+            // TODO quito match_kw, al incorporar realm_id que tiene ^ el match falla
             // por usar expresión regular. Pongo kw_match_simple V4.0.0
             JSON_INCREF(jn_filters);
             if(kw_match_simple(kw, jn_filters)) {
