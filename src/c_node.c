@@ -95,12 +95,10 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_hooks[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Full desc of hooks"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_links[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Full desc of links"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_parents[] = {
@@ -163,14 +161,11 @@ SDATA_END()
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag----------------default---------description---------- */
-SDATA (ASN_JSON,        "treedb_schema",    SDF_REQUIRED,       0,              "Treedb schema"),
-SDATA (ASN_JSON,        "tranger",          0,                  0,              "TimeRanger"),
-SDATA (ASN_OCTET_STR,   "database",         SDF_RD,             0,              "Database name. Not empty to be persistent."),
-SDATA (ASN_OCTET_STR,   "service",          SDF_RD,             "",             "Service name for global store"),
-SDATA (ASN_OCTET_STR,   "filename_mask",    SDF_RD,            "%Y",            "Treedb filename mask"),
-SDATA (ASN_BOOLEAN,     "local_store",      SDF_RD,             0,              "True for local store (not clonable)"),
-SDATA (ASN_POINTER,     "kw_match",         0,                  kw_match_simple,"kw_match default function"),
+SDATA (ASN_JSON,        "tranger",          SDF_RD|SDF_REQUIRED,0,              "Tranger handler"),
+SDATA (ASN_OCTET_STR,   "treedb_name",      SDF_RD|SDF_REQUIRED,"",             "Treedb name"),
+SDATA (ASN_JSON,        "treedb_schema",    SDF_RD|SDF_REQUIRED,0,              "Treedb schema"),
 SDATA (ASN_INTEGER,     "exit_on_error",    0,                  LOG_OPT_EXIT_ZERO,"exit on error"),
+SDATA (ASN_POINTER,     "kw_match",         0,                  kw_match_simple,"kw_match default function"),
 SDATA (ASN_POINTER,     "user_data",        0,                  0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                  0,              "more user data"),
 SDATA (ASN_POINTER,     "subscriber",       0,                  0,              "subscriber of output-events. Not a child gobj."),
@@ -193,11 +188,12 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
  *              Private data
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
+    json_t *tranger;
+    const char *treedb_name;
     json_t *treedb_schema;
+    int32_t exit_on_error;
     kw_match_fn kw_match;
 
-    json_t *tranger;
-    int32_t exit_on_error;
 } PRIVATE_DATA;
 
 
@@ -217,9 +213,6 @@ PRIVATE void mt_create(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    priv->treedb_schema = gobj_read_json_attr(gobj, "treedb_schema");
-    priv->kw_match = gobj_read_pointer_attr(gobj, "kw_match");
-
     /*
      *  SERVICE subscription model
      */
@@ -232,7 +225,11 @@ PRIVATE void mt_create(hgobj gobj)
      *  Do copy of heavy used parameters, for quick access.
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
+    SET_PRIV(tranger,                   gobj_read_json_attr)
+    SET_PRIV(treedb_name,               gobj_read_str_attr)
+    SET_PRIV(treedb_schema,             gobj_read_json_attr)
     SET_PRIV(exit_on_error,             gobj_read_int32_attr)
+    SET_PRIV(kw_match,                  gobj_read_pointer_attr)
 }
 
 /***************************************************************************
@@ -261,72 +258,41 @@ PRIVATE int mt_start(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    const char *database = gobj_read_str_attr(gobj, "database");
-    if(empty_string(database)) {
+    if(!priv->tranger) {
         log_critical(priv->exit_on_error,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "database name EMPTY",
+            "msg",          "%s", "tranger NULL",
             NULL
         );
-        return -1;
     }
-    const char *filename_mask = gobj_read_str_attr(gobj, "filename_mask");
-    if(empty_string(filename_mask)) {
+    if(!priv->treedb_schema) {
         log_critical(priv->exit_on_error,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "filename_mask EMPTY",
+            "msg",          "%s", "treedb_schema NULL",
+            NULL
+        );
+    }
+    if(empty_string(priv->treedb_name)) {
+        log_critical(priv->exit_on_error,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "treedb_name name EMPTY",
             NULL
         );
         return -1;
     }
 
-    BOOL local_store = gobj_read_bool_attr(gobj, "local_store");
-    char path[NAME_MAX];
-    if(local_store) {
-        yuneta_realm_dir(path, sizeof(path), "store", TRUE);
-    } else {
-        const char *service = gobj_read_str_attr(gobj, "service");
-        yuneta_store_dir(path, sizeof(path), "resources", service, TRUE);
-    }
-
-    json_t *jn_tranger = json_pack("{s:s, s:s, s:s, s:b}",
-        "path", path,
-        "database", database,
-        "filename_mask", filename_mask,
-        "master", 1
-    );
-
-    json_t *tranger = tranger_startup(
-        jn_tranger // owned
-    );
-
-    if(!tranger) {
-        log_critical(priv->exit_on_error,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "tranger_startup() FAILED",
-            NULL
-        );
-    }
-    gobj_write_json_attr(gobj, "tranger", tranger);
-    json_decref(tranger); // HACK solo una copia de tranger
-
-    JSON_INCREF(priv->treedb_schema);
     treedb_open_db( // Return IS NOT YOURS!
-        tranger,
-        database,
-        priv->treedb_schema,  // owned
+        priv->tranger,
+        priv->treedb_name,
+        json_incref(priv->treedb_schema),  // owned
         "persistent"
     );
-    if(tranger) {
-//      TODO       create_persistent_resources(gobj); // IDEMPOTENTE.
-//             load_persistent_resources(gobj);
-    }
 
     return 0;
 }
@@ -338,18 +304,7 @@ PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    json_t *treedbs = treedb_list_treedb(priv->tranger);
-
-    int idx; json_t *jn_treedb;
-    json_array_foreach(treedbs, idx, jn_treedb) {
-        treedb_close_db(priv->tranger, json_string_value(jn_treedb));
-    }
-    JSON_DECREF(treedbs);
-
-    JSON_INCREF(priv->tranger);  // HACK copy of attr, the attr will decref
-    EXEC_AND_RESET(tranger_shutdown, priv->tranger);
-
-    gobj_write_json_attr(gobj, "tranger", 0);
+    treedb_close_db(priv->tranger, priv->treedb_name);
 
     return 0;
 }
@@ -388,7 +343,7 @@ PRIVATE json_t *mt_create_node( // Return is NOT YOURS
 
     json_t *record = treedb_create_node( // Return is NOT YOURS
         priv->tranger,
-        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        priv->treedb_name,
         topic_name,
         kw, // owned
         options
@@ -410,7 +365,7 @@ PRIVATE json_t *mt_update_node( // Return is NOT YOURS
 
     json_t *record = treedb_update_node( // Return is NOT YOURS
         priv->tranger,
-        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        priv->treedb_name,
         topic_name,
         kw, // owned
         options
@@ -427,7 +382,7 @@ PRIVATE int mt_delete_node(hgobj gobj, const char *topic_name, json_t *kw, const
 
     return treedb_delete_node(
         priv->tranger,
-        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        priv->treedb_name,
         topic_name,
         kw, // owned
         options
@@ -458,7 +413,7 @@ PRIVATE int mt_link_nodes2(hgobj gobj, const char *parent_ref, const char *child
 
     return treedb_link_nodes2(
         priv->tranger,
-        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        priv->treedb_name,
         parent_ref,
         child_ref
     );
@@ -488,7 +443,7 @@ PRIVATE int mt_unlink_nodes2(hgobj gobj, const char *parent_ref, const char *chi
 
     return treedb_unlink_nodes2(
         priv->tranger,
-        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        priv->treedb_name,
         parent_ref,
         child_ref
     );
@@ -503,9 +458,10 @@ PRIVATE json_t *mt_get_node(hgobj gobj, const char *topic_name, const char *id)
 
     return treedb_get_node(
         priv->tranger,
-        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        priv->treedb_name,
         topic_name,
-        id
+        id,
+        0 // TODO options
     );
 }
 
@@ -523,7 +479,7 @@ PRIVATE json_t *mt_list_nodes(
 
     return treedb_list_nodes(
         priv->tranger,
-        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        priv->treedb_name,
         topic_name,
         jn_filter,
         jn_options,
@@ -540,7 +496,7 @@ PRIVATE int mt_snap_nodes(hgobj gobj, const char *tag)
 
     return treedb_snap_nodes(
         priv->tranger,
-        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        priv->treedb_name,
         tag
     );
 }
@@ -554,7 +510,7 @@ PRIVATE int mt_set_nodes_snap(hgobj gobj, const char *tag)
 
     return treedb_set_nodes_snap(
         priv->tranger,
-        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        priv->treedb_name,
         tag
     );
 }
@@ -568,7 +524,7 @@ PRIVATE json_t *mt_list_nodes_snaps(hgobj gobj)
 
     return treedb_list_nodes_snaps(
         priv->tranger,
-        kw_get_str(priv->tranger, "database", "", KW_REQUIRED) // treedb_name
+        priv->treedb_name
     );
 }
 
@@ -980,9 +936,9 @@ PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
     const char *options = kw_get_str(kw, "options", "", 0);
 
-    json_t *topics = treedb_topics(
+    json_t *topics = treedb_list_topics(
         priv->tranger,
-        kw_get_str(priv->tranger, "database", "", KW_REQUIRED), // treedb_name
+        priv->treedb_name,
         options
     );
 
@@ -1055,7 +1011,6 @@ PRIVATE json_t *cmd_links(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -1087,7 +1042,6 @@ PRIVATE json_t *cmd_hooks(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -1320,7 +1274,8 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     json_t *node = gobj_get_node(
         gobj,
         topic_name,
-        id
+        id,
+        json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
     );
 
     return msg_iev_build_webix(gobj,
