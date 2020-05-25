@@ -1435,6 +1435,14 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
     if(!empty_string(ref)) {
         // TODO get topic_name, id, hook, link
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("No implemented"),
+            0,
+            0,
+            kw  // owned
+        );
     } else {
         if(empty_string(topic_name)) {
             return msg_iev_build_webix(
