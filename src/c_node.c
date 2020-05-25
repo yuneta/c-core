@@ -493,11 +493,11 @@ PRIVATE json_t *mt_list_nodes(
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE int mt_snap_nodes(hgobj gobj, const char *tag)
+PRIVATE int mt_shoot_snap(hgobj gobj, const char *tag)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    return treedb_snap_nodes(
+    return treedb_shoot_snap(
         priv->tranger,
         priv->treedb_name,
         tag
@@ -507,11 +507,11 @@ PRIVATE int mt_snap_nodes(hgobj gobj, const char *tag)
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE int mt_set_nodes_snap(hgobj gobj, const char *tag)
+PRIVATE int mt_activate_snap(hgobj gobj, const char *tag)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    return treedb_set_nodes_snap(
+    return treedb_activate_snap(
         priv->tranger,
         priv->treedb_name,
         tag
@@ -521,11 +521,11 @@ PRIVATE int mt_set_nodes_snap(hgobj gobj, const char *tag)
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE json_t *mt_list_nodes_snaps(hgobj gobj)
+PRIVATE json_t *mt_list_snaps(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    return treedb_list_nodes_snaps(
+    return treedb_list_snaps(
         priv->tranger,
         priv->treedb_name
     );
@@ -1601,9 +1601,9 @@ PRIVATE GCLASS _gclass = {
         mt_unlink_nodes2,
         mt_get_node,
         mt_list_nodes,
-        mt_snap_nodes,
-        mt_set_nodes_snap,
-        mt_list_nodes_snaps,
+        mt_shoot_snap,
+        mt_activate_snap,
+        mt_list_snaps,
         mt_treedbs,
         mt_treedb_topics,
         mt_topic_desc,
