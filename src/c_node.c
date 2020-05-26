@@ -521,13 +521,14 @@ PRIVATE int mt_activate_snap(hgobj gobj, const char *tag)
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE json_t *mt_list_snaps(hgobj gobj)
+PRIVATE json_t *mt_list_snaps(hgobj gobj, json_t *filter)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     return treedb_list_snaps(
         priv->tranger,
-        priv->treedb_name
+        priv->treedb_name,
+        filter
     );
 }
 
