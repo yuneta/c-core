@@ -127,7 +127,6 @@ SDATA_END()
 PRIVATE sdata_desc_t pm_get_node[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
-SDATAPM (ASN_OCTET_STR, "ref",          0,              0,          "Get node by ref"),
 SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Tree expanded"),
 SDATA_END()
 };
@@ -1431,40 +1430,27 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *node_id = kw_get_str(kw, "node_id", "", 0);
-    const char *ref = kw_get_str(kw, "ref", "", 0);
     BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
 
-    if(!empty_string(ref)) {
-        // TODO get topic_name, id, hook, link
+    if(empty_string(topic_name)) {
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("No implemented"),
+            json_local_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
         );
-    } else {
-        if(empty_string(topic_name)) {
-            return msg_iev_build_webix(
-                gobj,
-                -1,
-                json_local_sprintf("What topic_name?"),
-                0,
-                0,
-                kw  // owned
-            );
-        }
-        if(empty_string(node_id)) {
-            return msg_iev_build_webix(
-                gobj,
-                -1,
-                json_local_sprintf("What node id?"),
-                0,
-                0,
-                kw  // owned
-            );
-        }
+    }
+    if(empty_string(node_id)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What node id?"),
+            0,
+            0,
+            kw  // owned
+        );
     }
 
     json_t *node = gobj_get_node(
