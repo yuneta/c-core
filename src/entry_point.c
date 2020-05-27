@@ -790,6 +790,8 @@ PRIVATE void process(const char *process_name, const char *work_dir, const char 
         "alias",        "%s", __yuno_alias__,
         "version",      "%s", __yuno_version__,
         "date",         "%s", __app_datetime__,
+        "pid",          "%d", getpid(),
+        "watcher_pid",  "%d", get_watcher_pid(),
         "description",  "%s", __app_doc__,
         NULL
     );
