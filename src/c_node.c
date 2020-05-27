@@ -45,6 +45,7 @@ PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_list_instances(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE sdata_desc_t pm_help[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
@@ -130,6 +131,13 @@ SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Tree expanded"),
 SDATA_END()
 };
+PRIVATE sdata_desc_t pm_list_instances[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
+SDATAPM (ASN_UNSIGNED,  "instances",    0,              0,          "Maximum of instances"),
+SDATA_END()
+};
 
 PRIVATE const char *a_help[] = {"h", "?", 0};
 
@@ -153,7 +161,8 @@ SDATACM (ASN_SCHEMA,    "links",        0,  pm_links,       cmd_links,          
 SDATACM (ASN_SCHEMA,    "parents",      0,  pm_parents,     cmd_parents,        "Parents of node"),
 SDATACM (ASN_SCHEMA,    "childs",       0,  pm_childs,      cmd_childs,         "Childs of node"),
 SDATACM (ASN_SCHEMA,    "list-nodes",   0,  pm_list_nodes,  cmd_list_nodes,     "List nodes"),
-SDATACM (ASN_SCHEMA,    "get-node",     0,  pm_get_node,    cmd_get_node,       "Get node by id or ref"),
+SDATACM (ASN_SCHEMA,    "get-node",     0,  pm_get_node,    cmd_get_node,       "Get node by id"),
+SDATACM (ASN_SCHEMA,    "list-instances",0, pm_list_instances,cmd_list_instances,"List node's instances"),
 SDATA_END()
 };
 
@@ -753,6 +762,33 @@ PRIVATE json_t *mt_node_childs(
     JSON_DECREF(options);
 
     return childs;
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE json_t *mt_node_instances(
+    hgobj gobj,
+    const char *topic_name,
+    const char *id,
+    int max_instances // 0 all instances
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    json_t *match_cond = json_pack("{s:s, s:i}",
+        "key", id,
+        "max_key_instances", max_instances
+    );
+    json_t *list = trmsg_open_list(
+        priv->tranger,
+        topic_name,
+        match_cond
+    );
+    json_t *instances = trmsg_get_instances(list, id);
+    json_incref(instances);
+    trmsg_close_list(priv->tranger, list);
+    return instances;
 }
 
 
@@ -1469,6 +1505,55 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     );
 }
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_list_instances(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    const char *node_id = kw_get_str(kw, "node_id", "", 0);
+    int max_instances = kw_get_int(kw, "instances", 0, KW_WILD_NUMBER);
+
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    if(empty_string(node_id)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What node id?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *instances = gobj_node_instances(
+        gobj,
+        topic_name,
+        node_id,
+        max_instances
+    );
+
+    return msg_iev_build_webix(
+        gobj,
+        instances?0:-1,
+        json_local_sprintf("%d instances", json_array_size(instances)),
+        tranger_list_topic_desc(priv->tranger, topic_name),
+        instances,
+        kw  // owned
+    );
+}
+
 
 
 
@@ -1598,7 +1683,7 @@ PRIVATE GCLASS _gclass = {
         mt_topic_hooks,
         mt_node_parents,
         mt_node_childs,
-        0, //mt_future59,
+        mt_node_instances,
         0, //mt_future60,
         0, //mt_future61,
         0, //mt_future62,
