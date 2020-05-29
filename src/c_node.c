@@ -771,24 +771,25 @@ PRIVATE json_t *mt_node_instances(
     hgobj gobj,
     const char *topic_name,
     const char *id,
+    const char *pkey2,
     json_t *match_cond
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(!match_cond) {
-        match_cond = json_object();
-    }
-    json_object_set_new(match_cond, "id", json_string(id));
-    json_t *list = trmsg_open_list(
-        priv->tranger,
-        topic_name,
-        match_cond
-    );
-    json_t *instances = trmsg_get_instances(list, id);
-    json_incref(instances);
-    trmsg_close_list(priv->tranger, list);
-    return instances;
+//     if(!match_cond) {
+//         match_cond = json_object();
+//     }
+//     json_object_set_new(match_cond, "id", json_string(id));
+//     json_t *list = trmsg_open_list(
+//         priv->tranger,
+//         topic_name,
+//         match_cond
+//     );
+//     json_t *instances = trmsg_get_instances(list, id);
+//     json_incref(instances);
+//     trmsg_close_list(priv->tranger, list);
+//     return instances;
 }
 
 
