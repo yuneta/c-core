@@ -135,6 +135,7 @@ PRIVATE sdata_desc_t pm_node_instances[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
+SDATAPM (ASN_OCTET_STR, "pkey2",        0,              0,          "Primary Key 2"),
 SDATA_END()
 };
 
@@ -1513,6 +1514,7 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *node_id = kw_get_str(kw, "node_id", "", 0);
+    const char *pkey2= kw_get_str(kw, "pkey2", "", 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -1539,6 +1541,7 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
         gobj,
         topic_name,
         node_id,
+        pkey2,
         json_incref(kw)
     );
 
