@@ -46,6 +46,7 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_node_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE sdata_desc_t pm_help[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
@@ -129,9 +130,14 @@ PRIVATE sdata_desc_t pm_node_instances[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
-SDATAPM (ASN_OCTET_STR, "pkey2_field",  0,              0,          "PKey2 field"),
+SDATAPM (ASN_OCTET_STR, "pkey2",        0,              0,          "PKey2 field"),
 SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
 SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Tree expanded"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_node_pkey2s[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_get_node[] = {
@@ -165,6 +171,7 @@ SDATACM (ASN_SCHEMA,    "childs",       0,  pm_childs,      cmd_childs,         
 SDATACM (ASN_SCHEMA,    "list-nodes",   0,  pm_list_nodes,  cmd_list_nodes,     "List nodes"),
 SDATACM (ASN_SCHEMA,    "get-node",     0,  pm_get_node,    cmd_get_node,       "Get node by id"),
 SDATACM (ASN_SCHEMA,    "list-instances",0, pm_node_instances,cmd_node_instances,"List node's instances"),
+SDATACM (ASN_SCHEMA,    "list-pkey2s",  0,  pm_node_pkey2s, cmd_node_pkey2s,    "List node's pkey2"),
 SDATA_END()
 };
 
@@ -506,7 +513,7 @@ PRIVATE json_t *mt_list_nodes(
 PRIVATE json_t *mt_node_instances(
     hgobj gobj,
     const char *topic_name,
-    const char *pkey2_field,
+    const char *pkey2,
     json_t *jn_filter,
     json_t *jn_options
 )
@@ -517,7 +524,7 @@ PRIVATE json_t *mt_node_instances(
         priv->tranger,
         priv->treedb_name,
         topic_name,
-        pkey2_field,
+        pkey2,
         jn_filter,  // owned
         jn_options, // owned, "collapsed"
         gobj_read_pointer_attr(gobj, "kw_match")
@@ -585,7 +592,7 @@ PRIVATE json_t *mt_treedb_topics(hgobj gobj, const char *treedb_name, const char
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    return treedb_list_topics(
+    return treedb_topics(
         priv->tranger,
         empty_string(treedb_name)?priv->treedb_name:treedb_name,
         options
@@ -619,7 +626,7 @@ PRIVATE json_t *mt_topic_links(hgobj gobj, const char *treedb_name, const char *
     }
 
     // All topics
-    json_t *topics = treedb_list_topics(
+    json_t *topics = treedb_topics(
         priv->tranger,
         priv->treedb_name,
         0
@@ -651,7 +658,7 @@ PRIVATE json_t *mt_topic_hooks(hgobj gobj, const char *treedb_name, const char *
     }
 
     // All topics
-    json_t *topics = treedb_list_topics(
+    json_t *topics = treedb_topics(
         priv->tranger,
         priv->treedb_name,
         0
@@ -1461,11 +1468,9 @@ PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
  ***************************************************************************/
 PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *node_id = kw_get_str(kw, "node_id", "", 0);
-    const char *pkey2_field = kw_get_str(kw, "pkey2_field", "", 0);
+    const char *pkey2 = kw_get_str(kw, "pkey2", "", 0);
     const char *filter = kw_get_str(kw, "filter", "", 0);
     BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
 
@@ -1479,21 +1484,11 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
             kw  // owned
         );
     }
-    if(empty_string(node_id)) {
+    if(empty_string(pkey2)) {
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What node id?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-    if(empty_string(pkey2_field)) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_local_sprintf("What node pkey2_field?"),
+            json_local_sprintf("What pkey2"),
             0,
             0,
             kw  // owned
@@ -1513,26 +1508,64 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
             );
         }
     }
-    if(!jn_filter) {
-        jn_filter = json_pack("{s:s}", "id", node_id);
-    } else {
-        json_object_set_new(jn_filter, "id", json_string(node_id));
+    if(!empty_string(node_id)) {
+        if(!jn_filter) {
+            jn_filter = json_pack("{s:s}", "id", node_id);
+        } else {
+            json_object_set_new(jn_filter, "id", json_string(node_id));
+        }
     }
 
     json_t *instances = gobj_node_instances(
         gobj,
         topic_name,
-        pkey2_field,
+        pkey2,
         jn_filter,  // owned
         json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
     );
 
     return msg_iev_build_webix(
         gobj,
-        instances?0:-1,
+        0,
         json_local_sprintf("%d instances", json_array_size(instances)),
-        tranger_list_topic_desc(priv->tranger, topic_name),
+        0,
         instances,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_node_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *pkey2s = treedb_topic_pkey2s( // Return list of pkey2, must be decref
+        priv->tranger,
+        priv->treedb_name,
+        topic_name
+    );
+
+    return msg_iev_build_webix(
+        gobj,
+        pkey2s?0:-1,
+        json_local_sprintf("%d pkey2s", json_array_size(pkey2s)),
+        0,
+        pkey2s,
         kw  // owned
     );
 }
