@@ -1564,7 +1564,7 @@ PRIVATE json_t *cmd_node_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         pkey2s?0:-1,
         json_local_sprintf("%d pkey2s", json_array_size(pkey2s)),
         0,
-        json_incref(pkey2s),
+        pkey2s,
         kw  // owned
     );
 }
