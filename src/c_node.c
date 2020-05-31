@@ -1554,9 +1554,8 @@ PRIVATE json_t *cmd_node_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         );
     }
 
-    json_t *pkey2s = treedb_topic_pkey2s( // Return list of pkey2, must be decref
+    json_t *pkey2s = treedb_topic_pkey2s(
         priv->tranger,
-        priv->treedb_name,
         topic_name
     );
 
@@ -1565,7 +1564,7 @@ PRIVATE json_t *cmd_node_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         pkey2s?0:-1,
         json_local_sprintf("%d pkey2s", json_array_size(pkey2s)),
         0,
-        pkey2s,
+        json_incref(pkey2s),
         kw  // owned
     );
 }
