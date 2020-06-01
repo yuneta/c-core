@@ -1646,53 +1646,29 @@ PRIVATE json_t *cmd_snap_content(hgobj gobj, const char *cmd, json_t *kw, hgobj 
             kw  // owned
         );
     }
+
     json_t *jn_data = json_array();
 
-    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    if(empty_string(topic_name)) {
-        json_t *topics = gobj_treedb_topics(gobj, priv->treedb_name, "");
-        int idx; json_t *topic;
-        json_array_foreach(topics, idx, topic) {
-            const char *topic_name = json_string_value(topic);
-
-            json_t *jn_filter = json_pack("{s:b, s:i}",
-                "backward", 1,
-                "user_flag", snap_tag
-            );
-            json_t *jn_list = json_pack("{s:s, s:o}",
-                "topic_name", topic_name,
-                "match_cond", jn_filter
-            );
-            json_t *list = tranger_open_list(
-                priv->tranger,
-                jn_list // owned
-            );
-            json_array_extend(jn_data, kw_get_list(list, "data", 0, KW_REQUIRED));
-            tranger_close_list(priv->tranger, list);
-        }
-        JSON_DECREF(topics);
-    } else {
-        json_t *jn_filter = json_pack("{s:b, s:i}",
-            "backward", 1,
-            "user_flag", snap_tag
-        );
-        json_t *jn_list = json_pack("{s:s, s:o}",
-            "topic_name", topic_name,
-            "match_cond", jn_filter
-        );
-        json_t *list = tranger_open_list(
-            priv->tranger,
-            jn_list // owned
-        );
-        json_array_extend(jn_data, kw_get_list(list, "data", 0, KW_REQUIRED));
-        tranger_close_list(priv->tranger, list);
-    }
+    json_t *jn_filter = json_pack("{s:b, s:i}",
+        "backward", 1,
+        "user_flag", snap_tag
+    );
+    json_t *jn_list = json_pack("{s:s, s:o}",
+        "topic_name", topic_name,
+        "match_cond", jn_filter
+    );
+    json_t *list = tranger_open_list(
+        priv->tranger,
+        jn_list // owned
+    );
+    json_array_extend(jn_data, kw_get_list(list, "data", 0, KW_REQUIRED));
+    tranger_close_list(priv->tranger, list);
 
     return msg_iev_build_webix(
         gobj,
         0,
         0,
-        0,
+        tranger_list_topic_desc(priv->tranger, topic_name),
         jn_data,
         kw  // owned
     );
