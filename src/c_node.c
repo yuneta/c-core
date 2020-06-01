@@ -168,10 +168,10 @@ SDATACM (ASN_SCHEMA,    "hooks",        0,  pm_hooks,       cmd_hooks,          
 SDATACM (ASN_SCHEMA,    "links",        0,  pm_links,       cmd_links,          "Links of node"),
 SDATACM (ASN_SCHEMA,    "parents",      0,  pm_parents,     cmd_parents,        "Parents of node"),
 SDATACM (ASN_SCHEMA,    "childs",       0,  pm_childs,      cmd_childs,         "Childs of node"),
-SDATACM (ASN_SCHEMA,    "list-nodes",   0,  pm_list_nodes,  cmd_list_nodes,     "List nodes"),
-SDATACM (ASN_SCHEMA,    "get-node",     0,  pm_get_node,    cmd_get_node,       "Get node by id"),
-SDATACM (ASN_SCHEMA,    "list-instances",0, pm_node_instances,cmd_node_instances,"List node's instances"),
-SDATACM (ASN_SCHEMA,    "list-pkey2s",  0,  pm_node_pkey2s, cmd_node_pkey2s,    "List node's pkey2"),
+SDATACM (ASN_SCHEMA,    "nodes",        0,  pm_list_nodes,  cmd_list_nodes,     "List nodes"),
+SDATACM (ASN_SCHEMA,    "node",         0,  pm_get_node,    cmd_get_node,       "Get node by id"),
+SDATACM (ASN_SCHEMA,    "instances",    0,  pm_node_instances,cmd_node_instances,"List node's instances"),
+SDATACM (ASN_SCHEMA,    "pkey2s",       0,  pm_node_pkey2s, cmd_node_pkey2s,    "List node's pkey2"),
 SDATA_END()
 };
 
@@ -1479,16 +1479,6 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
             gobj,
             -1,
             json_local_sprintf("What topic_name?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-    if(empty_string(pkey2)) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_local_sprintf("What pkey2"),
             0,
             0,
             kw  // owned
