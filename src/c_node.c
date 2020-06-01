@@ -1468,6 +1468,8 @@ PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
  ***************************************************************************/
 PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *node_id = kw_get_str(kw, "node_id", "", 0);
     const char *pkey2 = kw_get_str(kw, "pkey2", "", 0);
@@ -1518,7 +1520,7 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
         gobj,
         0,
         json_local_sprintf("%d instances", json_array_size(instances)),
-        0,
+        tranger_list_topic_desc(priv->tranger, topic_name),
         instances,
         kw  // owned
     );
