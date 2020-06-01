@@ -1562,7 +1562,7 @@ PRIVATE json_t *cmd_node_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     return msg_iev_build_webix(
         gobj,
         pkey2s?0:-1,
-        json_local_sprintf("%d pkey2s", json_array_size(pkey2s)),
+        json_local_sprintf("%d pkey2s", json_object_size(pkey2s)),
         0,
         pkey2s,
         kw  // owned
