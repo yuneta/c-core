@@ -1804,7 +1804,7 @@ PRIVATE GCLASS _gclass = {
         mt_node_parents,
         mt_node_childs,
         mt_node_instances,
-        0, //mt_future60,
+        0, //mt_save_node,
         0, //mt_future61,
         0, //mt_future62,
         0, //mt_future63,
