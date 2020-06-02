@@ -61,7 +61,7 @@ PRIVATE sdata_desc_t pm_create_node[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Node content"),
 SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Node content in base64"),
-SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: \"permissive\""),
+SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: \"permissive\" \"multiple\""),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_update_node[] = {
@@ -364,7 +364,7 @@ PRIVATE json_t *mt_create_node( // Return is NOT YOURS
     hgobj gobj,
     const char *topic_name,
     json_t *kw, // owned
-    const char *options // "permissive"
+    const char *options // "permissive" "verbose" "multiple"
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
