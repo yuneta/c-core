@@ -364,7 +364,7 @@ PRIVATE json_t *mt_create_node( // Return is NOT YOURS
     hgobj gobj,
     const char *topic_name,
     json_t *kw, // owned
-    const char *options // "permissive" "verbose" "multiple"
+    const char *options // "permissive" "verbose"
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
