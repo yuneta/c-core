@@ -382,6 +382,19 @@ PRIVATE json_t *mt_create_node( // Return is NOT YOURS
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
+PRIVATE int mt_save_node(
+    hgobj gobj,
+    json_t *node
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return treedb_save_node(priv->tranger, node);
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
 PRIVATE json_t *mt_update_node( // Return is NOT YOURS
     hgobj gobj,
     const char *topic_name,
@@ -1804,7 +1817,7 @@ PRIVATE GCLASS _gclass = {
         mt_node_parents,
         mt_node_childs,
         mt_node_instances,
-        0, //mt_save_node,
+        mt_save_node,
         0, //mt_future61,
         0, //mt_future62,
         0, //mt_future63,
