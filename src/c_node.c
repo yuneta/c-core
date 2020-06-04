@@ -46,6 +46,7 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_node_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_list_snaps(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_snap_content(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -192,12 +193,13 @@ SDATACM (ASN_SCHEMA,    "childs",       0,  pm_childs,      cmd_childs,         
 SDATACM (ASN_SCHEMA,    "nodes",        0,  pm_list_nodes,  cmd_list_nodes,     "List nodes"),
 SDATACM (ASN_SCHEMA,    "node",         0,  pm_get_node,    cmd_get_node,       "Get node by id"),
 SDATACM (ASN_SCHEMA,    "instances",    0,  pm_node_instances,cmd_node_instances,"List node's instances"),
+SDATACM (ASN_SCHEMA,    "touch-instance",0, pm_node_instances,cmd_touch_instance,"Touch (save) instance to force to be the last instance"),
 SDATACM (ASN_SCHEMA,    "pkey2s",       0,  pm_node_pkey2s, cmd_node_pkey2s,    "List node's pkey2"),
-SDATACM (ASN_SCHEMA,    "list-snaps",    0, 0,              cmd_list_snaps,     "List snaps"),
-SDATACM (ASN_SCHEMA,    "snap-content",  0, pm_snap_content,cmd_snap_content,   "Show snap content"),
-SDATACM (ASN_SCHEMA,    "shoot-snap",    0, pm_shoot_snap,  cmd_shoot_snap,     "Shoot snap"),
-SDATACM (ASN_SCHEMA,    "activate-snap", 0, pm_activate_snap,cmd_activate_snap, "Activate snap"),
-SDATACM (ASN_SCHEMA,    "deactivate-snap",0, 0,              cmd_deactivate_snap,"De-Activate snap"),
+SDATACM (ASN_SCHEMA,    "snaps",        0,  0,              cmd_list_snaps,     "List snaps"),
+SDATACM (ASN_SCHEMA,    "snap-content", 0,  pm_snap_content,cmd_snap_content,   "Show snap content"),
+SDATACM (ASN_SCHEMA,    "shoot-snap",   0,  pm_shoot_snap,  cmd_shoot_snap,     "Shoot snap"),
+SDATACM (ASN_SCHEMA,    "activate-snap",0,  pm_activate_snap,cmd_activate_snap, "Activate snap"),
+SDATACM (ASN_SCHEMA,    "deactivate-snap",0,0,              cmd_deactivate_snap,"De-Activate snap"),
 SDATA_END()
 };
 
@@ -1607,6 +1609,86 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
         gobj,
         0,
         json_local_sprintf("%d instances", json_array_size(instances)),
+        tranger_list_topic_desc(priv->tranger, topic_name),
+        instances,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    const char *node_id = kw_get_str(kw, "node_id", "", 0);
+    const char *pkey2 = kw_get_str(kw, "pkey2", "", 0);
+    const char *filter = kw_get_str(kw, "filter", "", 0);
+
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    json_t *jn_filter = 0;
+    if(!empty_string(filter)) {
+        jn_filter = legalstring2json(filter, TRUE);
+        if(!jn_filter) {
+            return msg_iev_build_webix(
+                gobj,
+                -1,
+                json_local_sprintf("Can't decode filter json"),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+    }
+    if(!empty_string(node_id)) {
+        if(!jn_filter) {
+            jn_filter = json_pack("{s:s}", "id", node_id);
+        } else {
+            json_object_set_new(jn_filter, "id", json_string(node_id));
+        }
+    }
+
+    json_t *instances = gobj_node_instances(
+        gobj,
+        topic_name,
+        pkey2,
+        jn_filter,  // owned
+        0
+    );
+
+    /*
+     *  This is a danger operation, only one instance please
+     */
+    if(json_array_size(instances)!=1) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("Select only one instance please"),
+            tranger_list_topic_desc(priv->tranger, topic_name),
+            instances,
+            kw  // owned
+        );
+    }
+    int idx; json_t *instance;
+    json_array_foreach(instances, idx, instance) {
+        gobj_save_node(gobj, instance);
+    }
+
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        json_local_sprintf("%d instances touched", json_array_size(instances)),
         tranger_list_topic_desc(priv->tranger, topic_name),
         instances,
         kw  // owned
