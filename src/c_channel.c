@@ -40,8 +40,9 @@ SDATA (ASN_OCTET_STR,   "model",            SDF_RD,             "one-over-all", 
 
 SDATA (ASN_OCTET_STR,   "lHost",            SDF_RD,             0,              "Local host bind filter"),
 SDATA (ASN_OCTET_STR,   "lPort",            SDF_RD,             0,              "Local port bind filter"),
-SDATA (ASN_JSON,        "allowd_urls",      SDF_RD,             0,              "Peer allowed url's filter"),
-SDATA (ASN_JSON,        "denied_urls",      SDF_RD,             0,              "Peer denied url's filter"),
+// TODO remove this when all configuration jsons have allowd_urls,denied_urls deleted
+SDATA (ASN_JSON,        "allowd_urls",      SDF_RD,             0,              "DEPRECATED Peer allowed url's filter"),
+SDATA (ASN_JSON,        "denied_urls",      SDF_RD,             0,              "DEPRECATED Peer denied url's filter"),
 SDATA (ASN_INTEGER,     "timeout",          SDF_RD,             1*1000,         "Timeout"),
 SDATA (ASN_BOOLEAN,     "opened",           SDF_RD,             0,              "Channel opened (opened is higher level than connected"),
 SDATA (ASN_COUNTER64,   "txMsgs",           SDF_WR,             0,              "Messages transmitted"),
