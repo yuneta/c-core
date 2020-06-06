@@ -385,8 +385,7 @@ SDATA (ASN_COUNTER64,   "qs_higher_response_time", SDF_RD|SDF_STATS,    -1,     
 SDATA (ASN_COUNTER64,   "qs_repeated",      SDF_RD|SDF_STATS,           0,              "Qs."),
 SDATA (ASN_COUNTER64,   "cpu_ticks",        SDF_RD|SDF_STATS,           0,              "Cpu ticks."),
 SDATA (ASN_UNSIGNED,    "cpu",              SDF_RD|SDF_STATS,           0,              "Cpu percent."),
-SDATA (ASN_JSON,        "allowed_ips",      SDF_RD|SDF_STATS,           "{}",           "Peer allowed ip's"),
-SDATA (ASN_JSON,        "denied_ips",       SDF_RD|SDF_STATS,           "{}",           "Peer denied ip's"),
+SDATA (ASN_JSON,        "allowed_ips",      SDF_RD|SDF_STATS,           "{}",           "Peer allowed ip's if true, false denied"),
 SDATA_END()
 };
 
@@ -4372,4 +4371,33 @@ PUBLIC json_int_t default_service_decr_stat(const char *path, json_int_t value)
 PUBLIC json_int_t default_service_get_stat(const char *path)
 {
     return gobj_get_stat(gobj_default_service(), path);
+}
+
+/***************************************************************************
+ *  Allowed ips
+ ***************************************************************************/
+PUBLIC BOOL is_ip_allowed(const char *ip)
+{
+    json_t *b = json_object_get(gobj_read_json_attr(gobj_yuno(), "allowed_ips"), ip);
+    return json_is_true(b)?TRUE:FALSE;
+}
+
+/***************************************************************************
+ * allowed: TRUE to allow, FALSE to deny
+ ***************************************************************************/
+PUBLIC int add_allowed_ip(const char *ip, BOOL allowed)
+{
+    return json_object_set_new(
+        gobj_read_json_attr(gobj_yuno(), "allowed_ips"),
+        ip,
+        allowed?json_true(): json_false()
+    );
+}
+
+/***************************************************************************
+ *  Remove from interna list (dict)
+ ***************************************************************************/
+PUBLIC int remove_allowed_ip(const char *ip)
+{
+    return json_object_del(gobj_read_json_attr(gobj_yuno(), "allowed_ips"), ip);
 }
