@@ -385,6 +385,8 @@ SDATA (ASN_COUNTER64,   "qs_higher_response_time", SDF_RD|SDF_STATS,    -1,     
 SDATA (ASN_COUNTER64,   "qs_repeated",      SDF_RD|SDF_STATS,           0,              "Qs."),
 SDATA (ASN_COUNTER64,   "cpu_ticks",        SDF_RD|SDF_STATS,           0,              "Cpu ticks."),
 SDATA (ASN_UNSIGNED,    "cpu",              SDF_RD|SDF_STATS,           0,              "Cpu percent."),
+SDATA (ASN_JSON,        "allowed_ips",      SDF_RD,                     "{}",           "Peer allowed ip's"),
+SDATA (ASN_JSON,        "denied_ips",       SDF_RD,                     "{}",           "Peer denied ip's"),
 SDATA_END()
 };
 
