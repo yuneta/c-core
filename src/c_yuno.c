@@ -121,6 +121,12 @@ PRIVATE json_t* cmd_subscribe_event(hgobj gobj, const char* cmd, json_t* kw, hgo
 PRIVATE json_t* cmd_unsubscribe_event(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 PRIVATE json_t* cmd_list_subscriptions(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 PRIVATE json_t* cmd_list_subscribings(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
+PRIVATE json_t* cmd_list_allowed_ips(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
+PRIVATE json_t* cmd_add_allowed_ip(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
+PRIVATE json_t* cmd_remove_allowed_ip(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
+PRIVATE json_t* cmd_list_denied_ips(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
+PRIVATE json_t* cmd_add_denied_ip(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
+PRIVATE json_t* cmd_remove_denied_ip(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 
 PRIVATE sdata_desc_t pm_help[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
@@ -222,6 +228,28 @@ SDATAPM (ASN_BOOLEAN,   "recursive",    0,              0,          "Walk over c
 SDATAPM (ASN_BOOLEAN,   "full-names",   0,              0,          "Show full names."),
 SDATA_END()
 };
+PRIVATE sdata_desc_t pm_add_allowed_ip[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "ip",           0,              "",         "ip"),
+SDATAPM (ASN_BOOLEAN,   "allowed",      0,              0,          "TRUE allowed, FALSE denied"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_remove_allowed_ip[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "ip",           0,              "",         "ip"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_add_denied_ip[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "ip",           0,              "",         "ip"),
+SDATAPM (ASN_BOOLEAN,   "denied",       0,              0,          "TRUE denied, FALSE denied"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_remove_denied_ip[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "ip",           0,              "",         "ip"),
+SDATA_END()
+};
 
 PRIVATE const char *a_help[] = {"h", "?", 0};
 PRIVATE const char *a_services[] = {"services", "list-services", 0};
@@ -293,6 +321,12 @@ SDATACM (ASN_SCHEMA,    "unsubscribe-event",        0,      pm_subscribe_event,c
 SDATACM (ASN_SCHEMA,    "list-subscriptions",       0,      pm_list_subscriptions,cmd_list_subscriptions,          "List subscriptions [of __default_service__]."),
 SDATACM (ASN_SCHEMA,    "list-subscribings",        0,      pm_list_subscriptions,cmd_list_subscribings,          "List subcribings [of __default_service__]."),
 
+SDATACM (ASN_SCHEMA,    "list-allowed-ips",         0,      0,              cmd_list_allowed_ips,          "List allowed ips"),
+SDATACM (ASN_SCHEMA,    "add-allowed-ip",           0,      pm_add_allowed_ip,  cmd_add_allowed_ip,          "Add a ip to allowed list"),
+SDATACM (ASN_SCHEMA,    "remove-allowed-ip",        0,      pm_remove_allowed_ip, cmd_remove_allowed_ip,          "Add a ip to allowed list"),
+SDATACM (ASN_SCHEMA,    "list-denied-ips",         0,      0,              cmd_list_denied_ips,          "List denied ips"),
+SDATACM (ASN_SCHEMA,    "add-denied-ip",           0,      pm_add_denied_ip,  cmd_add_denied_ip,          "Add a ip to denied list"),
+SDATACM (ASN_SCHEMA,    "remove-denied-ip",        0,      pm_remove_denied_ip, cmd_remove_denied_ip,          "Add a ip to denied list"),
 SDATA_END()
 };
 
@@ -326,14 +360,12 @@ SDATA (ASN_OCTET_STR,   "i18n_codeset",     SDF_RD,                     "UTF-8",
 SDATA (ASN_UNSIGNED,    "timeout",          SDF_RD,                     1000,           "timeout (miliseconds) to check yuno_must_die, stats,"),
 SDATA (ASN_UNSIGNED,    "timeout_stats",    SDF_RD,                     1,              "timeout (seconds) for publishing stats"),
 SDATA (ASN_UNSIGNED,    "timeout_flush",    SDF_RD,                     2,              "timeout (seconds) for rotatory flush"),
-SDATA (ASN_UNSIGNED,    "timeout_restart",  SDF_WR|SDF_PERSIST,         0,              "timeout (seconds) to restart"),
 SDATA (ASN_UNSIGNED,    "watcher_pid",      SDF_RD,                     0,              "Watcher pid"),
 SDATA (ASN_OCTET_STR,   "info_msg",         SDF_RD,                     0,              "Info msg, like errno."),
 SDATA (ASN_COUNTER64,   "launch_id",        SDF_RD,                     0,              "Launch Id. Set by agent."),
 SDATA (ASN_OCTET_STR,   "dynamicDoc",       SDF_WR|SDF_PERSIST,         0,              "Dynamic documentation"),
 SDATA (ASN_OCTET_STR,   "start_date",       SDF_RD|SDF_STATS,           0,              "Yuno starting date."),
-SDATA (ASN_JSON,        "trace_levels",     SDF_WR|SDF_PERSIST,         0,              "Trace levels"),
-SDATA (ASN_JSON,        "no_trace_levels",  SDF_WR|SDF_PERSIST,         0,              "No trace levels"),
+
 SDATA (ASN_UNSIGNED64,  "max_proc_mem",     SDF_WR,                     0,              "NOT USED! If not zero, abort if proc memory is greater"),
 
 SDATA (ASN_COUNTER64,   "uptime",           SDF_RD|SDF_STATS,           0,              "Yuno living time."),
@@ -385,7 +417,11 @@ SDATA (ASN_COUNTER64,   "qs_higher_response_time", SDF_RD|SDF_STATS,    -1,     
 SDATA (ASN_COUNTER64,   "qs_repeated",      SDF_RD|SDF_STATS,           0,              "Qs."),
 SDATA (ASN_COUNTER64,   "cpu_ticks",        SDF_RD|SDF_STATS,           0,              "Cpu ticks."),
 SDATA (ASN_UNSIGNED,    "cpu",              SDF_RD|SDF_STATS,           0,              "Cpu percent."),
-SDATA (ASN_JSON,        "allowed_ips",      SDF_RD|SDF_STATS,           "{}",           "Peer allowed ip's if true, false denied"),
+SDATA (ASN_UNSIGNED,    "timeout_restart",  SDF_WR|SDF_PERSIST,         0,              "timeout (seconds) to restart"),
+SDATA (ASN_JSON,        "trace_levels",     SDF_WR|SDF_PERSIST,         0,              "Trace levels"),
+SDATA (ASN_JSON,        "no_trace_levels",  SDF_WR|SDF_PERSIST,         0,              "No trace levels"),
+SDATA (ASN_JSON,        "allowed_ips",      SDF_RD|SDF_PERSIST,         "{}",           "Allowed peer ip's if true, false not allowed"),
+SDATA (ASN_JSON,        "denied_ips",       SDF_RD|SDF_PERSIST,         "{}",           "Denied peer ip's if true, false not denied"),
 SDATA_END()
 };
 
@@ -3262,6 +3298,182 @@ PRIVATE json_t* cmd_list_subscribings(hgobj gobj, const char* cmd, json_t* kw, h
     );
 }
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t* cmd_list_allowed_ips(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
+{
+    /*
+     *  Inform
+     */
+    return msg_iev_build_webix(gobj,
+        0,
+        0,
+        0,
+        json_incref(gobj_read_json_attr(gobj_yuno(), "allowed_ips")),
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t* cmd_add_allowed_ip(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
+{
+    const char *ip = kw_get_str(kw, "ip", "", 0);
+    BOOL allowed = kw_get_bool(kw, "allowed", 0, KW_WILD_NUMBER);
+
+    if(empty_string(ip)) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_local_sprintf("What ip?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    if(!kw_has_key(kw, "allowed")) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_local_sprintf("Allowed, true or false?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    add_allowed_ip(ip, allowed);
+
+    /*
+     *  Inform
+     */
+    return msg_iev_build_webix(gobj,
+        0,
+        0,
+        0,
+        json_incref(gobj_read_json_attr(gobj_yuno(), "allowed_ips")),
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t* cmd_remove_allowed_ip(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
+{
+    const char *ip = kw_get_str(kw, "ip", "", 0);
+    if(empty_string(ip)) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_local_sprintf("What ip?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    remove_allowed_ip(ip);
+
+    /*
+     *  Inform
+     */
+    return msg_iev_build_webix(gobj,
+        0,
+        0,
+        0,
+        json_incref(gobj_read_json_attr(gobj_yuno(), "allowed_ips")),
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t* cmd_list_denied_ips(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
+{
+    /*
+     *  Inform
+     */
+    return msg_iev_build_webix(gobj,
+        0,
+        0,
+        0,
+        json_incref(gobj_read_json_attr(gobj_yuno(), "denied_ips")),
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t* cmd_add_denied_ip(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
+{
+    const char *ip = kw_get_str(kw, "ip", "", 0);
+    BOOL denied = kw_get_bool(kw, "denied", 0, KW_WILD_NUMBER);
+
+    if(empty_string(ip)) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_local_sprintf("What ip?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    if(!kw_has_key(kw, "denied")) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_local_sprintf("Allowed, true or false?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    add_denied_ip(ip, denied);
+
+    /*
+     *  Inform
+     */
+    return msg_iev_build_webix(gobj,
+        0,
+        0,
+        0,
+        json_incref(gobj_read_json_attr(gobj_yuno(), "denied_ips")),
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t* cmd_remove_denied_ip(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
+{
+    const char *ip = kw_get_str(kw, "ip", "", 0);
+    if(empty_string(ip)) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_local_sprintf("What ip?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    remove_denied_ip(ip);
+
+    /*
+     *  Inform
+     */
+    return msg_iev_build_webix(gobj,
+        0,
+        0,
+        0,
+        json_incref(gobj_read_json_attr(gobj_yuno(), "denied_ips")),
+        kw  // owned
+    );
+}
+
 
 
 
@@ -4374,10 +4586,16 @@ PUBLIC json_int_t default_service_get_stat(const char *path)
 }
 
 /***************************************************************************
- *  Allowed ips
+ *  Is ip or peername allowed?
  ***************************************************************************/
-PUBLIC BOOL is_ip_allowed(const char *ip)
+PUBLIC BOOL is_ip_allowed(const char *peername)
 {
+    char ip[NAME_MAX];
+    snprintf(ip, sizeof(ip), "%s", peername);
+    char *p = strchr(ip, ':');
+    if(p) {
+        *p = 0;
+    }
     json_t *b = json_object_get(gobj_read_json_attr(gobj_yuno(), "allowed_ips"), ip);
     return json_is_true(b)?TRUE:FALSE;
 }
@@ -4387,11 +4605,15 @@ PUBLIC BOOL is_ip_allowed(const char *ip)
  ***************************************************************************/
 PUBLIC int add_allowed_ip(const char *ip, BOOL allowed)
 {
-    return json_object_set_new(
+    if(json_object_set_new(
         gobj_read_json_attr(gobj_yuno(), "allowed_ips"),
         ip,
         allowed?json_true(): json_false()
-    );
+    )==0) {
+        return gobj_save_persistent_attrs(gobj_yuno());
+    } else {
+        return -1;
+    }
 }
 
 /***************************************************************************
@@ -4399,5 +4621,52 @@ PUBLIC int add_allowed_ip(const char *ip, BOOL allowed)
  ***************************************************************************/
 PUBLIC int remove_allowed_ip(const char *ip)
 {
-    return json_object_del(gobj_read_json_attr(gobj_yuno(), "allowed_ips"), ip);
+    if(json_object_del(gobj_read_json_attr(gobj_yuno(), "allowed_ips"), ip)==0) {
+        return gobj_save_persistent_attrs(gobj_yuno());
+    } else {
+        return -1;
+    }
+}
+
+/***************************************************************************
+ *  Is ip or peername denied?
+ ***************************************************************************/
+PUBLIC BOOL is_ip_denied(const char *peername)
+{
+    char ip[NAME_MAX];
+    snprintf(ip, sizeof(ip), "%s", peername);
+    char *p = strchr(ip, ':');
+    if(p) {
+        *p = 0;
+    }
+    json_t *b = json_object_get(gobj_read_json_attr(gobj_yuno(), "denied_ips"), ip);
+    return json_is_true(b)?TRUE:FALSE;
+}
+
+/***************************************************************************
+ * denied: TRUE to deny, FALSE to deny
+ ***************************************************************************/
+PUBLIC int add_denied_ip(const char *ip, BOOL denied)
+{
+    if(json_object_set_new(
+        gobj_read_json_attr(gobj_yuno(), "denied_ips"),
+        ip,
+        denied?json_true(): json_false()
+    )==0) {
+        return gobj_save_persistent_attrs(gobj_yuno());
+    } else {
+        return -1;
+    }
+}
+
+/***************************************************************************
+ *  Remove from interna list (dict)
+ ***************************************************************************/
+PUBLIC int remove_denied_ip(const char *ip)
+{
+    if(json_object_del(gobj_read_json_attr(gobj_yuno(), "denied_ips"), ip)==0) {
+        return gobj_save_persistent_attrs(gobj_yuno());
+    } else {
+        return -1;
+    }
 }

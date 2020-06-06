@@ -134,9 +134,13 @@ PUBLIC json_int_t default_service_get_stat(const char *path);
 /*--------------------------------------------------*
  *  Allowed ips
  *--------------------------------------------------*/
-PUBLIC BOOL is_ip_allowed(const char *ip);
-PUBLIC int add_allowed_ip(const char *ip, BOOL allowed); // allowed: TRUE to allow, FALSE to deny
+PUBLIC BOOL is_ip_allowed(const char *peername);
+PUBLIC int add_allowed_ip(const char *ip, BOOL allowed); // allowed: TRUE to allow, FALSE to not allow
 PUBLIC int remove_allowed_ip(const char *ip); // Remove from interna list
+
+PUBLIC BOOL is_ip_denied(const char *peername);
+PUBLIC int add_denied_ip(const char *ip, BOOL denied); // denied: TRUE to deny, FALSE to not deny
+PUBLIC int remove_denied_ip(const char *ip); // Remove from interna list
 
 #ifdef __cplusplus
 }
