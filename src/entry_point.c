@@ -867,7 +867,16 @@ PRIVATE void process(const char *process_name, const char *work_dir, const char 
                 continue;
             }
             json_incref(jn_service_tree);
-            gobj_service_factory(service_name, jn_service_tree);
+            if(!gobj_service_factory(service_name, jn_service_tree)) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "msg",          "%s", "gobj_service_factory() FAILED",
+                    "service",      "%s", service_name,
+                    NULL
+                );
+            }
         }
     }
 
