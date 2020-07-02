@@ -430,12 +430,10 @@ PRIVATE int _add_frame_header(hgobj gobj, GBUFFER *gbuf, char h_fin, char h_opco
 
     } else {
         log_error(0,
-            "gobj",         "%s", __FILE__,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "data TOO LONG",
-            "gclass",       "%s", gobj_gclass_name(gobj),
-            "name",         "%s", gobj_name(gobj),
             "ln",           "%d", ln,
             NULL
         );
@@ -534,7 +532,6 @@ PRIVATE void ws_close(hgobj gobj, int code, const char *reason)
 
     if(!priv->close_frame_sent) {
         priv->close_frame_sent = TRUE;
-        set_timeout(priv->timer, 1*1000);
         send_close_frame(gobj, code, reason);
     }
 
@@ -544,6 +541,7 @@ PRIVATE void ws_close(hgobj gobj, int code, const char *reason)
             gobj_stop(priv->tcp0);
         }
     }
+    set_timeout(priv->timer, 1*1000);
 }
 
 /***************************************************************************
@@ -1675,11 +1673,9 @@ PRIVATE int ac_timeout_waiting_handshake(hgobj gobj, const char *event, json_t *
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     log_info(0,
-        "gobj",         "%s", __FILE__,
+        "gobj",         "%s", gobj_full_name(gobj),
         "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
         "msg",          "%s", "Timeout waiting websocket handshake",
-        "gclass",       "%s", gobj_gclass_name(gobj),
-        "name",         "%s", gobj_name(gobj),
         NULL
     );
 
@@ -1698,12 +1694,10 @@ PRIVATE int ac_timeout_waiting_disconnected(hgobj gobj, const char *event, json_
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    log_info(0,
-        "gobj",         "%s", __FILE__,
+    log_warning(0,
+        "gobj",         "%s", gobj_full_name(gobj),
         "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
         "msg",          "%s", "Timeout waiting websocket disconnected",
-        "gclass",       "%s", gobj_gclass_name(gobj),
-        "name",         "%s", gobj_name(gobj),
         NULL
     );
 
@@ -1861,11 +1855,9 @@ PRIVATE int ac_process_payload_data(hgobj gobj, const char *event, json_t *kw, h
 PRIVATE int ac_timeout_waiting_payload_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     log_info(0,
-        "gobj",         "%s", __FILE__,
+        "gobj",         "%s", gobj_full_name(gobj),
         "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
         "msg",          "%s", "Timeout waiting websocket PAYLOAD data",
-        "gclass",       "%s", gobj_gclass_name(gobj),
-        "name",         "%s", gobj_name(gobj),
         NULL
     );
 
