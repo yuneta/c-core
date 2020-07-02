@@ -537,7 +537,6 @@ PRIVATE void ws_close(hgobj gobj, int code, const char *reason)
         set_timeout(priv->timer, 1*1000);
         send_close_frame(gobj, code, reason);
     }
-    gobj_send_event(priv->tcp0, "EV_DROP", 0, gobj);
 
     if(priv->iamServer) {
         if (!priv->tcp0_closed) {
@@ -1590,29 +1589,6 @@ PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
 }
 
 /***************************************************************************
- *  Too much time waiting disconected
- ***************************************************************************/
-PRIVATE int ac_timeout_waiting_disconnected(hgobj gobj, const char *event, json_t *kw, hgobj src)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    log_info(0,
-        "gobj",         "%s", __FILE__,
-        "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
-        "msg",          "%s", "Timeout waiting websocket disconected",
-        "gclass",       "%s", gobj_gclass_name(gobj),
-        "name",         "%s", gobj_name(gobj),
-        NULL
-    );
-
-    priv->on_close_broadcasted = TRUE;  // no on_open was broadcasted
-    priv->close_frame_sent = TRUE;
-    gobj_send_event(priv->tcp0, "EV_DROP", 0, gobj);
-    KW_DECREF(kw);
-    return 0;
-}
-
-/***************************************************************************
  *  Process handshake rx data.
  *  We can be server or client.
  ***************************************************************************/
@@ -1683,6 +1659,7 @@ PRIVATE int ac_process_handshake(hgobj gobj, const char *event, json_t *kw, hgob
                 priv->close_frame_sent = TRUE;
                 priv->on_close_broadcasted = TRUE;
                 ws_close(gobj, STATUS_PROTOCOL_ERROR, 0);
+                gobj_send_event(priv->tcp0, "EV_DROP", 0, gobj);
             }
         }
     }
@@ -1709,6 +1686,28 @@ PRIVATE int ac_timeout_waiting_handshake(hgobj gobj, const char *event, json_t *
     priv->on_close_broadcasted = TRUE;  // no on_open was broadcasted
     priv->close_frame_sent = TRUE;
     ws_close(gobj, STATUS_PROTOCOL_ERROR, 0);
+    gobj_send_event(priv->tcp0, "EV_DROP", 0, gobj);
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ *  Too much time waiting disconnected
+ ***************************************************************************/
+PRIVATE int ac_timeout_waiting_disconnected(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    log_info(0,
+        "gobj",         "%s", __FILE__,
+        "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
+        "msg",          "%s", "Timeout waiting websocket disconnected",
+        "gclass",       "%s", gobj_gclass_name(gobj),
+        "name",         "%s", gobj_name(gobj),
+        NULL
+    );
+
+    gobj_send_event(priv->tcp0, "EV_DROP", 0, gobj);
     KW_DECREF(kw);
     return 0;
 }
@@ -1989,8 +1988,8 @@ PRIVATE const char *state_names[] = {
 
 PRIVATE EV_ACTION ST_DISCONNECTED[] = {
     {"EV_CONNECTED",        ac_connected,                       "ST_WAITING_HANDSHAKE"},
-    {"EV_TIMEOUT",          ac_timeout_waiting_disconnected,    0},
     {"EV_DISCONNECTED",     ac_disconnected,                    0},
+    {"EV_TIMEOUT",          ac_timeout_waiting_disconnected,    0},
     {"EV_STOPPED",          ac_stopped,                         0},
     {0,0,0}
 };
