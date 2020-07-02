@@ -537,6 +537,7 @@ PRIVATE void ws_close(hgobj gobj, int code, const char *reason)
         set_timeout(priv->timer, 1*1000);
         send_close_frame(gobj, code, reason);
     }
+    gobj_send_event(priv->tcp0, "EV_DROP", 0, gobj);
 
     if(priv->iamServer) {
         if (!priv->tcp0_closed) {
@@ -1682,7 +1683,6 @@ PRIVATE int ac_process_handshake(hgobj gobj, const char *event, json_t *kw, hgob
                 priv->close_frame_sent = TRUE;
                 priv->on_close_broadcasted = TRUE;
                 ws_close(gobj, STATUS_PROTOCOL_ERROR, 0);
-                gobj_send_event(priv->tcp0, "EV_DROP", 0, gobj);
             }
         }
     }
@@ -1709,7 +1709,6 @@ PRIVATE int ac_timeout_waiting_handshake(hgobj gobj, const char *event, json_t *
     priv->on_close_broadcasted = TRUE;  // no on_open was broadcasted
     priv->close_frame_sent = TRUE;
     ws_close(gobj, STATUS_PROTOCOL_ERROR, 0);
-    gobj_send_event(priv->tcp0, "EV_DROP", 0, gobj);
     KW_DECREF(kw);
     return 0;
 }
