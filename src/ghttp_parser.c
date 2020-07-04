@@ -206,7 +206,7 @@ PRIVATE int on_message_complete(http_parser* http_parser)
                 json_object_set_new(kw_http, "body", json_string(""));
             } else {
                 if(strcasestr(content_type, "application/json")) {
-                    json_t *jn_body = nonlegalstring2json(parser->body, TRUE);
+                    json_t *jn_body = nonlegalbuffer2json(parser->body, parser->body_size, TRUE);
                     json_object_set_new(kw_http, "body", jn_body);
                 } else {
                     json_object_set_new(kw_http, "body", json_string(parser->body));
