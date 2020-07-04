@@ -92,6 +92,7 @@ SDATA (ASN_UNSIGNED64,  "backup_queue_size",SDF_WR|SDF_PERSIST, 1*1000000,  "Do 
 SDATA (ASN_INTEGER,     "timeout_ack",      SDF_WR|SDF_PERSIST, 60,         "Timeout ack in seconds"),
 SDATA (ASN_BOOLEAN,     "drop_on_timeout_ack",SDF_WR|SDF_PERSIST, 1,        "On ack timeout drop connection"),
 
+SDATA (ASN_BOOLEAN,     "disable_alert",    SDF_WR|SDF_PERSIST, 0,          "Disable alert"),
 SDATA (ASN_OCTET_STR,   "alert_from",       SDF_WR,             "",         "Alert from"),
 SDATA (ASN_OCTET_STR,   "alert_to",         SDF_WR|SDF_PERSIST, "",         "Alert destination"),
 
@@ -622,27 +623,29 @@ PRIVATE q_msg enqueue_message(
     }
 
     //gobj_incr_qs(QS_INTERNAL_QUEUE, 1); // TODO gestiona colas múltiples
-    if(trq_size(priv->trq_msgs) >= 2000) {
-        if(trq_size(priv->trq_msgs) % 2000 == 0) {
-            char subject[280];
-            char alert[280];
-            snprintf(
-                subject,
-                sizeof(subject),
-                "ALERTA Encolamiento de %ld mensajes en nodo '%s', yuno '%s'",
-                (unsigned long)trq_size(priv->trq_msgs),
-                get_host_name(),
-                gobj_yuno_role_plus_name()
-            );
-            snprintf(
-                alert,
-                sizeof(alert),
-                "Encolamiento de %ld mensajes en nodo '%s', yuno '%s'",
-                (unsigned long)trq_size(priv->trq_msgs),
-                get_host_name(),
-                gobj_yuno_role_plus_name()
-            );
-            send_alert(gobj, subject, alert);
+    if(!gobj_read_bool_attr(gobj, "disable_alert")) {
+        if(trq_size(priv->trq_msgs) >= 2000) { // TODO deja configurable
+            if(trq_size(priv->trq_msgs) % 2000 == 0) {
+                char subject[280];
+                char alert[280];
+                snprintf(
+                    subject,
+                    sizeof(subject),
+                    "ALERTA Encolamiento de %ld mensajes en nodo '%s', yuno '%s'",
+                    (unsigned long)trq_size(priv->trq_msgs),
+                    get_host_name(),
+                    gobj_yuno_role_plus_name()
+                );
+                snprintf(
+                    alert,
+                    sizeof(alert),
+                    "Encolamiento de %ld mensajes en nodo '%s', yuno '%s'",
+                    (unsigned long)trq_size(priv->trq_msgs),
+                    get_host_name(),
+                    gobj_yuno_role_plus_name()
+                );
+                send_alert(gobj, subject, alert);
+            }
         }
     }
 
