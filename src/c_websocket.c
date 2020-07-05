@@ -138,6 +138,7 @@ PRIVATE int frame_completed(hgobj gobj);
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag------------------------default---------description---------- */
 SDATA (ASN_BOOLEAN,     "connected",        SDF_RD,                     0,              ""),
+SDATA (ASN_INTEGER,     "timeout_handshake",SDF_WR|SDF_PERSIST,    5*1000,              "Timeout to handshake"),
 SDATA (ASN_INTEGER,     "timeout_close",    SDF_WR|SDF_PERSIST,    3*1000,              "Timeout to close"),
 SDATA (ASN_INTEGER,     "pingT",            SDF_WR|SDF_PERSIST,   50*1000,      "Ping interval. If value <= 0 then No ping"),
 SDATA (ASN_POINTER,     "tcp0",             0,                          0,              "Tcp0 connection"),
@@ -1537,7 +1538,7 @@ PRIVATE int ac_connected(hgobj gobj, const char *event, json_t *kw, hgobj src)
             );
         }
     }
-    set_timeout(priv->timer, 10*1000);
+    set_timeout(priv->timer, gobj_read_int32_attr(gobj, "timeout_handshake"));
     KW_DECREF(kw);
     return 0;
 }
