@@ -42,7 +42,7 @@ SDATA (ASN_OCTET_STR,   "rx_data_event_name",       SDF_RD,         "EV_RX_DATA"
 SDATA (ASN_OCTET_STR,   "stopped_event_name",       SDF_RD,         "EV_STOPPED",   "Stopped event name"),
 SDATA (ASN_UNSIGNED,    "max_tx_queue",             SDF_WR,         0,              "Maximum messages in tx queue. Default is 0: no limit."),
 SDATA (ASN_COUNTER64,   "cur_tx_queue",             SDF_RD,         0,              "Current messages in tx queue"),
-SDATA (ASN_BOOLEAN,     "__clisrv__",                   SDF_RD,         0,              "Client of tcp server"),
+SDATA (ASN_BOOLEAN,     "__clisrv__",               SDF_RD,         0,              "Client of tcp server"),
 SDATA (ASN_BOOLEAN,     "output_priority",          SDF_RD|SDF_WR,  0,              "Make output priority"),
 SDATA (ASN_POINTER,     "user_data",                0,              0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",               0,              0,              "more user data"),
