@@ -821,7 +821,7 @@ PRIVATE int ac_mt_stats(hgobj gobj, const char *event, json_t *kw, hgobj src)
     if(!webix) {
         // Asynchronous response
     } else {
-        json_t * kw2 = msg_iev_answer(
+        json_t *kw2 = msg_iev_answer(
             gobj,
             kw,
             webix,
@@ -882,7 +882,7 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
     if(!webix) {
         // Asynchronous response
     } else {
-        json_t * kw2 = msg_iev_answer(
+        json_t *kw2 = msg_iev_answer(
             gobj,
             kw,
             webix,
@@ -1109,7 +1109,12 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
         json_t *__md_iev__ = kw_get_dict(iev_kw, "__md_iev__", 0, 0);
         if(__md_iev__) {
             KW_INCREF(iev_kw);
-            json_t *kw3 = msg_iev_answer(gobj, iev_kw, 0, 0);
+            json_t *kw3 = msg_iev_answer(
+                gobj,
+                iev_kw,
+                0,
+                "__publishing__"
+            );
             json_object_del(iev_kw, "__md_iev__");
             json_object_set_new(iev_kw, "__global__", kw3);
         }
