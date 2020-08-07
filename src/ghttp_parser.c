@@ -122,7 +122,7 @@ PUBLIC int ghttp_parser_received(
     } else if (nparsed != recved) {
         /* Handle error. Usually just close the connection. */
         log_error(0,
-            "gobj",         "%s", gobj_short_name(gobj),
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
             "msg",          "%s", "http_parser_execute() FAILED 1",
@@ -135,7 +135,7 @@ PUBLIC int ghttp_parser_received(
     } else {
         if(HTTP_PARSER_ERRNO(&parser->http_parser) != HPE_OK) {
             log_error(0,
-                "gobj",         "%s", gobj_short_name(gobj),
+                "gobj",         "%s", gobj_full_name(gobj),
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
                 "msg",          "%s", "http_parser_execute() FAILED 2",
