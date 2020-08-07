@@ -121,29 +121,29 @@ PUBLIC int ghttp_parser_received(
         /* handle new protocol */
     } else if (nparsed != recved) {
         /* Handle error. Usually just close the connection. */
-        json_t *tt = json_sprintf("%s", http_errno_name(HTTP_PARSER_ERRNO(&parser->http_parser)));
         log_error(0,
             "gobj",         "%s", gobj_short_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
-            "msg",          "%j", tt,
+            "msg",          "%s", "http_parser_execute() FAILED 1",
+            "error",        "%s", http_errno_name(HTTP_PARSER_ERRNO(&parser->http_parser)),
             "desc",         "%s", http_errno_description(HTTP_PARSER_ERRNO(&parser->http_parser)),
             NULL
         );
-        JSON_DECREF(tt);
+        log_debug_dump(0, buf, recved, 0);
         return -1;
     } else {
         if(HTTP_PARSER_ERRNO(&parser->http_parser) != HPE_OK) {
-            json_t *tt = json_sprintf("%s", http_errno_name(HTTP_PARSER_ERRNO(&parser->http_parser)));
             log_error(0,
                 "gobj",         "%s", gobj_short_name(gobj),
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
-                "msg",          "%j", tt,
+                "msg",          "%s", "http_parser_execute() FAILED 2",
+                "error",        "%s", http_errno_name(HTTP_PARSER_ERRNO(&parser->http_parser)),
                 "desc",         "%s", http_errno_description(HTTP_PARSER_ERRNO(&parser->http_parser)),
                 NULL
             );
-            JSON_DECREF(tt);
+            log_debug_dump(0, buf, recved, 0);
             return -1;
         }
     }
