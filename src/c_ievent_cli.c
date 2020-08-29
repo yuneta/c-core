@@ -31,7 +31,8 @@ PRIVATE int send_static_iev(
 );
 PRIVATE json_t *build_ievent_request(
     hgobj gobj,
-    const char *src_service
+    const char *src_service,
+    const char *dst_service
 );
 
 
@@ -185,7 +186,8 @@ PRIVATE json_t *mt_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src)
      */
     json_t *jn_ievent_id = build_ievent_request(
         gobj,
-        gobj_name(src)
+        gobj_name(src),
+        kw_get_str(kw, "__service__", 0, 0)
     );
     msg_iev_push_stack(
         kw,         // not owned
@@ -196,6 +198,7 @@ PRIVATE json_t *mt_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src)
     json_object_set_new(kw, "__stats__", json_string(stats));
 
     send_static_iev(gobj, "EV_MT_STATS", kw, src);
+
     return 0;   // return 0 on asychronous response.
 }
 
@@ -225,14 +228,17 @@ PRIVATE json_t *mt_command(hgobj gobj, const char *command, json_t *kw, hgobj sr
      */
     json_t *jn_ievent_id = build_ievent_request(
         gobj,
-        gobj_name(src)
+        gobj_name(src),
+        kw_get_str(kw, "__service__", 0, 0)
     );
     msg_iev_push_stack(
         kw,         // not owned
         IEVENT_MESSAGE_AREA_ID,
         jn_ievent_id   // owned
     );
+
     json_object_set_new(kw, "__command__", json_string(command));
+
     send_static_iev(gobj, "EV_MT_COMMAND", kw, src);
 
     return 0;   // return 0 on asychronous response.
@@ -270,7 +276,8 @@ PRIVATE int mt_inject_event(hgobj gobj, const char *event, json_t *kw, hgobj src
          */
         json_t *jn_ievent_id = build_ievent_request(
             gobj,
-            gobj_name(src)
+            gobj_name(src),
+            kw_get_str(kw, "__service__", 0, 0)
         );
         msg_iev_push_stack(
             kw,         // not owned
@@ -313,7 +320,8 @@ PRIVATE int send_remote_subscription(
     }
     json_t *jn_ievent_id = build_ievent_request(
         gobj,
-        gobj_name(subscriber)
+        gobj_name(subscriber),
+        0
     );
     msg_iev_push_stack(
         kw,         // not owned
@@ -377,7 +385,8 @@ PRIVATE int mt_subscription_deleted(
     }
     json_t *jn_ievent_id = build_ievent_request(
         gobj,
-        gobj_name(subscriber)
+        gobj_name(subscriber),
+        0
     );
     msg_iev_push_stack(
         kw,         // not owned
@@ -403,12 +412,14 @@ PRIVATE int mt_subscription_deleted(
  ***************************************************************************/
 PRIVATE json_t *build_ievent_request(
     hgobj gobj,
-    const char *src_service)
+    const char *src_service,
+    const char *dst_service
+)
 {
     json_t *jn_ievent_chain = json_pack("{s:s, s:s, s:s, s:s, s:s, s:s, s:s, s:s}",
         "dst_yuno", gobj_read_str_attr(gobj, "wanted_yuno_name"),
         "dst_role", gobj_read_str_attr(gobj, "wanted_yuno_role"),
-        "dst_service", gobj_read_str_attr(gobj, "wanted_yuno_service"),
+        "dst_service", dst_service?dst_service:gobj_read_str_attr(gobj, "wanted_yuno_service"),
         "src_yuno", gobj_yuno_name(),
         "src_role", gobj_yuno_role(),
         "src_service", src_service,
@@ -469,7 +480,8 @@ PRIVATE int send_identity_card(hgobj gobj)
      */
     json_t *jn_ievent_id = build_ievent_request(
         gobj,
-        gobj_name(gobj)
+        gobj_name(gobj),
+        0
     );
     msg_iev_push_stack(
         kw,         // not owned
