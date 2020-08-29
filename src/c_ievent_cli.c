@@ -187,7 +187,7 @@ PRIVATE json_t *mt_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src)
     json_t *jn_ievent_id = build_ievent_request(
         gobj,
         gobj_name(src),
-        kw_get_str(kw, "__service__", 0, 0)
+        kw_get_str(kw, "service", 0, 0)
     );
     msg_iev_push_stack(
         kw,         // not owned
@@ -229,7 +229,7 @@ PRIVATE json_t *mt_command(hgobj gobj, const char *command, json_t *kw, hgobj sr
     json_t *jn_ievent_id = build_ievent_request(
         gobj,
         gobj_name(src),
-        kw_get_str(kw, "__service__", 0, 0)
+        kw_get_str(kw, "service", 0, 0)
     );
     msg_iev_push_stack(
         kw,         // not owned

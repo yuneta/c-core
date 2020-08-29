@@ -71,6 +71,7 @@ PRIVATE json_t *cmd_view_attrs(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 PRIVATE json_t *cmd_view_attrs2(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_webix_gobj_tree(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_view_gobj_tree(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_view_gobj_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE json_t *cmd_view_gclass_register(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_view_service_register(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -274,6 +275,7 @@ SDATACM (ASN_SCHEMA,    "view-attrs2",              0,      pm_gobj_def_name, cm
 
 SDATACM (ASN_SCHEMA,    "webix-gobj-tree",          0,      pm_gobj_root_name,cmd_webix_gobj_tree,       "View webix style gobj tree."),
 SDATACM (ASN_SCHEMA,    "view-gobj-tree",           0,      pm_gobj_root_name,cmd_view_gobj_tree,       "View gobj tree."),
+SDATACM (ASN_SCHEMA,    "view-gobj-treedb",         0,      pm_gobj_root_name,cmd_view_gobj_treedb,       "View gobj treedb."),
 
 SDATACM (ASN_SCHEMA,    "list-childs",              0,      pm_list_childs, cmd_list_childs,            "List childs of the specified gclass"),
 SDATACM (ASN_SCHEMA,    "write-bool",               0,      pm_wr_attr,     cmd_write_bool,             "Write a boolean attribute)"),
@@ -1094,6 +1096,40 @@ PRIVATE json_t *cmd_view_gobj_tree(hgobj gobj, const char *cmd, json_t *kw, hgob
         0,
         0,
         0,
+        jn_data,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_view_gobj_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0); //" __yuno__"
+    hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
+    if(!gobj2view) {
+        gobj2view = gobj_find_gobj(gobj_name_);
+        if(!gobj2view) {
+            return msg_iev_build_webix(
+                gobj,
+                -1,
+                json_local_sprintf(
+                    "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
+                ),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+    }
+
+    json_t *jn_data = gobj_gobjs_treedb_data(gobj2view);
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        0,
+        kw_incref(gobj_gobjs_treedb_schema("gobj")),
         jn_data,
         kw  // owned
     );
