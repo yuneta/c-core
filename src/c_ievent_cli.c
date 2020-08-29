@@ -277,7 +277,7 @@ PRIVATE int mt_inject_event(hgobj gobj, const char *event, json_t *kw, hgobj src
         json_t *jn_ievent_id = build_ievent_request(
             gobj,
             gobj_name(src),
-            kw_get_str(kw, "__service__", 0, 0)
+            0
         );
         msg_iev_push_stack(
             kw,         // not owned
@@ -394,6 +394,7 @@ PRIVATE int mt_subscription_deleted(
         jn_ievent_id   // owned
     );
     kw_set_subdict_value(kw, "__md_iev__", "__msg_type__", json_string("__unsubscribing__"));
+
     return send_static_iev(gobj, event, kw, gobj);
 }
 
