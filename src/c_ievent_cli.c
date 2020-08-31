@@ -103,7 +103,7 @@ PRIVATE void mt_create(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    priv->timer = gobj_create("ievent", GCLASS_TIMER, 0, gobj);
+    priv->timer = gobj_create("", GCLASS_TIMER, 0, gobj);
 
     SET_PRIV(remote_yuno_name,          gobj_read_str_attr)
     SET_PRIV(remote_yuno_role,          gobj_read_str_attr)

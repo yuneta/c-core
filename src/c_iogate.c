@@ -310,7 +310,7 @@ PRIVATE void mt_create(hgobj gobj)
 
     priv->ptxMsgs = gobj_danger_attr_ptr(gobj, "txMsgs");
     priv->prxMsgs = gobj_danger_attr_ptr(gobj, "rxMsgs");
-    priv->timer = gobj_create("iogate", GCLASS_TIMER, 0, gobj);
+    priv->timer = gobj_create("", GCLASS_TIMER, 0, gobj);
 
     BOOL persistent_channels = gobj_read_bool_attr(gobj, "persistent_channels");
 

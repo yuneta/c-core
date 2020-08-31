@@ -91,7 +91,7 @@ PRIVATE void mt_create(hgobj gobj)
     /*
      *  Set the periodic timer to retry resend
      */
-    priv->timer = gobj_create("pers", GCLASS_TIMER, 0, gobj);
+    priv->timer = gobj_create("", GCLASS_TIMER, 0, gobj);
 
     /*
      *  Do copy of heavy used parameters, for quick access.

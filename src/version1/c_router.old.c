@@ -327,7 +327,7 @@ PRIVATE void mt_create(hgobj gobj)
     /*
      *  Set the periodic timer to retry resend
      */
-    priv->timer = gobj_create("router", GCLASS_TIMER, 0, gobj);
+    priv->timer = gobj_create("", GCLASS_TIMER, 0, gobj);
 
     /*------------------------------------*
      *      Route tables

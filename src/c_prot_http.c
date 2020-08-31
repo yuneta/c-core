@@ -96,7 +96,7 @@ PRIVATE void mt_create(hgobj gobj)
     priv->pconnected = gobj_danger_attr_ptr(gobj, "connected");
     priv->iamServer = gobj_read_bool_attr(gobj, "iamServer");
 
-    priv->timer = gobj_create("http", GCLASS_TIMER, 0, gobj);
+    priv->timer = gobj_create("", GCLASS_TIMER, 0, gobj);
     priv->parsing_request = ghttp_parser_create(
         gobj, HTTP_REQUEST, "EV_ON_MESSAGE", gobj_read_bool_attr(gobj, "send_event")
     );

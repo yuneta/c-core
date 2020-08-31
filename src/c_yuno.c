@@ -540,7 +540,7 @@ PRIVATE void mt_create(hgobj gobj)
     /*
      *  Set the periodic timer to flush log
      */
-    priv->timer = gobj_create("yuno", GCLASS_TIMER, 0, gobj);
+    priv->timer = gobj_create("", GCLASS_TIMER, 0, gobj);
 
     SET_PRIV(timeout,               gobj_read_uint32_attr)
     SET_PRIV(timeout_stats,         gobj_read_uint32_attr)

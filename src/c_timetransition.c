@@ -84,7 +84,7 @@ PRIVATE void mt_create(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    priv->timer = gobj_create("timer", GCLASS_TIMER, 0, gobj);
+    priv->timer = gobj_create("", GCLASS_TIMER, 0, gobj);
 
     SET_PRIV(timeout,                       gobj_read_int32_attr)
     SET_PRIV(time_transition_event_name,    gobj_read_str_attr)
