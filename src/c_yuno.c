@@ -895,13 +895,14 @@ PRIVATE json_t *cmd_view_gclass(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         }
     }
 
-    json_t *jn_data = gclass2json(gclass);
+    json_t *jn_data = json_array();
+    json_array_append_new(jn_data, gclass2json(gclass));
 
     return msg_iev_build_webix(
         gobj,
         0,
         0,
-        0,
+        kw_incref(gobj_gobjs_treedb_schema("gclass")),
         jn_data,
         kw  // owned
     );
