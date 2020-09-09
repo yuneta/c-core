@@ -901,7 +901,7 @@ PRIVATE json_t *cmd_view_gclass(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         gobj,
         0,
         0,
-        kw_incref(gobj_gobjs_treedb_schema("gclass")),
+        0, // TODO kw_incref(gobj_gobjs_treedb_schema("gclass")),
         jn_data,
         kw  // owned
     );
@@ -1129,7 +1129,7 @@ PRIVATE json_t *cmd_view_gobj_treedb(hgobj gobj, const char *cmd, json_t *kw, hg
         gobj,
         0,
         0,
-        kw_incref(gobj_gobjs_treedb_schema("gobj")),
+        0, // TODO kw_incref(gobj_gobjs_treedb_schema("gobj")),
         jn_data,
         kw  // owned
     );
