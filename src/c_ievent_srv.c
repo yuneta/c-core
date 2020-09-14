@@ -854,7 +854,7 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
     } else {
         service_gobj = gobj_find_service(service, FALSE);
         if(!service_gobj) {
-            service_gobj = gobj_find_gobj(service);
+            service_gobj = gobj_find_gobj(service); // WARNING TODO agujero seguridad?
             if(!service_gobj) {
                 return send_static_iev(gobj,
                     "EV_MT_COMMAND_ANSWER",
@@ -1050,7 +1050,7 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
     // Puede venir empty si se autoriza a buscar el evento publico en otros servicios
     hgobj gobj_service = 0;
     if(!empty_string(iev_dst_service)) {
-        gobj_service = gobj_find_unique_gobj(iev_dst_service, FALSE);
+        gobj_service = gobj_find_service(iev_dst_service, FALSE); // WARNING new in v4.2.11, prev gobj_find_unique_gobj
     }
     if(!gobj_service) {
         gobj_service = priv->gobj_service;
