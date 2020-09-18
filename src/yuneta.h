@@ -49,26 +49,30 @@ extern "C"{
 #include "c_timetransition.h"
 #include "c_rstats.h"
 
-// Protocols
+/*
+ *  Protocols
+ */
 #include "c_connex.h"
-// #include "c_serverlink.h"
-#include "c_tcp0.h"
-#include "c_tcp_s0.h"
-// #include "c_tlv.h"
 #include "c_websocket.h"
 #include "c_prot_header4.h"
 #include "c_prot_raw.h"
 #include "c_prot_http.h"
-
-#include "c_gss_udp_s0.h"   // gossamer
-
-#include "c_udp0.h"         // mixin uv-gobj
-#include "c_udp_s0.h"       // mixin uv-gobj
-#include "c_timer.h"        // mixin uv-gobj
-#include "c_fs.h"           // mixin uv-gobj
+// #include "c_serverlink.h"
+// #include "c_tlv.h"
 
 /*
- *  Protocols, decoders
+ *  Mixin uv-gobj
+ */
+#include "c_gss_udp_s0.h"   // gossamer
+#include "c_tcp0.h"
+#include "c_tcp_s0.h"
+#include "c_udp_s0.h"
+#include "c_udp0.h"
+#include "c_timer.h"
+#include "c_fs.h"
+
+/*
+ *  Decoders
  */
 #include "ghttp_parser.h"
 

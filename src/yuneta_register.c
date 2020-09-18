@@ -25,6 +25,7 @@ PUBLIC int yuneta_register_c_core(void)
     /*
      *  Services
      */
+    gobj_register_gclass(GCLASS_NODE);
     gobj_register_gclass(GCLASS_RESOURCE);
     gobj_register_gclass(GCLASS_IEVENT_SRV);
     gobj_register_gclass(GCLASS_IEVENT_CLI);
@@ -41,6 +42,7 @@ PUBLIC int yuneta_register_c_core(void)
     gobj_register_gclass(GCLASS_COUNTER);
 //     gobj_register_gclass(GCLASS_TASK);
     gobj_register_gclass(GCLASS_DYNRULE);
+    gobj_register_gclass(GCLASS_TIMETRANSITION);
     gobj_register_gclass(GCLASS_RSTATS);
 
     /*
