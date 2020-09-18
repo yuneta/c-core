@@ -1869,6 +1869,9 @@ PRIVATE json_t *cmd_activate_snap(hgobj gobj, const char *cmd, json_t *kw, hgobj
         gobj,
         name
     );
+    if(ret>=0) {
+        // TODO publish changes?
+    }
     return msg_iev_build_webix(gobj,
         ret,
         ret>=0?json_sprintf("Snap activated: '%s', check new yuno pids", name):json_string(log_last_message()),
