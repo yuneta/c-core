@@ -209,7 +209,7 @@ SDATA_END()
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag----------------default---------description---------- */
-SDATA (ASN_JSON,        "tranger",          SDF_RD|SDF_REQUIRED,0,              "Tranger handler"),
+SDATA (ASN_POINTER,     "tranger",          SDF_RD|SDF_REQUIRED,0,              "Tranger handler"),
 SDATA (ASN_OCTET_STR,   "treedb_name",      SDF_RD|SDF_REQUIRED,"",             "Treedb name"),
 SDATA (ASN_JSON,        "treedb_schema",    SDF_RD|SDF_REQUIRED,0,              "Treedb schema"),
 SDATA (ASN_INTEGER,     "exit_on_error",    0,                  LOG_OPT_EXIT_ZERO,"exit on error"),
@@ -273,7 +273,7 @@ PRIVATE void mt_create(hgobj gobj)
      *  Do copy of heavy used parameters, for quick access.
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
-    SET_PRIV(tranger,                   gobj_read_json_attr)
+    SET_PRIV(tranger,                   gobj_read_pointer_attr)
     SET_PRIV(treedb_name,               gobj_read_str_attr)
     SET_PRIV(treedb_schema,             gobj_read_json_attr)
     SET_PRIV(exit_on_error,             gobj_read_int32_attr)
@@ -287,7 +287,7 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    IF_EQ_SET_PRIV(tranger,             gobj_read_json_attr)
+    IF_EQ_SET_PRIV(tranger,             gobj_read_pointer_attr)
     END_EQ_SET_PRIV()
 }
 
