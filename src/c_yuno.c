@@ -128,6 +128,8 @@ PRIVATE json_t* cmd_remove_allowed_ip(hgobj gobj, const char* cmd, json_t* kw, h
 PRIVATE json_t* cmd_list_denied_ips(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 PRIVATE json_t* cmd_add_denied_ip(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 PRIVATE json_t* cmd_remove_denied_ip(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
+PRIVATE json_t* cmd_2key_get_schema(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
+PRIVATE json_t* cmd_2key_get_value(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 
 PRIVATE sdata_desc_t pm_help[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
@@ -251,6 +253,14 @@ PRIVATE sdata_desc_t pm_remove_denied_ip[] = {
 SDATAPM (ASN_OCTET_STR, "ip",           0,              "",         "ip"),
 SDATA_END()
 };
+PRIVATE sdata_desc_t pm_2key_get_value[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "key1",         0,              "",         "Key1"),
+SDATAPM (ASN_OCTET_STR, "key2",         0,              "",         "Key2"),
+SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "No expanded (default) return [[size]]"),
+SDATAPM (ASN_UNSIGNED,  "limit",        0,              0,          "Expand only sizes < limit. 0 no limit"),
+SDATA_END()
+};
 
 PRIVATE const char *a_help[] = {"h", "?", 0};
 PRIVATE const char *a_services[] = {"services", "list-services", 0};
@@ -326,9 +336,11 @@ SDATACM (ASN_SCHEMA,    "list-subscribings",        0,      pm_list_subscription
 SDATACM (ASN_SCHEMA,    "list-allowed-ips",         0,      0,              cmd_list_allowed_ips,          "List allowed ips"),
 SDATACM (ASN_SCHEMA,    "add-allowed-ip",           0,      pm_add_allowed_ip,  cmd_add_allowed_ip,          "Add a ip to allowed list"),
 SDATACM (ASN_SCHEMA,    "remove-allowed-ip",        0,      pm_remove_allowed_ip, cmd_remove_allowed_ip,          "Add a ip to allowed list"),
-SDATACM (ASN_SCHEMA,    "list-denied-ips",         0,      0,              cmd_list_denied_ips,          "List denied ips"),
-SDATACM (ASN_SCHEMA,    "add-denied-ip",           0,      pm_add_denied_ip,  cmd_add_denied_ip,          "Add a ip to denied list"),
-SDATACM (ASN_SCHEMA,    "remove-denied-ip",        0,      pm_remove_denied_ip, cmd_remove_denied_ip,          "Add a ip to denied list"),
+SDATACM (ASN_SCHEMA,    "list-denied-ips",          0,      0,              cmd_list_denied_ips,          "List denied ips"),
+SDATACM (ASN_SCHEMA,    "add-denied-ip",            0,      pm_add_denied_ip,  cmd_add_denied_ip,          "Add a ip to denied list"),
+SDATACM (ASN_SCHEMA,    "remove-denied-ip",         0,      pm_remove_denied_ip, cmd_remove_denied_ip,          "Add a ip to denied list"),
+SDATACM (ASN_SCHEMA,    "get-2key-schema",          0,      0, cmd_2key_get_schema, "Get 2key schema"),
+SDATACM (ASN_SCHEMA,    "get-2key-value",           0,      pm_2key_get_value, cmd_2key_get_value, "Get 2key value"),
 SDATA_END()
 };
 
@@ -3506,6 +3518,83 @@ PRIVATE json_t* cmd_remove_denied_ip(hgobj gobj, const char* cmd, json_t* kw, hg
         0,
         0,
         json_incref(gobj_read_json_attr(gobj_yuno(), "denied_ips")),
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t* cmd_2key_get_schema(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
+{
+    /*
+     *  Inform
+     */
+    return msg_iev_build_webix(gobj,
+        0,
+        0,
+        0,
+        gobj_2key_get_schema(),
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t* cmd_2key_get_value(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
+{
+    const char *key1 = kw_get_str(kw, "key1", "", 0);
+    if(empty_string(key1)) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_local_sprintf("What key1?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    const char *key2 = kw_get_str(kw, "key2", "", 0);
+    if(empty_string(key2)) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_local_sprintf("What key2?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *value = gobj_2key_get_value(key1, key2);
+    if(!value) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_local_sprintf("2key not found: '%s','%s'", key1, key2),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    BOOL expanded = kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
+    int limit = kw_get_int(kw, "limit", 0, KW_WILD_NUMBER);
+    if(expanded) {
+        if(!limit) {
+            kw_incref(value); // All
+        } else {
+            value = kw_collapse(value, TRUE, TRUE, limit);
+        }
+    } else {
+        value = kw_collapse(value, TRUE, TRUE, 0);
+    }
+
+    /*
+     *  Inform
+     */
+    return msg_iev_build_webix(gobj,
+        0,
+        0,
+        0,
+        value,
         kw  // owned
     );
 }
