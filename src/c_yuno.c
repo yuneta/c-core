@@ -257,6 +257,7 @@ PRIVATE sdata_desc_t pm_2key_get_value[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "key1",         0,              "",         "Key1"),
 SDATAPM (ASN_OCTET_STR, "key2",         0,              "",         "Key2"),
+SDATAPM (ASN_OCTET_STR, "path",         0,              "",         "Path"),
 SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "No expanded (default) return [[size]]"),
 SDATAPM (ASN_UNSIGNED,  "limit",        0,              0,          "Expand only sizes < limit. 0 no limit"),
 SDATA_END()
@@ -3575,8 +3576,23 @@ PRIVATE json_t* cmd_2key_get_value(hgobj gobj, const char* cmd, json_t* kw, hgob
             kw  // owned
         );
     }
+
     BOOL expanded = kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
     int limit = kw_get_int(kw, "limit", 0, KW_WILD_NUMBER);
+    const char *path = kw_get_str(kw, "path", "", 0);
+    if(!empty_string(path)) {
+        value = kw_find_path(value, path, FALSE);
+        if(!value) {
+            return msg_iev_build_webix(gobj,
+                -1,
+                json_local_sprintf("Path not found: '%s'", path),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+    }
+
     if(expanded) {
         if(!limit) {
             kw_incref(value); // All
