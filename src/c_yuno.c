@@ -130,6 +130,7 @@ PRIVATE json_t* cmd_add_denied_ip(hgobj gobj, const char* cmd, json_t* kw, hgobj
 PRIVATE json_t* cmd_remove_denied_ip(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 PRIVATE json_t* cmd_2key_get_schema(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 PRIVATE json_t* cmd_2key_get_value(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
+PRIVATE json_t* cmd_2key_get_subvalue(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 
 PRIVATE sdata_desc_t pm_help[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
@@ -342,6 +343,7 @@ SDATACM (ASN_SCHEMA,    "add-denied-ip",            0,      pm_add_denied_ip,  c
 SDATACM (ASN_SCHEMA,    "remove-denied-ip",         0,      pm_remove_denied_ip, cmd_remove_denied_ip,          "Add a ip to denied list"),
 SDATACM (ASN_SCHEMA,    "get-2key-schema",          0,      0, cmd_2key_get_schema, "Get 2key schema"),
 SDATACM (ASN_SCHEMA,    "get-2key-value",           0,      pm_2key_get_value, cmd_2key_get_value, "Get 2key value"),
+SDATACM (ASN_SCHEMA,    "get-2key-subvalue",        0,      pm_2key_get_value, cmd_2key_get_subvalue, "Get 2key sub-value"),
 SDATA_END()
 };
 
@@ -3613,6 +3615,24 @@ PRIVATE json_t* cmd_2key_get_value(hgobj gobj, const char* cmd, json_t* kw, hgob
         value,
         kw  // owned
     );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t* cmd_2key_get_subvalue(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
+{
+    const char *path = kw_get_str(kw, "path", "", 0);
+    if(empty_string(path)) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_local_sprintf("What path?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    return cmd_2key_get_value(gobj, cmd, kw, src);
 }
 
 
