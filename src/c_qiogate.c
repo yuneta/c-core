@@ -857,7 +857,7 @@ PRIVATE int process_ack(hgobj gobj, const char *event, json_t *kw, hgobj src)
     GBUFFER *gbuf = (GBUFFER *)(size_t)kw_get_int(kw, "gbuffer", 0, 0);
 
     gbuf_incref(gbuf);
-    json_t *jn_ack_message = gbuf2json(gbuf, TRUE);
+    json_t *jn_ack_message = gbuf2json(gbuf, 2);
 
     uint64_t rowid = kw_get_int(trq_get_metadata(jn_ack_message), "__msg_key__", 0, KW_REQUIRED);
 
