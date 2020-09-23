@@ -260,7 +260,8 @@ SDATAPM (ASN_OCTET_STR, "key1",         0,              "",         "Key1"),
 SDATAPM (ASN_OCTET_STR, "key2",         0,              "",         "Key2"),
 SDATAPM (ASN_OCTET_STR, "path",         0,              "",         "Path"),
 SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "No expanded (default) return [[size]]"),
-SDATAPM (ASN_UNSIGNED,  "limit",        0,              0,          "Expand only sizes < limit. 0 no limit"),
+SDATAPM (ASN_UNSIGNED,  "lists_limit",  0,              0,          "Expand lists only if size < limit. 0 no limit"),
+SDATAPM (ASN_UNSIGNED,  "dicts_limit",  0,              0,          "Expand dicts only if size < limit. 0 no limit"),
 SDATA_END()
 };
 
@@ -3580,7 +3581,8 @@ PRIVATE json_t* cmd_2key_get_value(hgobj gobj, const char* cmd, json_t* kw, hgob
     }
 
     BOOL expanded = kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
-    int limit = kw_get_int(kw, "limit", 0, KW_WILD_NUMBER);
+    int lists_limit = kw_get_int(kw, "lists_limit", 0, KW_WILD_NUMBER);
+    int dicts_limit = kw_get_int(kw, "dicts_limit", 0, KW_WILD_NUMBER);
     const char *path = kw_get_str(kw, "path", "", 0);
     if(!empty_string(path)) {
         value = kw_find_path(value, path, FALSE);
@@ -3596,13 +3598,13 @@ PRIVATE json_t* cmd_2key_get_value(hgobj gobj, const char* cmd, json_t* kw, hgob
     }
 
     if(expanded) {
-        if(!limit) {
+        if(!lists_limit && !dicts_limit) {
             kw_incref(value); // All
         } else {
-            value = kw_collapse(value, TRUE, TRUE, limit);
+            value = kw_collapse(value, lists_limit, dicts_limit);
         }
     } else {
-        value = kw_collapse(value, TRUE, TRUE, 0);
+        value = kw_collapse(value, 0, 0);
     }
 
     /*
