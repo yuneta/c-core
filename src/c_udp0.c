@@ -69,7 +69,7 @@ enum {
     TRACE_DUMP_TRAFFIC          = 0x0002,
 };
 PRIVATE const trace_level_t s_user_trace_level[16] = {
-{"connections",         "Trace connections and desconections"},
+{"connections",         "Trace connections and disconnections"},
 {"traffic",             "Trace dump traffic"},
 {0, 0},
 };
