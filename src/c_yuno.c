@@ -267,6 +267,8 @@ SDATA_END()
 
 PRIVATE const char *a_help[] = {"h", "?", 0};
 PRIVATE const char *a_services[] = {"services", "list-services", 0};
+PRIVATE const char *a_read_attrs[] = {"read-attrs", 0};
+PRIVATE const char *a_read_attrs2[] = {"read-attrs2", 0};
 
 PRIVATE sdata_desc_t command_table[] = {
 /*-CMD---type-----------name------------------------alias---items-----------json_fn----------------------description---------- */
@@ -283,12 +285,12 @@ SDATACM (ASN_SCHEMA,    "view-gobj",                0,      pm_gobj_def_name, cm
 
 SDATACM (ASN_SCHEMA,    "public-attrs",             0,      pm_gclass_name, cmd_public_attrs,           "List public attrs of gclasses"),
 
-SDATACM (ASN_SCHEMA,    "view-attrs",               0,      pm_gobj_def_name, cmd_view_attrs,           "View gobj's attrs"),
-SDATACM (ASN_SCHEMA,    "view-attrs2",              0,      pm_gobj_def_name, cmd_view_attrs2,          "View gobj's attrs with details"),
+SDATACM (ASN_SCHEMA,    "view-attrs",               a_read_attrs,pm_gobj_def_name, cmd_view_attrs,      "View gobj's attrs"),
+SDATACM (ASN_SCHEMA,    "view-attrs2",              a_read_attrs2,pm_gobj_def_name, cmd_view_attrs2,    "View gobj's attrs with details"),
 
-SDATACM (ASN_SCHEMA,    "webix-gobj-tree",          0,      pm_gobj_root_name,cmd_webix_gobj_tree,       "View webix style gobj tree."),
+SDATACM (ASN_SCHEMA,    "webix-gobj-tree",          0,      pm_gobj_root_name,cmd_webix_gobj_tree,      "View webix style gobj tree."),
 SDATACM (ASN_SCHEMA,    "view-gobj-tree",           0,      pm_gobj_root_name,cmd_view_gobj_tree,       "View gobj tree."),
-SDATACM (ASN_SCHEMA,    "view-gobj-treedb",         0,      pm_gobj_root_name,cmd_view_gobj_treedb,       "View gobj treedb."),
+SDATACM (ASN_SCHEMA,    "view-gobj-treedb",         0,      pm_gobj_root_name,cmd_view_gobj_treedb,     "View gobj treedb."),
 
 SDATACM (ASN_SCHEMA,    "list-childs",              0,      pm_list_childs, cmd_list_childs,            "List childs of the specified gclass"),
 SDATACM (ASN_SCHEMA,    "write-bool",               0,      pm_wr_attr,     cmd_write_bool,             "Write a boolean attribute)"),
