@@ -131,6 +131,7 @@ PRIVATE json_t* cmd_remove_denied_ip(hgobj gobj, const char* cmd, json_t* kw, hg
 PRIVATE json_t* cmd_2key_get_schema(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 PRIVATE json_t* cmd_2key_get_value(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 PRIVATE json_t* cmd_2key_get_subvalue(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
+PRIVATE json_t* cmd_topic_cols_desc(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 
 PRIVATE sdata_desc_t pm_help[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
@@ -347,6 +348,7 @@ SDATACM (ASN_SCHEMA,    "remove-denied-ip",         0,      pm_remove_denied_ip,
 SDATACM (ASN_SCHEMA,    "get-2key-schema",          0,      0, cmd_2key_get_schema, "Get 2key schema"),
 SDATACM (ASN_SCHEMA,    "get-2key-value",           0,      pm_2key_get_value, cmd_2key_get_value, "Get 2key value"),
 SDATACM (ASN_SCHEMA,    "get-2key-subvalue",        0,      pm_2key_get_value, cmd_2key_get_subvalue, "Get 2key sub-value"),
+SDATACM (ASN_SCHEMA,    "topic-cols-schema",        0,      0,  cmd_topic_cols_desc, "Get topic cols schema"),
 SDATA_END()
 };
 
@@ -3637,6 +3639,23 @@ PRIVATE json_t* cmd_2key_get_subvalue(hgobj gobj, const char* cmd, json_t* kw, h
         );
     }
     return cmd_2key_get_value(gobj, cmd, kw, src);
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t* cmd_topic_cols_desc(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
+{
+    /*
+     *  Inform
+     */
+    return msg_iev_build_webix(gobj,
+        0,
+        0,
+        0,
+        _treedb_create_topic_cols_desc(),
+        kw  // owned
+    );
 }
 
 
