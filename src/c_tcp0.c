@@ -452,6 +452,8 @@ PRIVATE void set_connected(hgobj gobj)
             "peername", priv->peername,
             "sockname", priv->sockname
         );
+        // TODO error de diseño, si se cambia connected_event_name la publicación fallará
+        // porque el evento no estará en output_events list.
         gobj_publish_event(gobj, priv->connected_event_name, kw_ev);
     }
 }
