@@ -513,7 +513,12 @@ PRIVATE int mt_unlink_nodes2(hgobj gobj, const char *parent_ref, const char *chi
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE json_t *mt_get_node(hgobj gobj, const char *topic_name, const char *id, json_t *jn_options)
+PRIVATE json_t *mt_get_node(
+    hgobj gobj,
+    const char *topic_name,
+    const char *id,
+    json_t *jn_options
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
