@@ -168,6 +168,14 @@ PRIVATE sdata_desc_t pm_activate_snap[] = {
 SDATAPM (ASN_OCTET_STR, "name",          0,              0,          "Snap name"),
 SDATA_END()
 };
+PRIVATE sdata_desc_t pm_print_tranger[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "path",         0,              "",         "Path"),
+SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "No expanded (default) return [[size]]"),
+SDATAPM (ASN_UNSIGNED,  "lists_limit",  0,              0,          "Expand lists only if size < limit. 0 no limit"),
+SDATAPM (ASN_UNSIGNED,  "dicts_limit",  0,              0,          "Expand dicts only if size < limit. 0 no limit"),
+SDATA_END()
+};
 
 PRIVATE const char *a_help[] = {"h", "?", 0};
 
@@ -176,7 +184,7 @@ PRIVATE sdata_desc_t command_table[] = {
 SDATACM (ASN_SCHEMA,    "help",             a_help,     pm_help,    cmd_help,       "Command's help"),
 
 /*-CMD---type-----------name------------al--items-----------json_fn-------------description--*/
-SDATACM (ASN_SCHEMA,    "print-tranger",0,  0,              cmd_print_tranger,  "Print tranger"),
+SDATACM (ASN_SCHEMA,    "print-tranger",0,  pm_print_tranger, cmd_print_tranger,  "Print tranger"),
 SDATACM (ASN_SCHEMA,    "create-node",  0,  pm_create_node, cmd_create_node,    "Create node"),
 SDATACM (ASN_SCHEMA,    "update-node",  0,  pm_update_node, cmd_update_node,    "Update node"),
 SDATACM (ASN_SCHEMA,    "delete-node",  0,  pm_delete_node, cmd_delete_node,    "Delete node"),
@@ -877,12 +885,44 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    json_t *tranger = kw_incref(priv->tranger);
+    BOOL expanded = kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
+    int lists_limit = kw_get_int(kw, "lists_limit", 0, KW_WILD_NUMBER);
+    int dicts_limit = kw_get_int(kw, "dicts_limit", 0, KW_WILD_NUMBER);
+    const char *path = kw_get_str(kw, "path", "", 0);
+
+    json_t *value = priv->tranger;
+
+    if(!empty_string(path)) {
+        value = kw_find_path(value, path, FALSE);
+        if(!value) {
+            return msg_iev_build_webix(gobj,
+                -1,
+                json_local_sprintf("Path not found: '%s'", path),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+    }
+
+    if(expanded) {
+        if(!lists_limit && !dicts_limit) {
+            kw_incref(value); // All
+        } else {
+            value = kw_collapse(value, lists_limit, dicts_limit);
+        }
+    } else {
+        value = kw_collapse(value, 0, 0);
+    }
+
+    /*
+     *  Inform
+     */
     return msg_iev_build_webix(gobj,
         0,
         0,
         0,
-        tranger,
+        value,
         kw  // owned
     );
 }
