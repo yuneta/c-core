@@ -53,6 +53,7 @@ set (SRCS
 
     # Services          # service, gotter or spider or gateway.
     src/c_resource.c
+    src/c_tranger.c
     src/c_node.c
     src/c_ievent_srv.c
     src/c_ievent_cli.c
@@ -110,6 +111,7 @@ set (HDRS
 
     # Services          # service, gotter or spider or gateway.
     src/c_node.h
+    src/c_tranger.h
     src/c_resource.h
     src/c_ievent_srv.h
     src/c_ievent_cli.h
