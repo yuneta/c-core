@@ -3586,8 +3586,8 @@ PRIVATE json_t* cmd_2key_get_value(hgobj gobj, const char* cmd, json_t* kw, hgob
     }
 
     BOOL expanded = kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
-    int lists_limit = kw_get_int(kw, "lists_limit", 0, KW_WILD_NUMBER);
-    int dicts_limit = kw_get_int(kw, "dicts_limit", 0, KW_WILD_NUMBER);
+    int lists_limit = kw_get_int(kw, "lists_limit", 100, KW_WILD_NUMBER);
+    int dicts_limit = kw_get_int(kw, "dicts_limit", 100, KW_WILD_NUMBER);
     const char *path = kw_get_str(kw, "path", "", 0);
     if(!empty_string(path)) {
         value = kw_find_path(value, path, FALSE);

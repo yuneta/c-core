@@ -30,6 +30,7 @@
  ***************************************************************************/
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_save_tranger_schema(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -176,6 +177,10 @@ SDATAPM (ASN_UNSIGNED,  "lists_limit",  0,              0,          "Expand list
 SDATAPM (ASN_UNSIGNED,  "dicts_limit",  0,              0,          "Expand dicts only if size < limit. 0 no limit"),
 SDATA_END()
 };
+PRIVATE sdata_desc_t pm_save_tranger_schema[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATA_END()
+};
 
 PRIVATE const char *a_help[] = {"h", "?", 0};
 
@@ -185,6 +190,7 @@ SDATACM (ASN_SCHEMA,    "help",             a_help,     pm_help,    cmd_help,   
 
 /*-CMD---type-----------name------------al--items-----------json_fn-------------description--*/
 SDATACM (ASN_SCHEMA,    "print-tranger",0,  pm_print_tranger, cmd_print_tranger,  "Print tranger"),
+SDATACM (ASN_SCHEMA,    "save-tranger-schema",0, pm_save_tranger_schema, cmd_save_tranger_schema,  "Save tranger schema"),
 SDATACM (ASN_SCHEMA,    "create-node",  0,  pm_create_node, cmd_create_node,    "Create node"),
 SDATACM (ASN_SCHEMA,    "update-node",  0,  pm_update_node, cmd_update_node,    "Update node"),
 SDATACM (ASN_SCHEMA,    "delete-node",  0,  pm_delete_node, cmd_delete_node,    "Delete node"),
@@ -886,8 +892,8 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     BOOL expanded = kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
-    int lists_limit = kw_get_int(kw, "lists_limit", 0, KW_WILD_NUMBER);
-    int dicts_limit = kw_get_int(kw, "dicts_limit", 0, KW_WILD_NUMBER);
+    int lists_limit = kw_get_int(kw, "lists_limit", 100, KW_WILD_NUMBER);
+    int dicts_limit = kw_get_int(kw, "dicts_limit", 100, KW_WILD_NUMBER);
     const char *path = kw_get_str(kw, "path", "", 0);
 
     json_t *value = priv->tranger;
@@ -923,6 +929,24 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
         0,
         0,
         value,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_save_tranger_schema(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+    /*
+     *  Inform
+     */
+    return msg_iev_build_webix(gobj,
+        0,
+        0,
+        0,
+        0, // TODO value,
         kw  // owned
     );
 }
