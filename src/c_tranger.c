@@ -2,7 +2,7 @@
  *          C_TRANGER.C
  *          Tranger GClass.
  *
- *          Trangers: resources with treedb
+ *          Trangers: resources with tranger
  *
  *          Copyright (c) 2020 Niyamaka.
  *          All Rights Reserved.
@@ -79,7 +79,6 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_topics[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "treedb_name",  0,              0,          "Treedb name"),
 SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: 'dict'"),
 SDATA_END()
 };
@@ -156,11 +155,15 @@ SDATA_END()
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag----------------default---------description---------- */
-SDATA (ASN_POINTER,     "tranger",          SDF_RD|SDF_REQUIRED,0,              "Tranger handler"),
-SDATA (ASN_OCTET_STR,   "treedb_name",      SDF_RD|SDF_REQUIRED,"",             "Treedb name"),
-SDATA (ASN_JSON,        "treedb_schema",    SDF_RD|SDF_REQUIRED,0,              "Treedb schema"),
-SDATA (ASN_INTEGER,     "exit_on_error",    0,                  LOG_OPT_EXIT_ZERO,"exit on error"),
-SDATA (ASN_POINTER,     "kw_match",         0,                  kw_match_simple,"kw_match default function"),
+SDATA (ASN_POINTER,     "tranger",          SDF_RD,             0,              "Tranger handler"),
+SDATA (ASN_OCTET_STR,   "path",             SDF_RD|SDF_REQUIRED,"",             "If database exists then only needs (path,[database]) params"),
+SDATA (ASN_OCTET_STR,   "database",         SDF_RD,             "",             "If null, path must contains the 'database'"),
+SDATA (ASN_OCTET_STR,   "filename_mask",    SDF_RD|SDF_REQUIRED,"%Y-%m-%d",    "Organization of tables (file name format, see strftime())"),
+
+SDATA (ASN_INTEGER,     "xpermission",      SDF_RD,             02770,          "Use in creation, default 02770"),
+SDATA (ASN_INTEGER,     "rpermission",      SDF_RD,             0660,           "Use in creation, default 0660"),
+SDATA (ASN_INTEGER,     "on_critical_error",SDF_RD,             LOG_OPT_EXIT_ZERO,"exit on error (Zero to avoid restart)"),
+SDATA (ASN_BOOLEAN,     "master",           SDF_RD,             FALSE,          "the master is the only that can write"),
 SDATA (ASN_POINTER,     "user_data",        0,                  0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                  0,              "more user data"),
 SDATA (ASN_POINTER,     "subscriber",       0,                  0,              "subscriber of output-events. Not a child gobj."),
@@ -184,10 +187,6 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
     json_t *tranger;
-    const char *treedb_name;
-    json_t *treedb_schema;
-    int32_t exit_on_error;
-    kw_match_fn kw_match;
 
 } PRIVATE_DATA;
 
@@ -220,11 +219,7 @@ PRIVATE void mt_create(hgobj gobj)
      *  Do copy of heavy used parameters, for quick access.
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
-    SET_PRIV(tranger,                   gobj_read_pointer_attr)
-    SET_PRIV(treedb_name,               gobj_read_str_attr)
-    SET_PRIV(treedb_schema,             gobj_read_json_attr)
-    SET_PRIV(exit_on_error,             gobj_read_int32_attr)
-    SET_PRIV(kw_match,                  gobj_read_pointer_attr)
+//     SET_PRIV(xxx,                   gobj_read_pointer_attr)
 }
 
 /***************************************************************************
@@ -232,10 +227,10 @@ PRIVATE void mt_create(hgobj gobj)
  ***************************************************************************/
 PRIVATE void mt_writing(hgobj gobj, const char *path)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    IF_EQ_SET_PRIV(tranger,             gobj_read_pointer_attr)
-    END_EQ_SET_PRIV()
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//
+//     IF_EQ_SET_PRIV(xxx,             gobj_read_pointer_attr)
+//     END_EQ_SET_PRIV()
 }
 
 /***************************************************************************
@@ -243,7 +238,13 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
  ***************************************************************************/
 PRIVATE void mt_destroy(hgobj gobj)
 {
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+    /*
+     *  SERVICE subscription model
+     */
+    hgobj subscriber = (hgobj)gobj_read_pointer_attr(gobj, "subscriber");
+    if(subscriber) {
+        gobj_unsubscribe_event(gobj, NULL, NULL, subscriber);
+    }
 }
 
 /***************************************************************************
@@ -253,41 +254,20 @@ PRIVATE int mt_start(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(!priv->tranger) {
-        log_critical(priv->exit_on_error,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "tranger NULL",
-            NULL
-        );
-    }
-    if(!priv->treedb_schema) {
-        log_critical(priv->exit_on_error,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "treedb_schema NULL",
-            NULL
-        );
-    }
-    if(empty_string(priv->treedb_name)) {
-        log_critical(priv->exit_on_error,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "treedb_name name EMPTY",
-            NULL
-        );
-        return -1;
-    }
-
-    treedb_open_db( // Return IS NOT YOURS!
-        priv->tranger,
-        priv->treedb_name,
-        json_incref(priv->treedb_schema),  // owned
-        "persistent"
+    json_t *jn_tranger = json_pack("{s:s, s:s, s:s, s:i, s:i, s:i, s:b}",
+        "path", gobj_read_str_attr(gobj, "path"),
+        "database", gobj_read_str_attr(gobj, "database"),
+        "filename_mask", gobj_read_str_attr(gobj, "filename_mask"),
+        "xpermission", (int)gobj_read_int32_attr(gobj, "xpermission"),
+        "rpermission", (int)gobj_read_int32_attr(gobj, "rpermission"),
+        "on_critical_error", (int)gobj_read_int32_attr(gobj, "on_critical_error"),
+        "master", gobj_read_bool_attr(gobj, "master")
     );
+
+    priv->tranger = tranger_startup(
+        jn_tranger // owned
+    );
+    gobj_write_pointer_attr(gobj, "tranger", priv->tranger);
 
     return 0;
 }
@@ -298,8 +278,8 @@ PRIVATE int mt_start(hgobj gobj)
 PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    treedb_close_db(priv->tranger, priv->treedb_name);
+    EXEC_AND_RESET(tranger_shutdown, priv->tranger);
+    gobj_write_pointer_attr(gobj, "tranger", 0);
 
     return 0;
 }
@@ -309,7 +289,7 @@ PRIVATE int mt_stop(hgobj gobj)
  ***************************************************************************/
 PRIVATE int mt_trace_on(hgobj gobj, const char *level, json_t *kw)
 {
-    treedb_set_trace(TRUE);
+    // TODO treedb_set_trace(TRUE);
     KW_DECREF(kw);
     return 0;
 }
@@ -319,7 +299,7 @@ PRIVATE int mt_trace_on(hgobj gobj, const char *level, json_t *kw)
  ***************************************************************************/
 PRIVATE int mt_trace_off(hgobj gobj, const char *level, json_t *kw)
 {
-    treedb_set_trace(FALSE);
+    // TODO treedb_set_trace(FALSE);
     KW_DECREF(kw);
     return 0;
 }
@@ -471,11 +451,11 @@ PRIVATE json_t *mt_treedb_topics(hgobj gobj, const char *treedb_name, const char
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    return treedb_topics(
-        priv->tranger,
-        empty_string(treedb_name)?priv->treedb_name:treedb_name,
-        options
-    );
+//  TODO   return treedb_topics(
+//         priv->tranger,
+//         empty_string(treedb_name)?priv->treedb_name:treedb_name,
+//         options
+//     );
 }
 
 /***************************************************************************
@@ -491,71 +471,6 @@ PRIVATE json_t *mt_topic_desc(hgobj gobj, const char *topic_name)
         // WARNING return all topics, not only treedb's topics
         return kw_incref(kw_get_dict(priv->tranger, "topics", 0, KW_REQUIRED));
     }
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE json_t *mt_topic_links(hgobj gobj, const char *treedb_name, const char *topic_name)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    if(!empty_string(topic_name)) {
-        return treedb_get_topic_links(priv->tranger, treedb_name, topic_name);
-    }
-
-    // All topics
-    json_t *topics = treedb_topics(
-        priv->tranger,
-        priv->treedb_name,
-        0
-    );
-
-    json_t *links = json_object();
-    int idx; json_t *jn_topic_name;
-    json_array_foreach(topics, idx, jn_topic_name) {
-        const char *topic_name = json_string_value(jn_topic_name);
-        json_object_set_new(
-            links,
-            topic_name,
-            treedb_get_topic_links(priv->tranger, treedb_name, topic_name)
-        );
-    }
-    JSON_DECREF(topics);
-    return links;
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE json_t *mt_topic_hooks(hgobj gobj, const char *treedb_name, const char *topic_name)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    if(!empty_string(topic_name)) {
-        return treedb_get_topic_hooks(priv->tranger, treedb_name, topic_name);
-    }
-
-    // All topics
-    json_t *topics = treedb_topics(
-        priv->tranger,
-        priv->treedb_name,
-        0
-    );
-
-    json_t *hooks = json_object();
-    int idx; json_t *jn_topic_name;
-    json_array_foreach(topics, idx, jn_topic_name) {
-        const char *topic_name = json_string_value(jn_topic_name);
-        json_object_set_new(
-            hooks,
-            topic_name,
-            treedb_get_topic_hooks(priv->tranger, treedb_name, topic_name)
-        );
-    }
-
-    JSON_DECREF(topics);
-    return hooks;
 }
 
 
@@ -724,20 +639,20 @@ PRIVATE json_t *cmd_create_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
         );
     }
 
-    json_t *record = gobj_create_record(
-        gobj,
-        topic_name,
-        jn_content, // owned
-        options // options  "permissive"
-    );
-    JSON_INCREF(record);
-    return msg_iev_build_webix(gobj,
-        record?0:-1,
-        json_local_sprintf(record?"Tranger created!":log_last_message()),
-        0,
-        record,
-        kw  // owned
-    );
+//TODO     json_t *record = gobj_create_record(
+//         gobj,
+//         topic_name,
+//         jn_content, // owned
+//         options // options  "permissive"
+//     );
+//     JSON_INCREF(record);
+//     return msg_iev_build_webix(gobj,
+//         record?0:-1,
+//         json_local_sprintf(record?"Tranger created!":log_last_message()),
+//         0,
+//         record,
+//         kw  // owned
+//     );
 }
 
 /***************************************************************************
@@ -812,20 +727,20 @@ PRIVATE json_t *cmd_update_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
         );
     }
 
-    json_t *record = gobj_update_record(
-        gobj,
-        topic_name,
-        jn_content, // owned
-        options // "permissive"
-    );
-    JSON_INCREF(record);
-    return msg_iev_build_webix(gobj,
-        record?0:-1,
-        json_local_sprintf(record?"Tranger update!":log_last_message()),
-        0,
-        record,
-        kw  // owned
-    );
+// TODO    json_t *record = gobj_update_record(
+//         gobj,
+//         topic_name,
+//         jn_content, // owned
+//         options // "permissive"
+//     );
+//     JSON_INCREF(record);
+//     return msg_iev_build_webix(gobj,
+//         record?0:-1,
+//         json_local_sprintf(record?"Tranger update!":log_last_message()),
+//         0,
+//         record,
+//         kw  // owned
+//     );
 }
 
 /***************************************************************************
@@ -866,57 +781,57 @@ PRIVATE json_t *cmd_delete_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
     /*
      *  Get a iter of matched resources.
      */
-    json_t *iter = gobj_list_records(
-        gobj,
-        topic_name,
-        jn_filter,  // filter
-        0
-    );
-
-    if(json_array_size(iter)==0) {
-        JSON_DECREF(iter);
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_local_sprintf("Select one record please"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
-    /*
-     *  Delete
-     */
-    json_t *jn_data = json_array();
-    int idx; json_t *record;
-    json_array_foreach(iter, idx, record) {
-        const char *id = kw_get_str(record, "id", "", KW_REQUIRED);
-
-        if(gobj_delete_record(gobj, topic_name, record, force?"force":"")<0) {
-            JSON_DECREF(iter);
-            return msg_iev_build_webix(
-                gobj,
-                -1,
-                json_local_sprintf("Cannot delete the record %s^%s", topic_name, id),
-                0,
-                0,
-                kw  // owned
-            );
-        }
-        json_array_append_new(jn_data, json_string(id));
-    }
-
-    JSON_DECREF(iter);
-
-    return msg_iev_build_webix(
-        gobj,
-        0,
-        json_local_sprintf("%d records deleted", idx),
-        0,
-        jn_data,
-        kw  // owned
-    );
+//     json_t *iter = gobj_list_records(
+//         gobj,
+//         topic_name,
+//         jn_filter,  // filter
+//         0
+//     );
+//
+//     if(json_array_size(iter)==0) {
+//         JSON_DECREF(iter);
+//         return msg_iev_build_webix(
+//             gobj,
+//             -1,
+//             json_local_sprintf("Select one record please"),
+//             0,
+//             0,
+//             kw  // owned
+//         );
+//     }
+//
+//     /*
+//      *  Delete
+//      */
+//     json_t *jn_data = json_array();
+//     int idx; json_t *record;
+//     json_array_foreach(iter, idx, record) {
+//         const char *id = kw_get_str(record, "id", "", KW_REQUIRED);
+//
+//         if(gobj_delete_record(gobj, topic_name, record, force?"force":"")<0) {
+//             JSON_DECREF(iter);
+//             return msg_iev_build_webix(
+//                 gobj,
+//                 -1,
+//                 json_local_sprintf("Cannot delete the record %s^%s", topic_name, id),
+//                 0,
+//                 0,
+//                 kw  // owned
+//             );
+//         }
+//         json_array_append_new(jn_data, json_string(id));
+//     }
+//
+//     JSON_DECREF(iter);
+//
+//     return msg_iev_build_webix(
+//         gobj,
+//         0,
+//         json_local_sprintf("%d records deleted", idx),
+//         0,
+//         jn_data,
+//         kw  // owned
+// TODO    );
 }
 
 /***************************************************************************
@@ -1379,10 +1294,10 @@ PRIVATE GCLASS _gclass = {
         0, //mt_activate_snap,
         0, //mt_list_snaps,
         0, //mt_treedbs,
-        mt_treedb_topics,
+        0, // TODO mt_treedb_topics,
         mt_topic_desc,
-        mt_topic_links,
-        mt_topic_hooks,
+        0, //mt_topic_links,
+        0, //mt_topic_hooks,
         0, //mt_record_parents,
         0, //mt_record_childs,
         mt_record_instances,
