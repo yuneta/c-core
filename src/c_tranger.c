@@ -60,7 +60,7 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_save_tranger_schema[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "path",         0,              "",         "Path"),
+SDATAPM (ASN_JSON,      "schema",       SDF_REQUIRED,  "",         "Path"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_create_record[] = {
@@ -239,13 +239,6 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
  ***************************************************************************/
 PRIVATE void mt_destroy(hgobj gobj)
 {
-    /*
-     *  SERVICE subscription model
-     */
-    hgobj subscriber = (hgobj)gobj_read_pointer_attr(gobj, "subscriber");
-    if(subscriber) {
-        gobj_unsubscribe_event(gobj, NULL, NULL, subscriber);
-    }
 }
 
 /***************************************************************************
@@ -520,7 +513,7 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
         if(!value) {
             return msg_iev_build_webix(gobj,
                 -1,
-                json_local_sprintf("Path not found: '%s'", path),
+                json_sprintf("Path not found: '%s'", path),
                 0,
                 0,
                 kw  // owned
@@ -553,17 +546,293 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE json_t *get_topic(json_t *topic_array, const char *topic_name)
+{
+    int idx; json_t *jn_topic;
+    json_array_foreach(topic_array, idx, jn_topic) {
+        const char *topic_name_ = kw_get_str(jn_topic, "topic_name", "", KW_REQUIRED);
+        if(strcmp(topic_name_, topic_name)==0) {
+            return jn_topic;
+        }
+    }
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE json_t *cmd_save_tranger_schema(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    json_t *schema = kw_get_dict_value(kw, "schema", 0, 0);
+    if(!schema) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_sprintf("What schema?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    BOOL master = gobj_read_bool_attr(gobj, "master");
+    if(!master) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_sprintf("Only master can write in tranger"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    const char *id = kw_get_str(schema, "id", "", 0);
+    const char *schema_type = kw_get_str(schema, "schema_type", "", 0);
+    int new_schema_version = kw_get_int(schema, "schema_version", 0, KW_WILD_NUMBER);
+    json_t *jn_topics = kw_get_list(schema, "topics", 0, 0);
+
+/*
+    "id": "control_fichador",
+    "schema_type": "msg2dbs",
+    "schema_version": 6,
+    "topics": [
+        {
+            "topic_name": "control_validation",
+            "topic_version": 4,
+            "cols": {
+*/
+
+    if(empty_string(id)) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_sprintf("No schema name"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    if(empty_string(schema_type)) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_sprintf("No schema type"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    if(!new_schema_version) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_sprintf("No schema version"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    if(!jn_topics) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_sprintf("Schema without topics"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    char schema_filename[NAME_MAX];
+    if(strncmp(schema_type, "treedb", strlen("treedb"))==0) {
+        snprintf(schema_filename, sizeof(schema_filename), "%s.treedb_schema.json",
+            id
+        );
+    } else if(strncmp(schema_type, "msg2db", strlen("msg2db"))==0) {
+        snprintf(schema_filename, sizeof(schema_filename), "%s.msg2db_schema.json",
+            id
+        );
+    } else {
+        log_error(0,
+            "gobj",             "%s", gobj_full_name(gobj),
+            "function",         "%s", __FUNCTION__,
+            "msgset",           "%s", MSGSET_PARAMETER_ERROR,
+            "msg",              "%s", "Schema type unknown",
+            "schema_type",      "%s", schema_type,
+            NULL
+        );
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_sprintf("Schema type unknown: '%s'", schema_type),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    char schema_full_path[NAME_MAX*2];
+    snprintf(schema_full_path, sizeof(schema_full_path), "%s/%s",
+        kw_get_str(priv->tranger, "directory", "", KW_REQUIRED),
+        schema_filename
+    );
+
+    if(!file_exists(schema_full_path, 0)) {
+        log_error(0,
+            "gobj",             "%s", gobj_full_name(gobj),
+            "function",         "%s", __FUNCTION__,
+            "msgset",           "%s", MSGSET_PARAMETER_ERROR,
+            "msg",              "%s", "Schema file not found",
+            "path",             "%s", schema_full_path,
+            NULL
+        );
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_sprintf("Schema file not found: '%s'", schema_filename),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *old_jn_schema = load_json_from_file(
+        schema_full_path,
+        "",
+        kw_get_int(priv->tranger, "on_critical_error", 0, KW_REQUIRED)
+    );
+    if(!old_jn_schema) {
+        log_error(0,
+            "gobj",             "%s", gobj_full_name(gobj),
+            "function",         "%s", __FUNCTION__,
+            "msgset",           "%s", MSGSET_PARAMETER_ERROR,
+            "msg",              "%s", "Schema json failed",
+            "path",             "%s", schema_full_path,
+            NULL
+        );
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_sprintf("Schema json failed: '%s'", schema_filename),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_int_t old_schema_version = kw_get_int(
+        old_jn_schema,
+        "schema_version",
+        0,
+        KW_WILD_NUMBER
+    );
+    if(new_schema_version <= old_schema_version) {
+        JSON_DECREF(old_jn_schema);
+        log_error(0,
+            "gobj",             "%s", gobj_full_name(gobj),
+            "function",         "%s", __FUNCTION__,
+            "msgset",           "%s", MSGSET_PARAMETER_ERROR,
+            "msg",              "%s", "Schema version lower than current",
+            "path",             "%s", schema_full_path,
+            "new_version",      "%d", (int)new_schema_version,
+            "old_version",      "%d", (int)old_schema_version,
+            NULL
+        );
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_sprintf("Schema version lower than current"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    /*
+     *  Update topics
+     */
+    json_t *old_topics = kw_get_list(old_jn_schema, "topics", 0, KW_REQUIRED);
+
+    int idx; json_t *jn_topic;
+    json_array_foreach(jn_topics, idx, jn_topic) {
+        const char *topic_name = kw_get_str(jn_topic, "topic_name", "", KW_REQUIRED);
+        int new_topic_version = kw_get_int(jn_topic, "topic_version", 0, KW_WILD_NUMBER);
+        json_t *old_topic = get_topic(old_topics, topic_name);
+        if(!old_topic) {
+            /*
+             *  HACK topic must be created, needs some parameters as pkey, system_flag, etc
+             */
+            JSON_DECREF(old_jn_schema);
+            log_error(0,
+                "gobj",             "%s", gobj_full_name(gobj),
+                "function",         "%s", __FUNCTION__,
+                "msgset",           "%s", MSGSET_PARAMETER_ERROR,
+                "msg",              "%s", "Topic not exist",
+                "path",             "%s", schema_full_path,
+                "topic_name",       "%s", topic_name,
+                NULL
+            );
+            return msg_iev_build_webix(gobj,
+                -1,
+                json_sprintf("Topic not exist"),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+        int old_topic_version = kw_get_int(old_topic, "topic_version", 0, KW_WILD_NUMBER);
+        if(new_topic_version <= old_topic_version) {
+            JSON_DECREF(old_jn_schema);
+            log_error(0,
+                "gobj",             "%s", gobj_full_name(gobj),
+                "function",         "%s", __FUNCTION__,
+                "msgset",           "%s", MSGSET_PARAMETER_ERROR,
+                "msg",              "%s", "Topic version lower than current",
+                "path",             "%s", schema_full_path,
+                "topic_name",       "%s", topic_name,
+                "new_version",      "%d", (int)new_topic_version,
+                "old_version",      "%d", (int)old_topic_version,
+                NULL
+            );
+            return msg_iev_build_webix(gobj,
+                -1,
+                json_sprintf("Topic version lower than current"),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+
+        /*
+         *  Update cols and version
+         */
+        json_object_set_new(old_topic, "topic_version", json_sprintf("%d", new_topic_version));
+
+        json_t *new_cols = kw_get_dict(jn_topic, "cols", 0, KW_REQUIRED);
+        json_object_set(old_topic, "cols", new_cols);
+    }
+
+    json_object_set_new(
+        old_jn_schema, "schema_version", json_sprintf("%d", new_schema_version)
+    );
+
+    /*
+     *  Save
+     */
+    int ret = save_json_to_file(
+        kw_get_str(priv->tranger, "directory", 0, KW_REQUIRED),
+        schema_filename,
+        kw_get_int(priv->tranger, "xpermission", 0, KW_REQUIRED),
+        kw_get_int(priv->tranger, "rpermission", 0, KW_REQUIRED),
+        kw_get_int(priv->tranger, "on_critical_error", 0, KW_REQUIRED),
+        TRUE,           // Create file if not exists or overwrite.
+        FALSE,          // only_read
+        old_jn_schema   // owned
+    );
+
+    JSON_DECREF(old_jn_schema);
+
     /*
      *  Inform
      */
     return msg_iev_build_webix(gobj,
+        ret,
+        json_sprintf("%s", (ret<0)?log_last_message(): "Schema saved"),
         0,
         0,
-        0,
-        0, // TODO value,
         kw  // owned
     );
 }
@@ -582,7 +851,7 @@ PRIVATE json_t *cmd_create_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -605,7 +874,7 @@ PRIVATE json_t *cmd_create_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Can't decode json content64"),
+                json_sprintf("Can't decode json content64"),
                 0,
                 0,
                 kw  // owned
@@ -620,7 +889,7 @@ PRIVATE json_t *cmd_create_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
                 return msg_iev_build_webix(
                     gobj,
                     -1,
-                    json_local_sprintf("Can't decode json content"),
+                    json_sprintf("Can't decode json content"),
                     0,
                     0,
                     kw  // owned
@@ -633,7 +902,7 @@ PRIVATE json_t *cmd_create_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What content?"),
+            json_sprintf("What content?"),
             0,
             0,
             kw  // owned
@@ -649,7 +918,7 @@ PRIVATE json_t *cmd_create_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
 //     JSON_INCREF(record);
 //     return msg_iev_build_webix(gobj,
 //         record?0:-1,
-//         json_local_sprintf(record?"Tranger created!":log_last_message()),
+//         json_sprintf(record?"Tranger created!":log_last_message()),
 //         0,
 //         record,
 //         kw  // owned
@@ -670,7 +939,7 @@ PRIVATE json_t *cmd_update_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -693,7 +962,7 @@ PRIVATE json_t *cmd_update_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Can't decode json content64"),
+                json_sprintf("Can't decode json content64"),
                 0,
                 0,
                 kw  // owned
@@ -708,7 +977,7 @@ PRIVATE json_t *cmd_update_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
                 return msg_iev_build_webix(
                     gobj,
                     -1,
-                    json_local_sprintf("Can't decode json content"),
+                    json_sprintf("Can't decode json content"),
                     0,
                     0,
                     kw  // owned
@@ -721,7 +990,7 @@ PRIVATE json_t *cmd_update_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What content?"),
+            json_sprintf("What content?"),
             0,
             0,
             kw  // owned
@@ -737,7 +1006,7 @@ PRIVATE json_t *cmd_update_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
 //     JSON_INCREF(record);
 //     return msg_iev_build_webix(gobj,
 //         record?0:-1,
-//         json_local_sprintf(record?"Tranger update!":log_last_message()),
+//         json_sprintf(record?"Tranger update!":log_last_message()),
 //         0,
 //         record,
 //         kw  // owned
@@ -757,7 +1026,7 @@ PRIVATE json_t *cmd_delete_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -771,7 +1040,7 @@ PRIVATE json_t *cmd_delete_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Can't decode filter json"),
+                json_sprintf("Can't decode filter json"),
                 0,
                 0,
                 kw  // owned
@@ -794,7 +1063,7 @@ PRIVATE json_t *cmd_delete_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
 //         return msg_iev_build_webix(
 //             gobj,
 //             -1,
-//             json_local_sprintf("Select one record please"),
+//             json_sprintf("Select one record please"),
 //             0,
 //             0,
 //             kw  // owned
@@ -814,7 +1083,7 @@ PRIVATE json_t *cmd_delete_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
 //             return msg_iev_build_webix(
 //                 gobj,
 //                 -1,
-//                 json_local_sprintf("Cannot delete the record %s^%s", topic_name, id),
+//                 json_sprintf("Cannot delete the record %s^%s", topic_name, id),
 //                 0,
 //                 0,
 //                 kw  // owned
@@ -828,7 +1097,7 @@ PRIVATE json_t *cmd_delete_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
 //     return msg_iev_build_webix(
 //         gobj,
 //         0,
-//         json_local_sprintf("%d records deleted", idx),
+//         json_sprintf("%d records deleted", idx),
 //         0,
 //         jn_data,
 //         kw  // owned
@@ -908,7 +1177,7 @@ PRIVATE json_t *cmd_list_records(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -922,7 +1191,7 @@ PRIVATE json_t *cmd_list_records(hgobj gobj, const char *cmd, json_t *kw, hgobj 
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Can't decode filter json"),
+                json_sprintf("Can't decode filter json"),
                 0,
                 0,
                 kw  // owned
@@ -940,7 +1209,7 @@ PRIVATE json_t *cmd_list_records(hgobj gobj, const char *cmd, json_t *kw, hgobj 
 //     return msg_iev_build_webix(
 //         gobj,
 //         records?0:-1,
-//         json_local_sprintf("%d records", json_array_size(records)),
+//         json_sprintf("%d records", json_array_size(records)),
 //         tranger_list_topic_desc(priv->tranger, topic_name),
 //         records,
 //         kw  // owned
@@ -962,7 +1231,7 @@ PRIVATE json_t *cmd_get_record(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -972,7 +1241,7 @@ PRIVATE json_t *cmd_get_record(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What record id?"),
+            json_sprintf("What record id?"),
             0,
             0,
             kw  // owned
@@ -988,7 +1257,7 @@ PRIVATE json_t *cmd_get_record(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 //
 //     return msg_iev_build_webix(gobj,
 //         record?0:-1,
-//         record?0:json_local_sprintf("Tranger not found"),
+//         record?0:json_sprintf("Tranger not found"),
 //         tranger_list_topic_desc(priv->tranger, topic_name),
 //         kw_incref(record),
 //         kw  // owned
@@ -1012,7 +1281,7 @@ PRIVATE json_t *cmd_record_instances(hgobj gobj, const char *cmd, json_t *kw, hg
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -1025,7 +1294,7 @@ PRIVATE json_t *cmd_record_instances(hgobj gobj, const char *cmd, json_t *kw, hg
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Can't decode filter json"),
+                json_sprintf("Can't decode filter json"),
                 0,
                 0,
                 kw  // owned
@@ -1051,7 +1320,7 @@ PRIVATE json_t *cmd_record_instances(hgobj gobj, const char *cmd, json_t *kw, hg
 //     return msg_iev_build_webix(
 //         gobj,
 //         0,
-//         json_local_sprintf("%d instances", json_array_size(instances)),
+//         json_sprintf("%d instances", json_array_size(instances)),
 //         tranger_list_topic_desc(priv->tranger, topic_name),
 //         instances,
 //         kw  // owned
@@ -1074,7 +1343,7 @@ PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgob
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -1087,7 +1356,7 @@ PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgob
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Can't decode filter json"),
+                json_sprintf("Can't decode filter json"),
                 0,
                 0,
                 kw  // owned
@@ -1117,7 +1386,7 @@ PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgob
 //         return msg_iev_build_webix(
 //             gobj,
 //             -1,
-//             json_local_sprintf("Select only one instance please"),
+//             json_sprintf("Select only one instance please"),
 //             tranger_list_topic_desc(priv->tranger, topic_name),
 //             instances,
 //             kw  // owned
@@ -1131,7 +1400,7 @@ PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgob
 //     return msg_iev_build_webix(
 //         gobj,
 //         0,
-//         json_local_sprintf("%d instances touched", json_array_size(instances)),
+//         json_sprintf("%d instances touched", json_array_size(instances)),
 //         tranger_list_topic_desc(priv->tranger, topic_name),
 //         instances,
 //         kw  // owned
@@ -1150,7 +1419,7 @@ PRIVATE json_t *cmd_record_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -1165,7 +1434,7 @@ PRIVATE json_t *cmd_record_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj
     return msg_iev_build_webix(
         gobj,
         pkey2s?0:-1,
-        json_local_sprintf("%d pkey2s", json_object_size(pkey2s)),
+        json_sprintf("%d pkey2s", json_object_size(pkey2s)),
         0,
         pkey2s,
         kw  // owned
