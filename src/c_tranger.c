@@ -50,6 +50,19 @@ SDATAPM (ASN_UNSIGNED,  "level",        0,              0,          "command sea
 SDATA_END()
 };
 
+PRIVATE sdata_desc_t pm_print_tranger[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "path",         0,              "",         "Path"),
+SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "No expanded (default) return [[size]]"),
+SDATAPM (ASN_UNSIGNED,  "lists_limit",  0,              0,          "Expand lists only if size < limit. 0 no limit"),
+SDATAPM (ASN_UNSIGNED,  "dicts_limit",  0,              0,          "Expand dicts only if size < limit. 0 no limit"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_save_tranger_schema[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "path",         0,              "",         "Path"),
+SDATA_END()
+};
 PRIVATE sdata_desc_t pm_create_record[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
@@ -111,18 +124,6 @@ SDATA_END()
 PRIVATE sdata_desc_t pm_record_pkey2s[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_print_tranger[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "path",         0,              "",         "Path"),
-SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "No expanded (default) return [[size]]"),
-SDATAPM (ASN_UNSIGNED,  "lists_limit",  0,              0,          "Expand lists only if size < limit. 0 no limit"),
-SDATAPM (ASN_UNSIGNED,  "dicts_limit",  0,              0,          "Expand dicts only if size < limit. 0 no limit"),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_save_tranger_schema[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
 SDATA_END()
 };
 
@@ -1281,15 +1282,15 @@ PRIVATE GCLASS _gclass = {
         0, //mt_publication_filter,
         0, //mt_future38,
         0, //mt_future39,
-        mt_create_record,
-        mt_update_record,
-        mt_delete_record,
-        0, //mt_link_records,
-        0, //mt_link_records2,
-        0, //mt_unlink_records,
-        0, //mt_unlink_records2,
-        mt_get_record,
-        mt_list_records,
+        mt_create_record,           //mt_create_node,
+        mt_update_record,           //mt_update_node,
+        mt_delete_record,           //mt_delete_node,
+        0, //mt_link_nodes,
+        0, //mt_link_nodes2,
+        0, //mt_unlink_nodes,
+        0, //mt_unlink_nodes2,
+        mt_get_record,              //mt_get_node,
+        mt_list_records,            //mt_list_nodes,
         0, //mt_shoot_snap,
         0, //mt_activate_snap,
         0, //mt_list_snaps,
@@ -1298,10 +1299,10 @@ PRIVATE GCLASS _gclass = {
         mt_topic_desc,
         0, //mt_topic_links,
         0, //mt_topic_hooks,
-        0, //mt_record_parents,
-        0, //mt_record_childs,
-        mt_record_instances,
-        mt_save_record,
+        0, //mt_node_parents,
+        0, //mt_node_childs,
+        mt_record_instances,        //mt_node_instances,
+        mt_save_record,             //mt_save_node,
         0, //mt_future61,
         0, //mt_future62,
         0, //mt_future63,
