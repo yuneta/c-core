@@ -546,7 +546,7 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE json_t *get_topic(json_t *topic_array, const char *topic_name)
+PRIVATE json_t *get_schema_topic(json_t *topic_array, const char *topic_name)
 {
     int idx; json_t *jn_topic;
     json_array_foreach(topic_array, idx, jn_topic) {
@@ -750,7 +750,7 @@ PRIVATE json_t *cmd_save_tranger_schema(hgobj gobj, const char *cmd, json_t *kw,
     json_array_foreach(jn_topics, idx, jn_topic) {
         const char *topic_name = kw_get_str(jn_topic, "topic_name", "", KW_REQUIRED);
         int new_topic_version = kw_get_int(jn_topic, "topic_version", 0, KW_WILD_NUMBER);
-        json_t *old_topic = get_topic(old_topics, topic_name);
+        json_t *old_topic = get_schema_topic(old_topics, topic_name);
         if(!old_topic) {
             /*
              *  HACK topic must be created, needs some parameters as pkey, system_flag, etc
@@ -822,8 +822,6 @@ PRIVATE json_t *cmd_save_tranger_schema(hgobj gobj, const char *cmd, json_t *kw,
         FALSE,          // only_read
         old_jn_schema   // owned
     );
-
-    JSON_DECREF(old_jn_schema);
 
     /*
      *  Inform
