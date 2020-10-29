@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "c_qiogate.h"
+#include "c_tranger.h"
 
 /***************************************************************************
  *              Constants
@@ -86,6 +87,7 @@ SDATA (ASN_OCTET_STR,   "topic_name",       SDF_RD,             "",         "trq
 SDATA (ASN_OCTET_STR,   "pkey",             SDF_RD,             "",         "trq_open pkey"),
 SDATA (ASN_OCTET_STR,   "tkey",             SDF_RD,             "",         "trq_open tkey"),
 SDATA (ASN_OCTET_STR,   "system_flag",      SDF_RD,             "",         "trq_open system_flag"),
+SDATA (ASN_UNSIGNED,    "on_critical_error",SDF_RD,             LOG_OPT_TRACE_STACK, "tranger parameter"),
 
 SDATA (ASN_UNSIGNED,    "max_pending_acks", SDF_WR|SDF_PERSIST, 1,          "Maximum messages pending of ack"),
 SDATA (ASN_UNSIGNED64,  "backup_queue_size",SDF_WR|SDF_PERSIST, 1*1000000,  "Do backup at this size"),
@@ -124,6 +126,7 @@ typedef struct _PRIVATE_DATA {
     int32_t timeout_ack;
     hgobj timer;
 
+    hgobj gobj_tranger_queues;
     json_t *tranger;
     tr_queue trq_msgs;
 
@@ -550,25 +553,26 @@ PRIVATE int open_queue(hgobj gobj)
         return -1;
     }
 
-    priv->tranger = tranger_startup(
-        json_pack("{s:s, s:s, s:b}",
-            "path", path,
-            "database", database,
-            "master", 1
-        )
+    /*---------------------------------*
+     *      Open Timeranger queues
+     *---------------------------------*/
+    json_t *kw_tranger = json_pack("{s:s, s:s, s:b, s:I, s:i}",
+        "path", path,
+        "database", database,
+        "master", 1,
+        "subscriber", (json_int_t)(size_t)gobj,
+        "on_critical_error", (int)gobj_read_uint32_attr(gobj, "on_critical_error")
     );
-    if(!priv->tranger) {
-        log_critical(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "tranger_startup() FAILED",
-            "path",         "%s", path,
-            "database",     "%s", database,
-            NULL
-        );
-        return -1;
-    }
+    char name[NAME_MAX];
+    snprintf(name, sizeof(name), "tranger_%s", gobj_name(gobj));
+    priv->gobj_tranger_queues = gobj_create_service(
+        name,
+        GCLASS_TRANGER,
+        kw_tranger,
+        gobj
+    );
+    gobj_start(priv->gobj_tranger_queues);
+    priv->tranger = gobj_read_pointer_attr(priv->gobj_tranger_queues, "tranger");
 
     priv->trq_msgs = trq_open(
         priv->tranger,
@@ -590,7 +594,13 @@ PRIVATE int close_queue(hgobj gobj)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     EXEC_AND_RESET(trq_close, priv->trq_msgs);
-    EXEC_AND_RESET(tranger_shutdown, priv->tranger);
+
+    /*----------------------------------*
+     *      Close Timeranger queues
+     *----------------------------------*/
+    gobj_stop(priv->gobj_tranger_queues);
+    EXEC_AND_RESET(gobj_destroy, priv->gobj_tranger_queues);
+    priv->tranger = 0;
 
     return 0;
 }
