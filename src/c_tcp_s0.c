@@ -476,7 +476,9 @@ PRIVATE void on_connection_cb(uv_stream_t *uv_server_socket, int status)
          *      New method
          *--------------------------------*/
         const char *op = kw_get_str(jn_child_tree_filter, "op", "find", 0);
-        json_t *jn_filter = json_deep_copy(kw_get_dict(jn_child_tree_filter, "kw", json_object(), 0));
+        json_t *jn_filter = json_deep_copy(
+            kw_get_dict(jn_child_tree_filter, "kw", json_object(), 0)
+        );
         // HACK si llegan dos on_connection_cb seguidos coge el mismo tree, protege internamente
         json_object_set_new(jn_filter, "__clisrv__", json_false());
         if(1 || strcmp(op, "find")==0) { // here, only find operation is valid.
