@@ -30,7 +30,6 @@
  ***************************************************************************/
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_save_tranger_schema(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -177,46 +176,45 @@ SDATAPM (ASN_UNSIGNED,  "lists_limit",  0,              0,          "Expand list
 SDATAPM (ASN_UNSIGNED,  "dicts_limit",  0,              0,          "Expand dicts only if size < limit. 0 no limit"),
 SDATA_END()
 };
-PRIVATE sdata_desc_t pm_save_tranger_schema[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATA_END()
-};
 
 PRIVATE const char *a_help[] = {"h", "?", 0};
+PRIVATE const char *a_nodes[] = {"list-nodes", "list-records", 0};
+PRIVATE const char *a_node[] = {"get-node", "get-record", 0};
+PRIVATE const char *a_create[] = {"create-record", 0};
+PRIVATE const char *a_update[] = {"update-record", 0};
+PRIVATE const char *a_delete[] = {"delete-record", 0};
 
 PRIVATE sdata_desc_t command_table[] = {
 /*-CMD---type-----------name----------------alias-------items-------json_fn---------description--*/
 SDATACM (ASN_SCHEMA,    "help",             a_help,     pm_help,    cmd_help,       "Command's help"),
 
 /*-CMD---type-----------name------------al--items-----------json_fn-------------description--*/
-SDATACM (ASN_SCHEMA,    "print-tranger",0,  pm_print_tranger, cmd_print_tranger,  "Print tranger"),
-SDATACM (ASN_SCHEMA,    "save-tranger-schema",0, pm_save_tranger_schema, cmd_save_tranger_schema,  "Save tranger schema"),
-SDATACM (ASN_SCHEMA,    "create-node",  0,  pm_create_node, cmd_create_node,    "Create node"),
-SDATACM (ASN_SCHEMA,    "update-node",  0,  pm_update_node, cmd_update_node,    "Update node"),
-SDATACM (ASN_SCHEMA,    "delete-node",  0,  pm_delete_node, cmd_delete_node,    "Delete node"),
-SDATACM (ASN_SCHEMA,    "link-nodes",   0,  pm_link_nodes,  cmd_link_nodes,     "Link nodes"),
-SDATACM (ASN_SCHEMA,    "unlink-nodes", 0,  pm_link_nodes,  cmd_unlink_nodes,   "Unlink nodes"),
-SDATACM (ASN_SCHEMA,    "trace",        0,  pm_trace,       cmd_trace,          "Set trace"),
 SDATACM (ASN_SCHEMA,    "treedbs",      0,  0,              cmd_treedbs,        "List treedb's"),
 SDATACM (ASN_SCHEMA,    "topics",       0,  pm_topics,      cmd_topics,         "List topics"),
-SDATACM (ASN_SCHEMA,    "desc",         0,  pm_desc,        cmd_desc,           "Schema of topic or full"),
+SDATACM (ASN_SCHEMA,    "create-node",  a_create, pm_create_node, cmd_create_node, "Create node"),
+SDATACM (ASN_SCHEMA,    "update-node",  a_update, pm_update_node, cmd_update_node, "Update node"),
+SDATACM (ASN_SCHEMA,    "delete-node",  a_delete, pm_delete_node, cmd_delete_node, "Delete node"),
+SDATACM (ASN_SCHEMA,    "nodes",        a_nodes, pm_list_nodes, cmd_list_nodes,  "List nodes"),
+SDATACM (ASN_SCHEMA,    "node",         a_node, pm_get_node, cmd_get_node,       "Get node by id"),
+SDATACM (ASN_SCHEMA,    "instances",    0,  pm_node_instances,cmd_node_instances,"List node's instances"),
+SDATACM (ASN_SCHEMA,    "link-nodes",   0,  pm_link_nodes,  cmd_link_nodes,     "Link nodes"),
+SDATACM (ASN_SCHEMA,    "unlink-nodes", 0,  pm_link_nodes,  cmd_unlink_nodes,   "Unlink nodes"),
 SDATACM (ASN_SCHEMA,    "hooks",        0,  pm_hooks,       cmd_hooks,          "Hooks of node"),
 SDATACM (ASN_SCHEMA,    "links",        0,  pm_links,       cmd_links,          "Links of node"),
 SDATACM (ASN_SCHEMA,    "parents",      0,  pm_parents,     cmd_parents,        "Parents of node"),
 SDATACM (ASN_SCHEMA,    "childs",       0,  pm_childs,      cmd_childs,         "Childs of node"),
-SDATACM (ASN_SCHEMA,    "nodes",        0,  pm_list_nodes,  cmd_list_nodes,     "List nodes"),
-SDATACM (ASN_SCHEMA,    "node",         0,  pm_get_node,    cmd_get_node,       "Get node by id"),
-SDATACM (ASN_SCHEMA,    "instances",    0,  pm_node_instances,cmd_node_instances,"List node's instances"),
 SDATACM (ASN_SCHEMA,    "touch-instance",0, pm_node_instances,cmd_touch_instance,"Touch (save) instance to force to be the last instance"),
-SDATACM (ASN_SCHEMA,    "pkey2s",       0,  pm_node_pkey2s, cmd_node_pkey2s,    "List node's pkey2"),
 SDATACM (ASN_SCHEMA,    "snaps",        0,  0,              cmd_list_snaps,     "List snaps"),
 SDATACM (ASN_SCHEMA,    "snap-content", 0,  pm_snap_content,cmd_snap_content,   "Show snap content"),
 SDATACM (ASN_SCHEMA,    "shoot-snap",   0,  pm_shoot_snap,  cmd_shoot_snap,     "Shoot snap"),
 SDATACM (ASN_SCHEMA,    "activate-snap",0,  pm_activate_snap,cmd_activate_snap, "Activate snap"),
 SDATACM (ASN_SCHEMA,    "deactivate-snap",0,0,              cmd_deactivate_snap,"De-Activate snap"),
+SDATACM (ASN_SCHEMA,    "pkey2s",       0,  pm_node_pkey2s, cmd_node_pkey2s,    "List node's pkey2"),
+SDATACM (ASN_SCHEMA,    "desc",         0,  pm_desc,        cmd_desc,           "Schema of topic or full"),
+SDATACM (ASN_SCHEMA,    "print-tranger",0,  pm_print_tranger, cmd_print_tranger,  "Print tranger"),
+SDATACM (ASN_SCHEMA,    "trace",        0,  pm_trace,       cmd_trace,          "Set trace"),
 SDATA_END()
 };
-
 
 /*---------------------------------------------*
  *      Attributes - order affect to oid's
@@ -929,24 +927,6 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
         0,
         0,
         value,
-        kw  // owned
-    );
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_save_tranger_schema(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-    /*
-     *  Inform
-     */
-    return msg_iev_build_webix(gobj,
-        0,
-        0,
-        0,
-        0, // TODO value,
         kw  // owned
     );
 }
