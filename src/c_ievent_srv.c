@@ -576,23 +576,23 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
      *------------------------------------*/
     /*--------------------------------*
      *  Match wanted yuno role/name
+     *  dst_role Required.
      *--------------------------------*/
-    if(!empty_string(iev_dst_role)) {
-        if(strcasecmp(iev_dst_role, gobj_yuno_role())!=0) {
-            log_error(0,
-                "gobj",         "%s", gobj_full_name(gobj),
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
-                "msg",          "%s", "dst_role NOT MATCH",
-                "my_role",      "%s", gobj_yuno_role(),
-                "dst_role",     "%s", iev_dst_role,
-                NULL
-            );
-            log_debug_json(0, kw, "dst_role NOT MATCH");
-            KW_DECREF(kw);
-            return -1;
-        }
+    if(strcasecmp(iev_dst_role, gobj_yuno_role())!=0) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
+            "msg",          "%s", "dst_role NOT MATCH",
+            "my_role",      "%s", gobj_yuno_role(),
+            "dst_role",     "%s", iev_dst_role,
+            NULL
+        );
+        log_debug_json(0, kw, "dst_role NOT MATCH");
+        KW_DECREF(kw);
+        return -1;
     }
+
     if(!empty_string(iev_dst_yuno)) {
         if(strcasecmp(iev_dst_yuno, gobj_yuno_name())!=0) {
             log_error(0,
