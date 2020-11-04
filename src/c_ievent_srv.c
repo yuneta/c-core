@@ -49,6 +49,9 @@ SDATA (ASN_OCTET_STR,   "client_yuno_service",  SDF_RD, 0, "yuno service of conn
 
 SDATA (ASN_OCTET_STR,   "this_service",         SDF_RD, 0, "simulated server service (Gate)"),
 SDATA (ASN_POINTER,     "gobj_service",         0, 0, "gate to real server service"),
+
+SDATA (ASN_BOOLEAN,     "authenticated",        SDF_RD, 0, "True if entry was authenticated"),
+
 // TODO available_services for this gate
 // TODO available_services in this gate
 // For now, only one service is available, the selected in identity_card exchange.
@@ -467,6 +470,7 @@ PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
      *  Route (channel) open.
      *  Wait Identity card
      */
+    gobj_write_bool_attr(gobj, "authenticated", FALSE);
 
     set_timeout(priv->timer, gobj_read_uint32_attr(gobj, "timeout_idgot"));
 
@@ -485,6 +489,8 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
      *  Clear timeout
      *---------------------------------------*/
     clear_timeout(priv->timer);
+
+    gobj_write_bool_attr(gobj, "authenticated", FALSE);
 
     /*
      *  Delete external subscriptions
@@ -657,10 +663,14 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
     /*-------------------------*
      *  Do authentication
      *-------------------------*/
+    gobj_write_bool_attr(gobj, "authenticated", FALSE);
+
     KW_INCREF(kw);
     json_t *webix_resp = gobj_authenticate(named_gobj, iev_dst_service, kw, gobj);
     if(webix_resp) {
-        if(kw_get_int(webix_resp, "result", -1, 0)!=0) {
+        if(kw_get_int(webix_resp, "result", -1, 0)==0) {
+            gobj_write_bool_attr(gobj, "authenticated", TRUE);
+        } else {
             log_error(0,
                 "gobj",         "%s", gobj_full_name(gobj),
                 "function",     "%s", __FUNCTION__,
@@ -762,6 +772,8 @@ PRIVATE int ac_goodbye(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     const char *cause = kw_get_str(kw, "cause", "", 0);
 
+    gobj_write_bool_attr(gobj, "authenticated", FALSE);
+
     uint32_t trace_level = gobj_trace_level(gobj);
     if((trace_level & TRACE_IDENTITY_CARD)) {
         char prefix[256];
@@ -788,6 +800,21 @@ PRIVATE int ac_mt_stats(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    if(!gobj_read_bool_attr(gobj, "authenticated")) {
+        return send_static_iev(gobj,
+            "EV_MT_STATS_ANSWER",
+            msg_iev_build_webix(
+                gobj,
+                -1,
+                json_local_sprintf("Only authenticated users can request stats"),
+                0,
+                0,
+                kw
+            ),
+            src
+        );
+    }
+
     const char *stats = kw_get_str(kw, "__stats__", 0, 0);
     const char *service = kw_get_str(kw, "service", "", 0);
 
@@ -801,7 +828,7 @@ PRIVATE int ac_mt_stats(hgobj gobj, const char *event, json_t *kw, hgobj src)
                 "EV_MT_STATS_ANSWER",
                 msg_iev_build_webix(
                     gobj,
-                    -100,
+                    -1,
                     json_local_sprintf("Service '%s' not found.", service),
                     0,
                     0,
@@ -845,6 +872,20 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    if(!gobj_read_bool_attr(gobj, "authenticated")) {
+        return send_static_iev(gobj,
+            "EV_MT_COMMAND_ANSWER",
+            msg_iev_build_webix(
+                gobj,
+                -1,
+                json_local_sprintf("Only authenticated users can request commands"),
+                0,
+                0,
+                kw
+            ),
+            src
+        );
+    }
     const char *command = kw_get_str(kw, "__command__", 0, 0);
     const char *service = kw_get_str(kw, "service", "", 0);
 
@@ -860,7 +901,7 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
                     "EV_MT_COMMAND_ANSWER",
                     msg_iev_build_webix(
                         gobj,
-                        -100,
+                        -1,
                         json_local_sprintf("Service '%s' not found.", service),
                         0,
                         0,
