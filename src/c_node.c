@@ -64,16 +64,18 @@ SDATA_END()
 PRIVATE sdata_desc_t pm_create_node[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Node content"),
 SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Node content in base64"),
+SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Node content in string"),
+SDATAPM (ASN_JSON,      "record",       0,              0,          "Node content in json"),
 SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: \"permissive\" \"multiple\""),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_update_node[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Node content"),
 SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Node content in base64"),
+SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Node content in string"),
+SDATAPM (ASN_JSON,      "record",       0,              0,          "Node content in json"),
 SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: \"create\", \"clean\""),
 SDATA_END()
 };
@@ -937,8 +939,8 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
 PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    const char *content = kw_get_str(kw, "content", "", 0);
     const char *content64 = kw_get_str(kw, "content64", "", 0);
+    const char *content = kw_get_str(kw, "content", "", 0);
     const char *options = kw_get_str(kw, "options", "", 0);
 
     if(empty_string(topic_name)) {
@@ -952,10 +954,10 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         );
     }
 
-    /*----------------------------------*
+    /*----------------------------------------*
      *  Get content
-     *  Priority: conten64, content
-     *----------------------------------*/
+     *  Priority: content64, content, record
+     *----------------------------------------*/
     json_t *jn_content = 0;
     if(!empty_string(content64)) {
         /*
@@ -990,6 +992,10 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
                 );
             }
         }
+    }
+
+    if(!jn_content) {
+        jn_content = kw_get_dict(kw, "record", 0, 0);
     }
 
     if(!jn_content) {
@@ -1025,8 +1031,8 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
 PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    const char *content = kw_get_str(kw, "content", "", 0);
     const char *content64 = kw_get_str(kw, "content64", "", 0);
+    const char *content = kw_get_str(kw, "content", "", 0);
     const char *options = kw_get_str(kw, "options", "", 0);
 
     if(empty_string(topic_name)) {
@@ -1040,10 +1046,10 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         );
     }
 
-    /*----------------------------------*
+    /*----------------------------------------*
      *  Get content
-     *  Priority: conten64, content
-     *----------------------------------*/
+     *  Priority: content64, content, record
+     *----------------------------------------*/
     json_t *jn_content = 0;
     if(!empty_string(content64)) {
         /*
@@ -1078,6 +1084,10 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
                 );
             }
         }
+    }
+
+    if(!jn_content) {
+        jn_content = kw_get_dict(kw, "record", 0, 0);
     }
 
     if(!jn_content) {
