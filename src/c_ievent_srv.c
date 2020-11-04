@@ -574,10 +574,10 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
     /*------------------------------------*
      *  Analyze
      *------------------------------------*/
-    /*--------------------------------*
-     *  Match wanted yuno role/name
-     *  dst_role Required.
-     *--------------------------------*/
+
+    /*------------------------------------*
+     *  Match wanted yuno role. Required.
+     *------------------------------------*/
     if(strcasecmp(iev_dst_role, gobj_yuno_role())!=0) {
         log_error(0,
             "gobj",         "%s", gobj_full_name(gobj),
@@ -593,6 +593,9 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
         return -1;
     }
 
+    /*--------------------------------*
+     *  Match wanted yuno name
+     *--------------------------------*/
     if(!empty_string(iev_dst_yuno)) {
         if(strcasecmp(iev_dst_yuno, gobj_yuno_name())!=0) {
             log_error(0,
@@ -642,9 +645,9 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
         return -1;
     }
 
-    /*-------------------------*
-     *  Find wanted service
-     *-------------------------*/
+    /*-----------------------------------*
+     *  Find wanted service. Required.
+     *-----------------------------------*/
     hgobj named_gobj = gobj_find_service(iev_dst_service, FALSE);
     if (!named_gobj) {
         log_error(0,
