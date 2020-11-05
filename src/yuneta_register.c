@@ -37,6 +37,7 @@ PUBLIC int yuneta_register_c_core(void)
     /*
      *  Gadgets
      */
+    gobj_register_gclass(GCLASS_MQIOGATE);
     gobj_register_gclass(GCLASS_QIOGATE);
     gobj_register_gclass(GCLASS_IOGATE);
     gobj_register_gclass(GCLASS_CHANNEL);

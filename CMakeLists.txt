@@ -62,6 +62,7 @@ set (SRCS
 #     src/c_dynagent.c
 
     # Gadgets
+    src/c_mqiogate.c
     src/c_qiogate.c
     src/c_iogate.c
     src/c_channel.c
@@ -120,6 +121,7 @@ set (HDRS
 #     src/c_dynagent.h
 
     # Gadgets
+    src/c_mqiogate.h
     src/c_qiogate.h
     src/c_iogate.h
     src/c_channel.h
