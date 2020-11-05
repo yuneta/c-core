@@ -501,7 +501,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_RSTATS_NAME,      // CHANGE WITH each gclass
+    GCLASS_RSTATS_NAME,
     &fsm,
     {
         mt_create,

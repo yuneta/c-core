@@ -458,7 +458,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_COUNTER_NAME,      // CHANGE WITH each gclass
+    GCLASS_COUNTER_NAME,
     &fsm,
     {
         mt_create,

@@ -1158,7 +1158,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_QIOGATE_NAME,      // CHANGE WITH each gclass
+    GCLASS_QIOGATE_NAME,
     &fsm,
     {
         mt_create,

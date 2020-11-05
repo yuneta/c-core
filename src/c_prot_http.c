@@ -480,7 +480,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_PROT_HTTP_NAME,      // CHANGE WITH each gclass
+    GCLASS_PROT_HTTP_NAME,
     &fsm,
     {
         mt_create,

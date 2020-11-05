@@ -1507,7 +1507,7 @@ PRIVATE FSM fsm = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_TRANGER_NAME,      // CHANGE WITH each gclass
+    GCLASS_TRANGER_NAME,
     &fsm,
     {
         mt_create,

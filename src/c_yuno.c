@@ -4403,7 +4403,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_DEFAULT_YUNO_NAME,      // CHANGE WITH each gclass
+    GCLASS_DEFAULT_YUNO_NAME,
     &fsm,
     {
         mt_create,

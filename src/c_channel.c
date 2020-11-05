@@ -505,7 +505,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_CHANNEL_NAME,      // CHANGE WITH each gclass
+    GCLASS_CHANNEL_NAME,
     &fsm,
     {
         mt_create,

@@ -742,7 +742,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_UDP0_NAME,      // CHANGE WITH each gclass
+    GCLASS_UDP0_NAME,
     &fsm,
     {
         mt_create,

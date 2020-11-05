@@ -2044,7 +2044,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_GWEBSOCKET_NAME,      // CHANGE WITH each gclass
+    GCLASS_GWEBSOCKET_NAME,
     &fsm,
     {
         mt_create,

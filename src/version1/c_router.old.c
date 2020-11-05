@@ -2605,7 +2605,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_ROUTER_NAME,      // CHANGE WITH each gclass
+    GCLASS_ROUTER_NAME,
     &fsm,
     {
         mt_create,

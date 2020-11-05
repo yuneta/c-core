@@ -808,7 +808,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_SNMP_NAME,      // CHANGE WITH each gclass
+    GCLASS_SNMP_NAME,
     &fsm,
     {
         mt_create,

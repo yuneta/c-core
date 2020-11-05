@@ -489,7 +489,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_PROT_HEADER4_NAME,      // CHANGE WITH each gclass
+    GCLASS_PROT_HEADER4_NAME,
     &fsm,
     {
         mt_create,

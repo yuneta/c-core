@@ -1335,7 +1335,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_IEVENT_SRV_NAME,      // CHANGE WITH each gclass
+    GCLASS_IEVENT_SRV_NAME,
     &fsm,
     {
         mt_create,

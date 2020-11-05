@@ -1606,7 +1606,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_RESOURCE_NAME,      // CHANGE WITH each gclass
+    GCLASS_RESOURCE_NAME,
     &fsm,
     {
         mt_create,

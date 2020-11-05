@@ -287,7 +287,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_GSERVERLINK_NAME,      // CHANGE WITH each gclass
+    GCLASS_GSERVERLINK_NAME,
     &fsm,
     {
         mt_create,

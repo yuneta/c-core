@@ -2090,7 +2090,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_IOGATE_NAME,      // CHANGE WITH each gclass
+    GCLASS_IOGATE_NAME,
     &fsm,
     {
         mt_create,

@@ -2026,7 +2026,7 @@ PRIVATE FSM fsm = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_NODE_NAME,      // CHANGE WITH each gclass
+    GCLASS_NODE_NAME,
     &fsm,
     {
         mt_create,

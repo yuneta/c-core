@@ -295,7 +295,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_TIMETRANSITION_NAME,      // CHANGE WITH each gclass
+    GCLASS_TIMETRANSITION_NAME,
     &fsm,
     {
         mt_create,

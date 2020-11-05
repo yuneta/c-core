@@ -1411,7 +1411,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_DYNRULE_NAME,      // CHANGE WITH each gclass
+    GCLASS_DYNRULE_NAME,
     &fsm,
     {
         mt_create,
