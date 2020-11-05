@@ -995,7 +995,7 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     }
 
     if(!jn_content) {
-        jn_content = kw_get_dict(kw, "record", 0, 0);
+        jn_content = kw_incref(kw_get_dict(kw, "record", 0, 0));
     }
 
     if(!jn_content) {
@@ -1087,7 +1087,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     }
 
     if(!jn_content) {
-        jn_content = kw_get_dict(kw, "record", 0, 0);
+        jn_content = kw_incref(kw_get_dict(kw, "record", 0, 0));
     }
 
     if(!jn_content) {
