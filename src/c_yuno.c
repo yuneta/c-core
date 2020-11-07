@@ -569,6 +569,13 @@ PRIVATE void mt_create(hgobj gobj)
     SET_PRIV(timeout_restart,       gobj_read_uint32_attr)
     SET_PRIV(yuno_name,             gobj_read_str_attr)
     SET_PRIV(yuno_role,             gobj_read_str_attr)
+
+    /*
+     *  Set user traces
+     *  Here set global traces
+     */
+    set_user_traces(gobj);
+    set_user_no_traces(gobj);
 }
 
 /***************************************************************************
@@ -656,6 +663,7 @@ PRIVATE int mt_start(hgobj gobj)
 
     /*
      *  Set user traces
+     *  Here set gclass/gobj traces
      */
     set_user_traces(gobj);
     set_user_no_traces(gobj);
