@@ -1556,8 +1556,10 @@ PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
     return msg_iev_build_webix(
         gobj,
         nodes?0:-1,
-        json_local_sprintf("%d nodes", json_array_size(nodes)),
-        tranger_list_topic_desc(priv->tranger, topic_name),
+        nodes?
+            json_local_sprintf("%d nodes", json_array_size(nodes)):
+            json_string(log_last_message()),
+        nodes?tranger_list_topic_desc(priv->tranger, topic_name):0,
         nodes,
         kw  // owned
     );
@@ -1605,7 +1607,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     return msg_iev_build_webix(gobj,
         node?0:-1,
         node?0:json_local_sprintf("Node not found"),
-        tranger_list_topic_desc(priv->tranger, topic_name),
+        node?tranger_list_topic_desc(priv->tranger, topic_name):0,
         kw_incref(node),
         kw  // owned
     );
@@ -1667,8 +1669,10 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("%d instances", json_array_size(instances)),
-        tranger_list_topic_desc(priv->tranger, topic_name),
+        instances?
+            json_local_sprintf("%d instances", json_array_size(instances)):
+            json_string(log_last_message()),
+        instances?tranger_list_topic_desc(priv->tranger, topic_name):0,
         instances,
         kw  // owned
     );
@@ -1781,7 +1785,9 @@ PRIVATE json_t *cmd_node_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     return msg_iev_build_webix(
         gobj,
         pkey2s?0:-1,
-        json_local_sprintf("%d pkey2s", json_object_size(pkey2s)),
+        pkey2s?
+            json_local_sprintf("%d pkey2s", json_object_size(pkey2s)):
+            json_string(log_last_message()),
         0,
         pkey2s,
         kw  // owned
