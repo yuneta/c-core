@@ -674,7 +674,7 @@ PRIVATE int framehead_consume(FRAME_HEAD *frame, istream istream, char *bf, int 
         total_consumed += consumed;
         bf += consumed;
         len -= consumed;
-        if(!istream->completed) {
+        if(!istream_is_completed(istream)) {
             return total_consumed;  // wait more data
         }
 
@@ -695,7 +695,7 @@ PRIVATE int framehead_consume(FRAME_HEAD *frame, istream istream, char *bf, int 
         total_consumed += consumed;
         bf += consumed;
         len -= consumed;
-        if(!istream->completed) {
+        if(!istream_is_completed(istream)) {
             return total_consumed;  // wait more data
         }
 
@@ -715,7 +715,7 @@ PRIVATE int framehead_consume(FRAME_HEAD *frame, istream istream, char *bf, int 
         total_consumed += consumed;
         bf += consumed;
         len -= consumed;
-        if(!istream->completed) {
+        if(!istream_is_completed(istream)) {
             return total_consumed;  // wait more data
         }
 
@@ -735,7 +735,7 @@ PRIVATE int framehead_consume(FRAME_HEAD *frame, istream istream, char *bf, int 
         total_consumed += consumed;
         bf += consumed;
         len -= consumed;
-        if(!istream->completed) {
+        if(!istream_is_completed(istream)) {
             return total_consumed;  // wait more data
         }
 
@@ -1840,7 +1840,7 @@ PRIVATE int ac_process_payload_data(hgobj gobj, const char *event, json_t *kw, h
     if(consumed > 0) {
         gbuf_get(gbuf, consumed);  // take out the bytes consumed
     }
-    if(priv->istream_payload->completed) {
+    if(istream_is_completed(priv->istream_payload)) {
         frame_completed(gobj);
     }
     if(gbuf_leftbytes(gbuf)) {
