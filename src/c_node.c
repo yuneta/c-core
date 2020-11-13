@@ -212,7 +212,8 @@ SDATACM (ASN_SCHEMA,    "shoot-snap",   0,  pm_shoot_snap,  cmd_shoot_snap,     
 SDATACM (ASN_SCHEMA,    "activate-snap",0,  pm_activate_snap,cmd_activate_snap, "Activate snap"),
 SDATACM (ASN_SCHEMA,    "deactivate-snap",0,0,              cmd_deactivate_snap,"De-Activate snap"),
 SDATACM (ASN_SCHEMA,    "pkey2s",       0,  pm_node_pkey2s, cmd_node_pkey2s,    "List node's pkey2"),
-SDATACM (ASN_SCHEMA,    "desc",         0,  pm_desc,        cmd_desc,           "Schema of topic or full"),
+SDATACM (ASN_SCHEMA,    "desc",         0,  pm_desc,        cmd_desc,           "Schema of topic"),
+SDATACM (ASN_SCHEMA,    "descs",        0,  0,              cmd_desc,           "Schema of topics"),
 SDATACM (ASN_SCHEMA,    "print-tranger",0,  pm_print_tranger, cmd_print_tranger,  "Print tranger"),
 SDATACM (ASN_SCHEMA,    "trace",        0,  pm_trace,       cmd_trace,          "Set trace"),
 SDATA_END()
@@ -667,10 +668,28 @@ PRIVATE json_t *mt_topic_desc(hgobj gobj, const char *topic_name)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     if(!empty_string(topic_name)) {
-        return tranger_list_topic_desc(priv->tranger, topic_name);
+        return tranger_topic_desc(priv->tranger, topic_name);
     } else {
-        // WARNING return all topics, not only treedb's topics
-        return kw_incref(kw_get_dict(priv->tranger, "topics", 0, KW_REQUIRED));
+        json_t *topics_list = treedb_topics( //Return a list with topic names of the treedb
+            priv->tranger,
+            priv->treedb_name,
+            ""
+        );
+        json_t *jn_topics_desc = json_object();
+        int idx; json_t *jn_topic_name;
+        json_array_foreach(topics_list, idx, jn_topic_name) {
+            topic_name = json_string_value(jn_topic_name);
+            if(strcmp(topic_name, "__schema_version__")==0) {
+                continue;
+            }
+            json_object_set_new(
+                jn_topics_desc,
+                topic_name,
+                tranger_topic_desc(priv->tranger, topic_name)
+            );
+        }
+        json_decref(topics_list);
+        return jn_topics_desc;
     }
 }
 

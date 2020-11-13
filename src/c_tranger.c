@@ -206,8 +206,6 @@ typedef struct _PRIVATE_DATA {
  ***************************************************************************/
 PRIVATE void mt_create(hgobj gobj)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
     /*
      *  SERVICE subscription model
      */
@@ -220,7 +218,7 @@ PRIVATE void mt_create(hgobj gobj)
      *  Do copy of heavy used parameters, for quick access.
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
-//     SET_PRIV(xxx,                   gobj_read_pointer_attr)
+    //SET_PRIV(xxx,                   gobj_read_pointer_attr)
 }
 
 /***************************************************************************
@@ -441,20 +439,6 @@ PRIVATE json_t *mt_record_instances(
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE json_t *mt_treedb_topics(hgobj gobj, const char *treedb_name, const char *options)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-//  TODO   return treedb_topics(
-//         priv->tranger,
-//         empty_string(treedb_name)?priv->treedb_name:treedb_name,
-//         options
-//     );
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
 PRIVATE json_t *mt_topic_desc(hgobj gobj, const char *topic_name)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -462,7 +446,6 @@ PRIVATE json_t *mt_topic_desc(hgobj gobj, const char *topic_name)
     if(!empty_string(topic_name)) {
         return tranger_list_topic_desc(priv->tranger, topic_name);
     } else {
-        // WARNING return all topics, not only treedb's topics
         return kw_incref(kw_get_dict(priv->tranger, "topics", 0, KW_REQUIRED));
     }
 }
