@@ -185,6 +185,8 @@ PRIVATE const char *a_node[] = {"get-node", "get-record", 0};
 PRIVATE const char *a_create[] = {"create-record", 0};
 PRIVATE const char *a_update[] = {"update-record", 0};
 PRIVATE const char *a_delete[] = {"delete-record", 0};
+PRIVATE const char *a_schemas[] = {"schemas","list-schemas", 0};
+PRIVATE const char *a_schema[] = {"schema", 0};
 
 PRIVATE sdata_desc_t command_table[] = {
 /*-CMD---type-----------name----------------alias-------items-------json_fn---------description--*/
@@ -212,8 +214,8 @@ SDATACM (ASN_SCHEMA,    "shoot-snap",   0,  pm_shoot_snap,  cmd_shoot_snap,     
 SDATACM (ASN_SCHEMA,    "activate-snap",0,  pm_activate_snap,cmd_activate_snap, "Activate snap"),
 SDATACM (ASN_SCHEMA,    "deactivate-snap",0,0,              cmd_deactivate_snap,"De-Activate snap"),
 SDATACM (ASN_SCHEMA,    "pkey2s",       0,  pm_node_pkey2s, cmd_node_pkey2s,    "List node's pkey2"),
-SDATACM (ASN_SCHEMA,    "desc",         0,  pm_desc,        cmd_desc,           "Schema of topic"),
-SDATACM (ASN_SCHEMA,    "descs",        0,  0,              cmd_desc,           "Schema of topics"),
+SDATACM (ASN_SCHEMA,    "desc",         a_schema, pm_desc,  cmd_desc,           "Schema of topic"),
+SDATACM (ASN_SCHEMA,    "descs",        a_schemas, 0,       cmd_desc,           "Schema of topics"),
 SDATACM (ASN_SCHEMA,    "print-tranger",0,  pm_print_tranger, cmd_print_tranger,  "Print tranger"),
 SDATACM (ASN_SCHEMA,    "trace",        0,  pm_trace,       cmd_trace,          "Set trace"),
 SDATA_END()
@@ -1578,7 +1580,7 @@ PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         nodes?
             json_local_sprintf("%d nodes", json_array_size(nodes)):
             json_string(log_last_message()),
-        nodes?tranger_list_topic_desc(priv->tranger, topic_name):0,
+        nodes?tranger_topic_desc(priv->tranger, topic_name):0,
         nodes,
         kw  // owned
     );
@@ -1626,7 +1628,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     return msg_iev_build_webix(gobj,
         node?0:-1,
         node?0:json_local_sprintf("Node not found"),
-        node?tranger_list_topic_desc(priv->tranger, topic_name):0,
+        node?tranger_topic_desc(priv->tranger, topic_name):0,
         kw_incref(node),
         kw  // owned
     );
@@ -1691,7 +1693,7 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
         instances?
             json_local_sprintf("%d instances", json_array_size(instances)):
             json_string(log_last_message()),
-        instances?tranger_list_topic_desc(priv->tranger, topic_name):0,
+        instances?tranger_topic_desc(priv->tranger, topic_name):0,
         instances,
         kw  // owned
     );
@@ -1757,7 +1759,7 @@ PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgob
             gobj,
             -1,
             json_local_sprintf("Select only one instance please"),
-            tranger_list_topic_desc(priv->tranger, topic_name),
+            tranger_topic_desc(priv->tranger, topic_name),
             instances,
             kw  // owned
         );
@@ -1771,7 +1773,7 @@ PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgob
         gobj,
         0,
         json_local_sprintf("%d instances touched", json_array_size(instances)),
-        tranger_list_topic_desc(priv->tranger, topic_name),
+        tranger_topic_desc(priv->tranger, topic_name),
         instances,
         kw  // owned
     );
@@ -1865,7 +1867,7 @@ PRIVATE json_t *cmd_snap_content(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         gobj,
         0,
         0,
-        tranger_list_topic_desc(priv->tranger, topic_name),
+        tranger_topic_desc(priv->tranger, topic_name),
         jn_data,
         kw  // owned
     );
@@ -1886,7 +1888,7 @@ PRIVATE json_t *cmd_list_snaps(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
     return msg_iev_build_webix(gobj,
         0,
         0,
-        tranger_list_topic_desc(priv->tranger, "__snaps__"),
+        tranger_topic_desc(priv->tranger, "__snaps__"),
         jn_data,
         kw  // owned
     );
@@ -1926,7 +1928,7 @@ PRIVATE json_t *cmd_shoot_snap(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
     return msg_iev_build_webix(gobj,
         ret,
         ret==0?json_sprintf("Snap '%s' shooted", name):json_string(log_last_message()),
-        ret==0?tranger_list_topic_desc(priv->tranger, "__snaps__"):0,
+        ret==0?tranger_topic_desc(priv->tranger, "__snaps__"):0,
         jn_data,
         kw  // owned
     );
