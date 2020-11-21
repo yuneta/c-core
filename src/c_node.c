@@ -401,7 +401,7 @@ PRIVATE json_t *mt_create_node( // Return is NOT YOURS
     hgobj gobj,
     const char *topic_name,
     json_t *kw, // owned
-    const char *options // "permissive" "verbose"
+    const char *options // "permissive"
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -1040,7 +1040,7 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     return msg_iev_build_webix(gobj,
         node?0:-1,
         json_local_sprintf(node?"Node created!":log_last_message()),
-        0,
+        gobj_topic_desc(gobj, topic_name),
         node,
         kw  // owned
     );
@@ -1132,7 +1132,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     return msg_iev_build_webix(gobj,
         node?0:-1,
         json_local_sprintf(node?"Node update!":log_last_message()),
-        0,
+        gobj_topic_desc(gobj, topic_name),
         node,
         kw  // owned
     );
@@ -1223,7 +1223,7 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         gobj,
         0,
         json_local_sprintf("%d nodes deleted", idx),
-        0,
+        gobj_topic_desc(gobj, topic_name),
         jn_data,
         kw  // owned
     );

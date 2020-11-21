@@ -303,10 +303,10 @@ PRIVATE json_t *mt_create_record( // Return is NOT YOURS
     hgobj gobj,
     const char *topic_name,
     json_t *kw, // owned
-    const char *options // "permissive" "verbose"
+    const char *options // "permissive"
 )
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
 // TODO    json_t *record = treedb_create_record( // Return is NOT YOURS
 //         priv->tranger,
@@ -316,6 +316,7 @@ PRIVATE json_t *mt_create_record( // Return is NOT YOURS
 //         options
 //     );
 //     return record;
+    return 0;
 }
 
 /***************************************************************************
@@ -326,9 +327,10 @@ PRIVATE int mt_save_record(
     json_t *record
 )
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
 // TODO    return treedb_save_record(priv->tranger, record);
+    return 0;
 }
 
 /***************************************************************************
@@ -341,7 +343,7 @@ PRIVATE json_t *mt_update_record( // Return is NOT YOURS
     const char *options // "create" ["permissive"], "clean"
 )
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
 // TODO    json_t *record = treedb_update_record( // Return is NOT YOURS
 //         priv->tranger,
@@ -351,6 +353,7 @@ PRIVATE json_t *mt_update_record( // Return is NOT YOURS
 //         options
 //     );
 //     return record;
+    return 0;
 }
 
 /***************************************************************************
@@ -358,7 +361,7 @@ PRIVATE json_t *mt_update_record( // Return is NOT YOURS
  ***************************************************************************/
 PRIVATE int mt_delete_record(hgobj gobj, const char *topic_name, json_t *kw, const char *options)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
 // TODO    return treedb_delete_record(
 //         priv->tranger,
@@ -367,6 +370,7 @@ PRIVATE int mt_delete_record(hgobj gobj, const char *topic_name, json_t *kw, con
 //         kw, // owned
 //         options
 //     );
+    return 0;
 }
 
 /***************************************************************************
@@ -379,7 +383,7 @@ PRIVATE json_t *mt_get_record(
     json_t *jn_options
 )
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
 // TODO    return treedb_get_record(
 //         priv->tranger,
@@ -388,6 +392,7 @@ PRIVATE json_t *mt_get_record(
 //         id,
 //         jn_options
 //     );
+    return 0;
 }
 
 /***************************************************************************
@@ -400,7 +405,7 @@ PRIVATE json_t *mt_list_records(
     json_t *jn_options
 )
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
 // TODO    return treedb_list_records(
 //         priv->tranger,
@@ -410,6 +415,7 @@ PRIVATE json_t *mt_list_records(
 //         jn_options,
 //         gobj_read_pointer_attr(gobj, "kw_match")
 //     );
+    return 0;
 }
 
 /***************************************************************************
@@ -423,7 +429,7 @@ PRIVATE json_t *mt_record_instances(
     json_t *jn_options
 )
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
 // TODO    return treedb_record_instances( // Return MUST be decref
 //         priv->tranger,
@@ -434,6 +440,7 @@ PRIVATE json_t *mt_record_instances(
 //         jn_options, // owned, "collapsed"
 //         gobj_read_pointer_attr(gobj, "kw_match")
 //     );
+    return 0;
 }
 
 /***************************************************************************
@@ -823,72 +830,72 @@ PRIVATE json_t *cmd_save_tranger_schema(hgobj gobj, const char *cmd, json_t *kw,
  ***************************************************************************/
 PRIVATE json_t *cmd_create_record(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    const char *content = kw_get_str(kw, "content", "", 0);
-    const char *content64 = kw_get_str(kw, "content64", "", 0);
-    const char *options = kw_get_str(kw, "options", "", 0);
-
-    if(empty_string(topic_name)) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_sprintf("What topic_name?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
-    /*----------------------------------*
-     *  Get content
-     *  Priority: conten64, content
-     *----------------------------------*/
-    json_t *jn_content = 0;
-    if(!empty_string(content64)) {
-        /*
-         *  Get content in base64 and decode
-         */
-        GBUFFER *gbuf_content = gbuf_decodebase64string(content64);
-        jn_content = legalstring2json(gbuf_cur_rd_pointer(gbuf_content), TRUE);
-        GBUF_DECREF(gbuf_content);
-        if(!jn_content) {
-            return msg_iev_build_webix(
-                gobj,
-                -1,
-                json_sprintf("Can't decode json content64"),
-                0,
-                0,
-                kw  // owned
-            );
-        }
-    }
-
-    if(!jn_content) {
-        if(!empty_string(content)) {
-            jn_content = legalstring2json(content, TRUE);
-            if(!jn_content) {
-                return msg_iev_build_webix(
-                    gobj,
-                    -1,
-                    json_sprintf("Can't decode json content"),
-                    0,
-                    0,
-                    kw  // owned
-                );
-            }
-        }
-    }
-
-    if(!jn_content) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_sprintf("What content?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
+//     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+//     const char *content = kw_get_str(kw, "content", "", 0);
+//     const char *content64 = kw_get_str(kw, "content64", "", 0);
+//     const char *options = kw_get_str(kw, "options", "", 0);
+//
+//     if(empty_string(topic_name)) {
+//         return msg_iev_build_webix(
+//             gobj,
+//             -1,
+//             json_sprintf("What topic_name?"),
+//             0,
+//             0,
+//             kw  // owned
+//         );
+//     }
+//
+//     /*----------------------------------*
+//      *  Get content
+//      *  Priority: conten64, content
+//      *----------------------------------*/
+//     json_t *jn_content = 0;
+//     if(!empty_string(content64)) {
+//         /*
+//          *  Get content in base64 and decode
+//          */
+//         GBUFFER *gbuf_content = gbuf_decodebase64string(content64);
+//         jn_content = legalstring2json(gbuf_cur_rd_pointer(gbuf_content), TRUE);
+//         GBUF_DECREF(gbuf_content);
+//         if(!jn_content) {
+//             return msg_iev_build_webix(
+//                 gobj,
+//                 -1,
+//                 json_sprintf("Can't decode json content64"),
+//                 0,
+//                 0,
+//                 kw  // owned
+//             );
+//         }
+//     }
+//
+//     if(!jn_content) {
+//         if(!empty_string(content)) {
+//             jn_content = legalstring2json(content, TRUE);
+//             if(!jn_content) {
+//                 return msg_iev_build_webix(
+//                     gobj,
+//                     -1,
+//                     json_sprintf("Can't decode json content"),
+//                     0,
+//                     0,
+//                     kw  // owned
+//                 );
+//             }
+//         }
+//     }
+//
+//     if(!jn_content) {
+//         return msg_iev_build_webix(
+//             gobj,
+//             -1,
+//             json_sprintf("What content?"),
+//             0,
+//             0,
+//             kw  // owned
+//         );
+//     }
 
 //TODO     json_t *record = gobj_create_record(
 //         gobj,
@@ -904,6 +911,7 @@ PRIVATE json_t *cmd_create_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
 //         record,
 //         kw  // owned
 //     );
+    return 0;
 }
 
 /***************************************************************************
@@ -914,7 +922,7 @@ PRIVATE json_t *cmd_update_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *content = kw_get_str(kw, "content", "", 0);
     const char *content64 = kw_get_str(kw, "content64", "", 0);
-    const char *options = kw_get_str(kw, "options", "", 0);
+//     const char *options = kw_get_str(kw, "options", "", 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -992,6 +1000,7 @@ PRIVATE json_t *cmd_update_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
 //         record,
 //         kw  // owned
 //     );
+    return 0;
 }
 
 /***************************************************************************
@@ -1001,7 +1010,7 @@ PRIVATE json_t *cmd_delete_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
 {
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *filter = kw_get_str(kw, "filter", "", 0);
-    BOOL force = kw_get_bool(kw, "force", 0, KW_WILD_NUMBER);
+//     BOOL force = kw_get_bool(kw, "force", 0, KW_WILD_NUMBER);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -1083,6 +1092,7 @@ PRIVATE json_t *cmd_delete_record(hgobj gobj, const char *cmd, json_t *kw, hgobj
 //         jn_data,
 //         kw  // owned
 // TODO    );
+    return 0;
 }
 
 /***************************************************************************
@@ -1148,11 +1158,11 @@ PRIVATE json_t *cmd_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE json_t *cmd_list_records(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *filter = kw_get_str(kw, "filter", "", 0);
-    BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
+//     BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -1195,6 +1205,7 @@ PRIVATE json_t *cmd_list_records(hgobj gobj, const char *cmd, json_t *kw, hgobj 
 //         records,
 //         kw  // owned
 //     );
+    return 0;
 }
 
 /***************************************************************************
@@ -1202,32 +1213,32 @@ PRIVATE json_t *cmd_list_records(hgobj gobj, const char *cmd, json_t *kw, hgobj 
  ***************************************************************************/
 PRIVATE json_t *cmd_get_record(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    const char *record_id = kw_get_str(kw, "record_id", "", 0);
-    BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
-
-    if(empty_string(topic_name)) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_sprintf("What topic_name?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-    if(empty_string(record_id)) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_sprintf("What record id?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//
+//     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+//     const char *record_id = kw_get_str(kw, "record_id", "", 0);
+// //     BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
+//
+//     if(empty_string(topic_name)) {
+//         return msg_iev_build_webix(
+//             gobj,
+//             -1,
+//             json_sprintf("What topic_name?"),
+//             0,
+//             0,
+//             kw  // owned
+//         );
+//     }
+//     if(empty_string(record_id)) {
+//         return msg_iev_build_webix(
+//             gobj,
+//             -1,
+//             json_sprintf("What record id?"),
+//             0,
+//             0,
+//             kw  // owned
+//         );
+//     }
 
 // TODO    json_t *record = gobj_get_record(
 //         gobj,
@@ -1243,6 +1254,7 @@ PRIVATE json_t *cmd_get_record(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 //         kw_incref(record),
 //         kw  // owned
 //     );
+    return 0;
 }
 
 /***************************************************************************
@@ -1250,45 +1262,45 @@ PRIVATE json_t *cmd_get_record(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
  ***************************************************************************/
 PRIVATE json_t *cmd_record_instances(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    const char *record_id = kw_get_str(kw, "record_id", "", 0);
-    const char *pkey2 = kw_get_str(kw, "pkey2", "", 0);
-    const char *filter = kw_get_str(kw, "filter", "", 0);
-    BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
-
-    if(empty_string(topic_name)) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_sprintf("What topic_name?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-    json_t *jn_filter = 0;
-    if(!empty_string(filter)) {
-        jn_filter = legalstring2json(filter, TRUE);
-        if(!jn_filter) {
-            return msg_iev_build_webix(
-                gobj,
-                -1,
-                json_sprintf("Can't decode filter json"),
-                0,
-                0,
-                kw  // owned
-            );
-        }
-    }
-    if(!empty_string(record_id)) {
-        if(!jn_filter) {
-            jn_filter = json_pack("{s:s}", "id", record_id);
-        } else {
-            json_object_set_new(jn_filter, "id", json_string(record_id));
-        }
-    }
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//
+//     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+//     const char *record_id = kw_get_str(kw, "record_id", "", 0);
+//     const char *pkey2 = kw_get_str(kw, "pkey2", "", 0);
+//     const char *filter = kw_get_str(kw, "filter", "", 0);
+//     BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
+//
+//     if(empty_string(topic_name)) {
+//         return msg_iev_build_webix(
+//             gobj,
+//             -1,
+//             json_sprintf("What topic_name?"),
+//             0,
+//             0,
+//             kw  // owned
+//         );
+//     }
+//     json_t *jn_filter = 0;
+//     if(!empty_string(filter)) {
+//         jn_filter = legalstring2json(filter, TRUE);
+//         if(!jn_filter) {
+//             return msg_iev_build_webix(
+//                 gobj,
+//                 -1,
+//                 json_sprintf("Can't decode filter json"),
+//                 0,
+//                 0,
+//                 kw  // owned
+//             );
+//         }
+//     }
+//     if(!empty_string(record_id)) {
+//         if(!jn_filter) {
+//             jn_filter = json_pack("{s:s}", "id", record_id);
+//         } else {
+//             json_object_set_new(jn_filter, "id", json_string(record_id));
+//         }
+//     }
 
 // TODO    json_t *instances = gobj_record_instances(
 //         gobj,
@@ -1306,6 +1318,7 @@ PRIVATE json_t *cmd_record_instances(hgobj gobj, const char *cmd, json_t *kw, hg
 //         instances,
 //         kw  // owned
 //     );
+    return 0;
 }
 
 /***************************************************************************
@@ -1313,44 +1326,44 @@ PRIVATE json_t *cmd_record_instances(hgobj gobj, const char *cmd, json_t *kw, hg
  ***************************************************************************/
 PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    const char *record_id = kw_get_str(kw, "record_id", "", 0);
-    const char *pkey2 = kw_get_str(kw, "pkey2", "", 0);
-    const char *filter = kw_get_str(kw, "filter", "", 0);
-
-    if(empty_string(topic_name)) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_sprintf("What topic_name?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-    json_t *jn_filter = 0;
-    if(!empty_string(filter)) {
-        jn_filter = legalstring2json(filter, TRUE);
-        if(!jn_filter) {
-            return msg_iev_build_webix(
-                gobj,
-                -1,
-                json_sprintf("Can't decode filter json"),
-                0,
-                0,
-                kw  // owned
-            );
-        }
-    }
-    if(!empty_string(record_id)) {
-        if(!jn_filter) {
-            jn_filter = json_pack("{s:s}", "id", record_id);
-        } else {
-            json_object_set_new(jn_filter, "id", json_string(record_id));
-        }
-    }
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//
+//     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+//     const char *record_id = kw_get_str(kw, "record_id", "", 0);
+//     const char *pkey2 = kw_get_str(kw, "pkey2", "", 0);
+//     const char *filter = kw_get_str(kw, "filter", "", 0);
+//
+//     if(empty_string(topic_name)) {
+//         return msg_iev_build_webix(
+//             gobj,
+//             -1,
+//             json_sprintf("What topic_name?"),
+//             0,
+//             0,
+//             kw  // owned
+//         );
+//     }
+//     json_t *jn_filter = 0;
+//     if(!empty_string(filter)) {
+//         jn_filter = legalstring2json(filter, TRUE);
+//         if(!jn_filter) {
+//             return msg_iev_build_webix(
+//                 gobj,
+//                 -1,
+//                 json_sprintf("Can't decode filter json"),
+//                 0,
+//                 0,
+//                 kw  // owned
+//             );
+//         }
+//     }
+//     if(!empty_string(record_id)) {
+//         if(!jn_filter) {
+//             jn_filter = json_pack("{s:s}", "id", record_id);
+//         } else {
+//             json_object_set_new(jn_filter, "id", json_string(record_id));
+//         }
+//     }
 
 // TODO    json_t *instances = gobj_record_instances(
 //         gobj,
@@ -1386,6 +1399,7 @@ PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgob
 //         instances,
 //         kw  // owned
 //     );
+    return 0;
 }
 
 /***************************************************************************
