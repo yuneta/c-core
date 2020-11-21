@@ -82,6 +82,7 @@ SDATA_END()
 PRIVATE sdata_desc_t pm_delete_node[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
+SDATAPM (ASN_JSON,      "record",       0,              0,          "Node content in json"),
 SDATAPM (ASN_BOOLEAN,   "force",        0,              0,          "Force delete"),
 SDATA_END()
 };
@@ -1171,6 +1172,21 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
                 kw  // owned
             );
         }
+    }
+
+    if(!jn_filter) {
+        jn_filter = kw_incref(kw_get_dict(kw, "record", 0, 0));
+    }
+
+    if(!kw_has_key(jn_filter, "id")) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("field 'id' is required to delete nodes"),
+            0,
+            0,
+            kw  // owned
+        );
     }
 
     /*
