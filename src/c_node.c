@@ -455,7 +455,12 @@ PRIVATE json_t *mt_update_node( // Return is NOT YOURS
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE int mt_delete_node(hgobj gobj, const char *topic_name, json_t *kw, const char *options)
+PRIVATE int mt_delete_node(
+    hgobj gobj,
+    const char *topic_name,
+    json_t *kw,    // owned
+    const char *options
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
@@ -1213,18 +1218,24 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
 
     /*
      *  Delete
+     *  HACK if there are several nodes to delete then force is true
+     *      in order to avoid incongruences in links
      */
+    if(json_array_size(iter)>1) {
+        force = TRUE;
+    }
     json_t *jn_data = json_array();
     int idx; json_t *node;
     json_array_foreach(iter, idx, node) {
         const char *id = kw_get_str(node, "id", "", KW_REQUIRED);
-
+        JSON_INCREF(node);
         if(gobj_delete_node(gobj, topic_name, node, force?"force":"")<0) {
             JSON_DECREF(iter);
+            JSON_DECREF(jn_data);
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Cannot delete the node %s^%s", topic_name, id),
+                json_local_sprintf(log_last_message()),
                 0,
                 0,
                 kw  // owned
