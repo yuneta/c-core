@@ -2081,8 +2081,8 @@ PRIVATE const EVENT input_events[] = {
     {NULL, 0, 0, 0}
 };
 PRIVATE const EVENT output_events[] = {
-    {"EV_TREEDB_NODE_UPDATED",  0, 0, 0},
-    {"EV_TREEDB_NODE_DELETED",  0, 0, 0},
+    {"EV_TREEDB_NODE_UPDATED",  EVF_PUBLIC_EVENT,   0,  0},
+    {"EV_TREEDB_NODE_DELETED",  EVF_PUBLIC_EVENT,   0,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const char *state_names[] = {
