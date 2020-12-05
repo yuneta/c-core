@@ -1135,7 +1135,6 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
                 "event",        "%s", iev_event,
                 NULL
             );
-            drop(gobj);
             KW_DECREF(iev_kw);
             KW_DECREF(kw);
             return -1;
@@ -1184,7 +1183,6 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
                 "event",        "%s", iev_event,
                 NULL
             );
-            drop(gobj);
             KW_DECREF(iev_kw);
             KW_DECREF(kw);
             return -1;
