@@ -23,7 +23,14 @@
 /***************************************************************************
  *              Prototypes
  ***************************************************************************/
-
+PRIVATE int treedb_callback(
+    void *user_data,
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name,
+    const char *operation,  // "node_updated", "node_deleted"
+    json_t *node            // owned
+);
 
 /***************************************************************************
  *          Data: config, public data, private data
@@ -358,6 +365,13 @@ PRIVATE int mt_start(hgobj gobj)
         priv->treedb_name,
         json_incref(priv->treedb_schema),  // owned
         "persistent"
+    );
+
+    treedb_set_callback(
+        priv->tranger,
+        priv->treedb_name,
+        treedb_callback,
+        gobj
     );
 
     return 0;
@@ -2032,6 +2046,24 @@ PRIVATE json_t *cmd_deactivate_snap(hgobj gobj, const char *cmd, json_t *kw, hgo
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE int treedb_callback(
+    void *user_data,
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name,
+    const char *operation,  // "EV_TREEDB_NODE_UPDATED", "EV_TREEDB_NODE_DELETED"
+    json_t *node            // owned
+)
+{
+    json_t *kw = json_pack("{s:s, s:s, s:o}",
+        "treedb_name", treedb_name,
+        "topic_name", topic_name,
+        "node", node
+    );
+
+    return gobj_publish_event(user_data, operation, kw);
+}
+
 
 
 
@@ -2049,6 +2081,8 @@ PRIVATE const EVENT input_events[] = {
     {NULL, 0, 0, 0}
 };
 PRIVATE const EVENT output_events[] = {
+    {"EV_TREEDB_NODE_UPDATED",  0, 0, 0},
+    {"EV_TREEDB_NODE_DELETED",  0, 0, 0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const char *state_names[] = {
