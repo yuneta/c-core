@@ -305,6 +305,7 @@ PRIVATE int send_remote_subscription(
     json_t *__config__ = sdata_read_json(subs, "__config__");
     json_t *__global__ = sdata_read_json(subs, "__global__");
     json_t *__filter__ = sdata_read_json(subs, "__filter__");
+    const char *__service__ = sdata_read_str(subs, "__service__");
     hgobj subscriber = sdata_read_pointer(subs, "subscriber");
 
     /*
@@ -323,9 +324,8 @@ PRIVATE int send_remote_subscription(
     json_t *jn_ievent_id = build_ievent_request(
         gobj,
         gobj_name(subscriber),
-        kw_get_str(kw, "__service__", 0, 0)
+        __service__
     );
-    json_object_del(kw, "__service__");
 
     msg_iev_push_stack(
         kw,         // not owned
@@ -372,6 +372,7 @@ PRIVATE int mt_subscription_deleted(
     json_t *__config__ = sdata_read_json(subs, "__config__");
     json_t *__global__ = sdata_read_json(subs, "__global__");
     json_t *__filter__ = sdata_read_json(subs, "__filter__");
+    const char *__service__ = sdata_read_str(subs, "__service__");
     hgobj subscriber = sdata_read_pointer(subs, "subscriber");
 
     /*
@@ -390,9 +391,8 @@ PRIVATE int mt_subscription_deleted(
     json_t *jn_ievent_id = build_ievent_request(
         gobj,
         gobj_name(subscriber),
-        kw_get_str(kw, "__service__", 0, 0)
+        __service__
     );
-    json_object_del(kw, "__service__");
 
     msg_iev_push_stack(
         kw,         // not owned
@@ -423,10 +423,13 @@ PRIVATE json_t *build_ievent_request(
     const char *dst_service
 )
 {
+    if(empty_string(dst_service)) {
+        dst_service = gobj_read_str_attr(gobj, "wanted_yuno_service");
+    }
     json_t *jn_ievent_chain = json_pack("{s:s, s:s, s:s, s:s, s:s, s:s, s:s, s:s}",
         "dst_yuno", gobj_read_str_attr(gobj, "wanted_yuno_name"),
         "dst_role", gobj_read_str_attr(gobj, "wanted_yuno_role"),
-        "dst_service", dst_service?dst_service:gobj_read_str_attr(gobj, "wanted_yuno_service"),
+        "dst_service", dst_service,
         "src_yuno", gobj_yuno_name(),
         "src_role", gobj_yuno_role(),
         "src_service", src_service,
