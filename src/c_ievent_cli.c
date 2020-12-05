@@ -277,8 +277,10 @@ PRIVATE int mt_inject_event(hgobj gobj, const char *event, json_t *kw, hgobj src
         json_t *jn_ievent_id = build_ievent_request(
             gobj,
             gobj_name(src),
-            0
+            kw_get_str(kw, "__service__", 0, 0)
         );
+        json_object_del(kw, "__service__");
+
         msg_iev_push_stack(
             kw,         // not owned
             IEVENT_MESSAGE_AREA_ID,
@@ -321,8 +323,10 @@ PRIVATE int send_remote_subscription(
     json_t *jn_ievent_id = build_ievent_request(
         gobj,
         gobj_name(subscriber),
-        0
+        kw_get_str(kw, "__service__", 0, 0)
     );
+    json_object_del(kw, "__service__");
+
     msg_iev_push_stack(
         kw,         // not owned
         IEVENT_MESSAGE_AREA_ID,
@@ -386,8 +390,10 @@ PRIVATE int mt_subscription_deleted(
     json_t *jn_ievent_id = build_ievent_request(
         gobj,
         gobj_name(subscriber),
-        0
+        kw_get_str(kw, "__service__", 0, 0)
     );
+    json_object_del(kw, "__service__");
+
     msg_iev_push_stack(
         kw,         // not owned
         IEVENT_MESSAGE_AREA_ID,
