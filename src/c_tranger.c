@@ -23,25 +23,22 @@
 /***************************************************************************
  *              Prototypes
  ***************************************************************************/
-
+PRIVATE int load_record_callback(
+    json_t *tranger,
+    json_t *topic,
+    json_t *list,
+    md_record_t *md_record,
+    json_t *jn_record
+);
 
 /***************************************************************************
  *          Data: config, public data, private data
  ***************************************************************************/
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_save_tranger_schema(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_create_record(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_update_record(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_delete_record(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_list_records(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_get_record(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_record_instances(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_record_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_open_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE sdata_desc_t pm_help[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
@@ -58,72 +55,32 @@ SDATAPM (ASN_UNSIGNED,  "lists_limit",  0,              0,          "Expand list
 SDATAPM (ASN_UNSIGNED,  "dicts_limit",  0,              0,          "Expand dicts only if size < limit. 0 no limit"),
 SDATA_END()
 };
-PRIVATE sdata_desc_t pm_save_tranger_schema[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_JSON,      "schema",       SDF_REQUIRED,  "",         "Path"),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_create_record[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Tranger content"),
-SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Tranger content in base64"),
-SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: \"permissive\" \"multiple\""),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_update_record[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Tranger content"),
-SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Tranger content in base64"),
-SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: \"create\", \"clean\""),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_delete_record[] = {
-SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
-SDATAPM (ASN_BOOLEAN,   "force",        0,              0,          "Force delete"),
-SDATA_END()
-};
 
-PRIVATE sdata_desc_t pm_trace[] = {
-SDATAPM (ASN_BOOLEAN,   "set",          0,              0,          "Trace: set 1 o 0"),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_topics[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: 'dict'"),
-SDATA_END()
-};
 PRIVATE sdata_desc_t pm_desc[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATA_END()
 };
-PRIVATE sdata_desc_t pm_list_records[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
-SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Tree expanded"),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_get_record[] = {
-SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "record_id",      0,              0,          "Tranger id"),
-SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Tree expanded"),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_record_instances[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "record_id",      0,              0,          "Tranger id"),
-SDATAPM (ASN_OCTET_STR, "pkey2",        0,              0,          "PKey2 field"),
-SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
-SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Tree expanded"),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_record_pkey2s[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+PRIVATE sdata_desc_t pm_open_list[] = {
+/*-PM----type-----------name--------------------flag----default-description---------- */
+SDATAPM (ASN_OCTET_STR, "id",                   0,      0,      "Id of list"),
+SDATAPM (ASN_BOOLEAN,   "return_data",          0,      0,      "True for return list data"),
+SDATAPM (ASN_OCTET_STR, "topic_name",           0,      0,      "Topic name"),
+SDATAPM (ASN_OCTET_STR, "fields",               0,      0,      "match_cond: Only this fields"),
+SDATAPM (ASN_BOOLEAN,   "backward",             0,      0,      "match_cond:"),
+SDATAPM (ASN_BOOLEAN,   "only_md",              0,      0,      "match_cond: don't load jn_record on loading disk, by default TRUE"),
+SDATAPM (ASN_INTEGER64, "from_rowid",           0,      0,      "match_cond:"),
+SDATAPM (ASN_INTEGER64, "to_rowid",             0,      0,      "match_cond:"),
+SDATAPM (ASN_OCTET_STR, "from_t",               0,      0,      "match_cond:"),
+SDATAPM (ASN_OCTET_STR, "to_t",                 0,      0,      "match_cond:"),
+SDATAPM (ASN_UNSIGNED,  "user_flag",            0,      0,      "match_cond:"),
+SDATAPM (ASN_UNSIGNED,  "not_user_flag",        0,      0,      "match_cond:"),
+SDATAPM (ASN_UNSIGNED,  "user_flag_mask_set",   0,      0,      "match_cond:"),
+SDATAPM (ASN_UNSIGNED,  "user_flag_mask_notset",0,      0,      "match_cond:"),
+SDATAPM (ASN_OCTET_STR, "key",                  0,      0,      "match_cond:"),
+SDATAPM (ASN_OCTET_STR, "notkey",               0,      0,      "match_cond:"),
+SDATAPM (ASN_OCTET_STR, "from_tm",              0,      0,      "match_cond:"),
+SDATAPM (ASN_OCTET_STR, "to_tm",                0,      0,      "match_cond:"),
+SDATAPM (ASN_OCTET_STR, "rkey",                 0,      0,      "match_cond: regular expression of key"),
 SDATA_END()
 };
 
@@ -133,23 +90,13 @@ PRIVATE sdata_desc_t command_table[] = {
 /*-CMD---type-----------name----------------alias-------items-------json_fn---------description--*/
 SDATACM (ASN_SCHEMA,    "help",             a_help,     pm_help,    cmd_help,       "Command's help"),
 
-/*-CMD---type-----------name------------al--items-----------json_fn-------------description--*/
-SDATACM (ASN_SCHEMA,    "print-tranger",0,  pm_print_tranger, cmd_print_tranger,  "Print tranger"),
-SDATACM (ASN_SCHEMA,    "save-tranger-schema",0, pm_save_tranger_schema, cmd_save_tranger_schema,  "Save tranger schema"),
-SDATACM (ASN_SCHEMA,    "create-record",  0,  pm_create_record, cmd_create_record,    "Create record"),
-SDATACM (ASN_SCHEMA,    "update-record",  0,  pm_update_record, cmd_update_record,    "Update record"),
-SDATACM (ASN_SCHEMA,    "delete-record",  0,  pm_delete_record, cmd_delete_record,    "Delete record"),
-SDATACM (ASN_SCHEMA,    "trace",        0,  pm_trace,       cmd_trace,          "Set trace"),
-SDATACM (ASN_SCHEMA,    "topics",       0,  pm_topics,      cmd_topics,         "List topics"),
-SDATACM (ASN_SCHEMA,    "desc",         0,  pm_desc,        cmd_desc,           "Schema of topic or full"),
-SDATACM (ASN_SCHEMA,    "records",        0,  pm_list_records,  cmd_list_records,     "List records"),
-SDATACM (ASN_SCHEMA,    "record",         0,  pm_get_record,    cmd_get_record,       "Get record by id"),
-SDATACM (ASN_SCHEMA,    "instances",    0,  pm_record_instances,cmd_record_instances,"List record's instances"),
-SDATACM (ASN_SCHEMA,    "touch-instance",0, pm_record_instances,cmd_touch_instance,"Touch (save) instance to force to be the last instance"),
-SDATACM (ASN_SCHEMA,    "pkey2s",       0,  pm_record_pkey2s, cmd_record_pkey2s,    "List record's pkey2"),
+/*-CMD---type-----------name----------------alias---items---------------json_fn-------------description--*/
+SDATACM (ASN_SCHEMA,    "print-tranger",    0,      pm_print_tranger,   cmd_print_tranger,  "Print tranger"),
+SDATACM (ASN_SCHEMA,    "topics",           0,      0,                  cmd_topics,         "List topics"),
+SDATACM (ASN_SCHEMA,    "desc",             0,      pm_desc,            cmd_desc,           "Schema of topic or full"),
+SDATACM (ASN_SCHEMA,    "open-list",        0,      pm_open_list,       cmd_open_list,      "Open list"),
 SDATA_END()
 };
-
 
 /*---------------------------------------------*
  *      Attributes - order affect to oid's
@@ -277,184 +224,108 @@ PRIVATE int mt_stop(hgobj gobj)
 }
 
 /***************************************************************************
- *      Framework Method
+ *      Framework Method subscription_added
  ***************************************************************************/
-PRIVATE int mt_trace_on(hgobj gobj, const char *level, json_t *kw)
-{
-    // TODO treedb_set_trace(TRUE);
-    KW_DECREF(kw);
-    return 0;
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE int mt_trace_off(hgobj gobj, const char *level, json_t *kw)
-{
-    // TODO treedb_set_trace(FALSE);
-    KW_DECREF(kw);
-    return 0;
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE json_t *mt_create_record( // Return is NOT YOURS
+PRIVATE int mt_subscription_added(
     hgobj gobj,
-    const char *topic_name,
-    json_t *kw, // owned
-    const char *options // "permissive"
-)
-{
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-// TODO    json_t *record = treedb_create_record( // Return is NOT YOURS
-//         priv->tranger,
-//         priv->treedb_name,
-//         topic_name,
-//         kw, // owned
-//         options
-//     );
-//     return record;
-    return 0;
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE int mt_save_record(
-    hgobj gobj,
-    json_t *record
-)
-{
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-// TODO    return treedb_save_record(priv->tranger, record);
-    return 0;
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE json_t *mt_update_record( // Return is NOT YOURS
-    hgobj gobj,
-    const char *topic_name,
-    json_t *kw,    // owned
-    const char *options // "create" ["permissive"], "clean"
-)
-{
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-// TODO    json_t *record = treedb_update_record( // Return is NOT YOURS
-//         priv->tranger,
-//         priv->treedb_name,
-//         topic_name,
-//         kw, // owned
-//         options
-//     );
-//     return record;
-    return 0;
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE int mt_delete_record(hgobj gobj, const char *topic_name, json_t *kw, const char *options)
-{
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-// TODO    return treedb_delete_record(
-//         priv->tranger,
-//         priv->treedb_name,
-//         topic_name,
-//         kw, // owned
-//         options
-//     );
-    return 0;
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE json_t *mt_get_record(
-    hgobj gobj,
-    const char *topic_name,
-    const char *id,
-    json_t *jn_options
-)
-{
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-// TODO    return treedb_get_record(
-//         priv->tranger,
-//         priv->treedb_name,
-//         topic_name,
-//         id,
-//         jn_options
-//     );
-    return 0;
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE json_t *mt_list_records(
-    hgobj gobj,
-    const char *topic_name,
-    json_t *jn_filter,
-    json_t *jn_options
-)
-{
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-// TODO    return treedb_list_records(
-//         priv->tranger,
-//         priv->treedb_name,
-//         topic_name,
-//         jn_filter,
-//         jn_options,
-//         gobj_read_pointer_attr(gobj, "kw_match")
-//     );
-    return 0;
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE json_t *mt_record_instances(
-    hgobj gobj,
-    const char *topic_name,
-    const char *pkey2,
-    json_t *jn_filter,
-    json_t *jn_options
-)
-{
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-// TODO    return treedb_record_instances( // Return MUST be decref
-//         priv->tranger,
-//         priv->treedb_name,
-//         topic_name,
-//         pkey2,
-//         jn_filter,  // owned
-//         jn_options, // owned, "collapsed"
-//         gobj_read_pointer_attr(gobj, "kw_match")
-//     );
-    return 0;
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE json_t *mt_topic_desc(hgobj gobj, const char *topic_name)
+    hsdata subs)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(!empty_string(topic_name)) {
-        return tranger_list_topic_desc(priv->tranger, topic_name);
-    } else {
-        return kw_incref(kw_get_dict(priv->tranger, "topics", 0, KW_REQUIRED));
+    json_t *__config__ = sdata_read_json(subs, "__config__");
+    BOOL first_shot = kw_get_bool(__config__, "__first_shot__", TRUE, 0);
+    if(!first_shot) {
+        return 0;
     }
+    hgobj subscriber = sdata_read_pointer(subs, "subscriber");
+    const char *event = sdata_read_str(subs, "event");
+    json_t *__global__ = sdata_read_json(subs, "__global__");
+    json_t *__filter__ = sdata_read_json(subs, "__filter__");
+
+    const char *__list_id__ = kw_get_str(__config__, "__list_id__", "", 0);
+    if(empty_string(__list_id__)) {
+        return gobj_send_event(
+            subscriber,
+            event,
+            msg_iev_build_webix2_without_answer_filter(gobj,
+                -1,
+                json_sprintf("__list_id__ required"),
+                0,
+                0, // owned
+                __global__?kw_duplicate(__global__):0,  // owned
+                "__first_shot__"
+            ),
+            gobj
+        );
+    }
+
+    json_t *list = tranger_get_list(priv->tranger, __list_id__);
+    if(!list) {
+        return gobj_send_event(
+            subscriber,
+            event,
+            msg_iev_build_webix2_without_answer_filter(gobj,
+                -1,
+                json_sprintf("tranger list not found: '%s'", __list_id__),
+                0,
+                0, // owned
+                __global__?kw_duplicate(__global__):0,  // owned
+                "__first_shot__"
+            ),
+            gobj
+        );
+    }
+
+    if(strcasecmp(event, "EV_TRANGER_NEW_RECORD")==0) {
+        json_t *match_cond = kw_get_dict(list, "match_cond", 0, KW_REQUIRED);
+        const char ** keys = 0;
+        if(kw_has_key(match_cond, "fields")) {
+            const char *fields = kw_get_str(match_cond, "fields", "", 0);
+            keys = split2(fields, ", ", 0);
+        }
+
+        json_t *jn_data = json_array();
+        size_t idx;
+        json_t *jn_record;
+        json_array_foreach(kw_get_list(list, "data", 0, KW_REQUIRED), idx, jn_record) {
+            if(__filter__) {
+                JSON_INCREF(__filter__);
+                if(!kw_match_simple(jn_record, __filter__)) {
+                    continue;
+                }
+                if(keys) {
+                    json_t *jn_record_with_fields = kw_clone_by_path(
+                        jn_record,   // owned
+                        keys
+                    );
+                    jn_record = jn_record_with_fields;
+                }
+                json_array_append(jn_data, jn_record);
+            }
+        }
+
+        split_free2(keys);
+
+        /*
+         *  Inform
+         */
+        return gobj_send_event(
+            subscriber,
+            event,
+            msg_iev_build_webix2_without_answer_filter(gobj,
+                0,
+                0,
+                0,
+                jn_data, // owned
+                __global__?kw_duplicate(__global__):0,  // owned
+                "__first_shot__"
+            ),
+            gobj
+        );
+
+    }
+
+    return 0;
 }
 
 
@@ -536,580 +407,26 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE json_t *get_schema_topic(json_t *topic_array, const char *topic_name)
-{
-    int idx; json_t *jn_topic;
-    json_array_foreach(topic_array, idx, jn_topic) {
-        const char *topic_name_ = kw_get_str(jn_topic, "topic_name", "", KW_REQUIRED);
-        if(strcmp(topic_name_, topic_name)==0) {
-            return jn_topic;
-        }
-    }
-    return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_save_tranger_schema(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    json_t *schema = kw_get_dict_value(kw, "schema", 0, 0);
-    if(!schema) {
-        return msg_iev_build_webix(gobj,
-            -1,
-            json_sprintf("What schema?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
+    json_t *topics = kw_get_dict(priv->tranger, "topics", 0, KW_REQUIRED);
+    json_t *topic_list = json_array();
 
-    BOOL master = gobj_read_bool_attr(gobj, "master");
-    if(!master) {
-        return msg_iev_build_webix(gobj,
-            -1,
-            json_sprintf("Only master can write in tranger"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
-    const char *id = kw_get_str(schema, "id", "", 0);
-    const char *schema_type = kw_get_str(schema, "schema_type", "", 0);
-    int new_schema_version = kw_get_int(schema, "schema_version", 0, KW_WILD_NUMBER);
-    json_t *jn_topics = kw_get_list(schema, "topics", 0, 0);
-
-/*
-    "id": "control_fichador",
-    "schema_type": "msg2dbs",
-    "schema_version": 6,
-    "topics": [
-        {
-            "topic_name": "control_validation",
-            "topic_version": 4,
-            "cols": {
-*/
-
-    if(empty_string(id)) {
-        return msg_iev_build_webix(gobj,
-            -1,
-            json_sprintf("No schema name"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-    if(empty_string(schema_type)) {
-        return msg_iev_build_webix(gobj,
-            -1,
-            json_sprintf("No schema type"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-    if(!new_schema_version) {
-        return msg_iev_build_webix(gobj,
-            -1,
-            json_sprintf("No schema version"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-    if(!jn_topics) {
-        return msg_iev_build_webix(gobj,
-            -1,
-            json_sprintf("Schema without topics"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
-    char schema_filename[NAME_MAX];
-    if(strncmp(schema_type, "treedb", strlen("treedb"))==0) {
-        snprintf(schema_filename, sizeof(schema_filename), "%s.treedb_schema.json",
-            id
-        );
-    } else if(strncmp(schema_type, "msg2db", strlen("msg2db"))==0) {
-        snprintf(schema_filename, sizeof(schema_filename), "%s.msg2db_schema.json",
-            id
-        );
-    } else {
-        log_error(0,
-            "gobj",             "%s", gobj_full_name(gobj),
-            "function",         "%s", __FUNCTION__,
-            "msgset",           "%s", MSGSET_PARAMETER_ERROR,
-            "msg",              "%s", "Schema type unknown",
-            "schema_type",      "%s", schema_type,
-            NULL
-        );
-        return msg_iev_build_webix(gobj,
-            -1,
-            json_sprintf("Schema type unknown: '%s'", schema_type),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
-    char schema_full_path[NAME_MAX*2];
-    snprintf(schema_full_path, sizeof(schema_full_path), "%s/%s",
-        kw_get_str(priv->tranger, "directory", "", KW_REQUIRED),
-        schema_filename
-    );
-
-    if(!file_exists(schema_full_path, 0)) {
-        log_error(0,
-            "gobj",             "%s", gobj_full_name(gobj),
-            "function",         "%s", __FUNCTION__,
-            "msgset",           "%s", MSGSET_PARAMETER_ERROR,
-            "msg",              "%s", "Schema file not found",
-            "path",             "%s", schema_full_path,
-            NULL
-        );
-        return msg_iev_build_webix(gobj,
-            -1,
-            json_sprintf("Schema file not found: '%s'", schema_filename),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
-    json_t *old_jn_schema = load_json_from_file(
-        schema_full_path,
-        "",
-        kw_get_int(priv->tranger, "on_critical_error", 0, KW_REQUIRED)
-    );
-    if(!old_jn_schema) {
-        log_error(0,
-            "gobj",             "%s", gobj_full_name(gobj),
-            "function",         "%s", __FUNCTION__,
-            "msgset",           "%s", MSGSET_PARAMETER_ERROR,
-            "msg",              "%s", "Schema json failed",
-            "path",             "%s", schema_full_path,
-            NULL
-        );
-        return msg_iev_build_webix(gobj,
-            -1,
-            json_sprintf("Schema json failed: '%s'", schema_filename),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
-    json_int_t old_schema_version = kw_get_int(
-        old_jn_schema,
-        "schema_version",
-        0,
-        KW_WILD_NUMBER
-    );
-    if(new_schema_version <= old_schema_version) {
-        JSON_DECREF(old_jn_schema);
-        log_error(0,
-            "gobj",             "%s", gobj_full_name(gobj),
-            "function",         "%s", __FUNCTION__,
-            "msgset",           "%s", MSGSET_PARAMETER_ERROR,
-            "msg",              "%s", "Schema version lower than current",
-            "path",             "%s", schema_full_path,
-            "new_version",      "%d", (int)new_schema_version,
-            "old_version",      "%d", (int)old_schema_version,
-            NULL
-        );
-        return msg_iev_build_webix(gobj,
-            -1,
-            json_sprintf("Schema version lower than current"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
-    /*
-     *  Update topics
-     */
-    json_t *old_topics = kw_get_list(old_jn_schema, "topics", 0, KW_REQUIRED);
-
-    int idx; json_t *jn_topic;
-    json_array_foreach(jn_topics, idx, jn_topic) {
-        const char *topic_name = kw_get_str(jn_topic, "topic_name", "", KW_REQUIRED);
-        int new_topic_version = kw_get_int(jn_topic, "topic_version", 0, KW_WILD_NUMBER);
-        json_t *old_topic = get_schema_topic(old_topics, topic_name);
-        if(!old_topic) {
-            /*
-             *  HACK topic must be created, needs some parameters as pkey, system_flag, etc
-             */
-            JSON_DECREF(old_jn_schema);
-            log_error(0,
-                "gobj",             "%s", gobj_full_name(gobj),
-                "function",         "%s", __FUNCTION__,
-                "msgset",           "%s", MSGSET_PARAMETER_ERROR,
-                "msg",              "%s", "Topic not exist",
-                "path",             "%s", schema_full_path,
-                "topic_name",       "%s", topic_name,
-                NULL
-            );
-            return msg_iev_build_webix(gobj,
-                -1,
-                json_sprintf("Topic not exist"),
-                0,
-                0,
-                kw  // owned
-            );
+    const char *topic_name; json_t *topic;
+    json_object_foreach(topics, topic_name, topic) {
+        if(!json_is_object(topic)) {
+            continue;
         }
-        int old_topic_version = kw_get_int(old_topic, "topic_version", 0, KW_WILD_NUMBER);
-        if(new_topic_version <= old_topic_version) {
-            JSON_DECREF(old_jn_schema);
-            log_error(0,
-                "gobj",             "%s", gobj_full_name(gobj),
-                "function",         "%s", __FUNCTION__,
-                "msgset",           "%s", MSGSET_PARAMETER_ERROR,
-                "msg",              "%s", "Topic version lower than current",
-                "path",             "%s", schema_full_path,
-                "topic_name",       "%s", topic_name,
-                "new_version",      "%d", (int)new_topic_version,
-                "old_version",      "%d", (int)old_topic_version,
-                NULL
-            );
-            return msg_iev_build_webix(gobj,
-                -1,
-                json_sprintf("Topic version lower than current"),
-                0,
-                0,
-                kw  // owned
-            );
-        }
-
-        /*
-         *  Update cols and version
-         */
-        json_object_set_new(old_topic, "topic_version", json_sprintf("%d", new_topic_version));
-
-        json_t *new_cols = kw_get_dict(jn_topic, "cols", 0, KW_REQUIRED);
-        json_object_set(old_topic, "cols", new_cols);
+        json_array_append_new(topic_list, json_string(topic_name));
     }
-
-    json_object_set_new(
-        old_jn_schema, "schema_version", json_sprintf("%d", new_schema_version)
-    );
-
-    /*
-     *  Save
-     */
-    int ret = save_json_to_file(
-        kw_get_str(priv->tranger, "directory", 0, KW_REQUIRED),
-        schema_filename,
-        kw_get_int(priv->tranger, "xpermission", 0, KW_REQUIRED),
-        kw_get_int(priv->tranger, "rpermission", 0, KW_REQUIRED),
-        kw_get_int(priv->tranger, "on_critical_error", 0, KW_REQUIRED),
-        TRUE,           // Create file if not exists or overwrite.
-        FALSE,          // only_read
-        old_jn_schema   // owned
-    );
-
-    /*
-     *  Inform
-     */
-    return msg_iev_build_webix(gobj,
-        ret,
-        json_sprintf("%s", (ret<0)?log_last_message(): "Schema saved"),
-        0,
-        0,
-        kw  // owned
-    );
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_create_record(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-//     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-//     const char *content = kw_get_str(kw, "content", "", 0);
-//     const char *content64 = kw_get_str(kw, "content64", "", 0);
-//     const char *options = kw_get_str(kw, "options", "", 0);
-//
-//     if(empty_string(topic_name)) {
-//         return msg_iev_build_webix(
-//             gobj,
-//             -1,
-//             json_sprintf("What topic_name?"),
-//             0,
-//             0,
-//             kw  // owned
-//         );
-//     }
-//
-//     /*----------------------------------*
-//      *  Get content
-//      *  Priority: conten64, content
-//      *----------------------------------*/
-//     json_t *jn_content = 0;
-//     if(!empty_string(content64)) {
-//         /*
-//          *  Get content in base64 and decode
-//          */
-//         GBUFFER *gbuf_content = gbuf_decodebase64string(content64);
-//         jn_content = legalstring2json(gbuf_cur_rd_pointer(gbuf_content), TRUE);
-//         GBUF_DECREF(gbuf_content);
-//         if(!jn_content) {
-//             return msg_iev_build_webix(
-//                 gobj,
-//                 -1,
-//                 json_sprintf("Can't decode json content64"),
-//                 0,
-//                 0,
-//                 kw  // owned
-//             );
-//         }
-//     }
-//
-//     if(!jn_content) {
-//         if(!empty_string(content)) {
-//             jn_content = legalstring2json(content, TRUE);
-//             if(!jn_content) {
-//                 return msg_iev_build_webix(
-//                     gobj,
-//                     -1,
-//                     json_sprintf("Can't decode json content"),
-//                     0,
-//                     0,
-//                     kw  // owned
-//                 );
-//             }
-//         }
-//     }
-//
-//     if(!jn_content) {
-//         return msg_iev_build_webix(
-//             gobj,
-//             -1,
-//             json_sprintf("What content?"),
-//             0,
-//             0,
-//             kw  // owned
-//         );
-//     }
-
-//TODO     json_t *record = gobj_create_record(
-//         gobj,
-//         topic_name,
-//         jn_content, // owned
-//         options // options  "permissive"
-//     );
-//     JSON_INCREF(record);
-//     return msg_iev_build_webix(gobj,
-//         record?0:-1,
-//         json_sprintf(record?"Tranger created!":log_last_message()),
-//         0,
-//         record,
-//         kw  // owned
-//     );
-    return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_update_record(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    const char *content = kw_get_str(kw, "content", "", 0);
-    const char *content64 = kw_get_str(kw, "content64", "", 0);
-//     const char *options = kw_get_str(kw, "options", "", 0);
-
-    if(empty_string(topic_name)) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_sprintf("What topic_name?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
-    /*----------------------------------*
-     *  Get content
-     *  Priority: conten64, content
-     *----------------------------------*/
-    json_t *jn_content = 0;
-    if(!empty_string(content64)) {
-        /*
-         *  Get content in base64 and decode
-         */
-        GBUFFER *gbuf_content = gbuf_decodebase64string(content64);
-        jn_content = legalstring2json(gbuf_cur_rd_pointer(gbuf_content), TRUE);
-        GBUF_DECREF(gbuf_content);
-        if(!jn_content) {
-            return msg_iev_build_webix(
-                gobj,
-                -1,
-                json_sprintf("Can't decode json content64"),
-                0,
-                0,
-                kw  // owned
-            );
-        }
-    }
-
-    if(!jn_content) {
-        if(!empty_string(content)) {
-            jn_content = legalstring2json(content, TRUE);
-            if(!jn_content) {
-                return msg_iev_build_webix(
-                    gobj,
-                    -1,
-                    json_sprintf("Can't decode json content"),
-                    0,
-                    0,
-                    kw  // owned
-                );
-            }
-        }
-    }
-
-    if(!jn_content) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_sprintf("What content?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
-// TODO    json_t *record = gobj_update_record(
-//         gobj,
-//         topic_name,
-//         jn_content, // owned
-//         options // "permissive"
-//     );
-//     JSON_INCREF(record);
-//     return msg_iev_build_webix(gobj,
-//         record?0:-1,
-//         json_sprintf(record?"Tranger update!":log_last_message()),
-//         0,
-//         record,
-//         kw  // owned
-//     );
-    return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_delete_record(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    const char *filter = kw_get_str(kw, "filter", "", 0);
-//     BOOL force = kw_get_bool(kw, "force", 0, KW_WILD_NUMBER);
-
-    if(empty_string(topic_name)) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_sprintf("What topic_name?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
-    json_t *jn_filter = 0;
-    if(!empty_string(filter)) {
-        jn_filter = legalstring2json(filter, TRUE);
-        if(!jn_filter) {
-            return msg_iev_build_webix(
-                gobj,
-                -1,
-                json_sprintf("Can't decode filter json"),
-                0,
-                0,
-                kw  // owned
-            );
-        }
-    }
-
-    /*
-     *  Get a iter of matched resources.
-     */
-//     json_t *iter = gobj_list_records(
-//         gobj,
-//         topic_name,
-//         jn_filter,  // filter
-//         0
-//     );
-//
-//     if(json_array_size(iter)==0) {
-//         JSON_DECREF(iter);
-//         return msg_iev_build_webix(
-//             gobj,
-//             -1,
-//             json_sprintf("Select one record please"),
-//             0,
-//             0,
-//             kw  // owned
-//         );
-//     }
-//
-//     /*
-//      *  Delete
-//      */
-//     json_t *jn_data = json_array();
-//     int idx; json_t *record;
-//     json_array_foreach(iter, idx, record) {
-//         const char *id = kw_get_str(record, "id", "", KW_REQUIRED);
-//
-//         if(gobj_delete_record(gobj, topic_name, record, force?"force":"")<0) {
-//             JSON_DECREF(iter);
-//             return msg_iev_build_webix(
-//                 gobj,
-//                 -1,
-//                 json_sprintf("Cannot delete the record %s^%s", topic_name, id),
-//                 0,
-//                 0,
-//                 kw  // owned
-//             );
-//         }
-//         json_array_append_new(jn_data, json_string(id));
-//     }
-//
-//     JSON_DECREF(iter);
-//
-//     return msg_iev_build_webix(
-//         gobj,
-//         0,
-//         json_sprintf("%d records deleted", idx),
-//         0,
-//         jn_data,
-//         kw  // owned
-// TODO    );
-    return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-    const char *treedb_name = kw_get_str(kw, "treedb_name", "", 0);
-    const char *options = kw_get_str(kw, "options", "", 0);
-
-    json_t *topics = gobj_treedb_topics(gobj, treedb_name, options);
 
     return msg_iev_build_webix(gobj,
         topics?0:-1,
         topics?0:json_string(log_last_message()),
         0,
-        topics,
+        topic_list,
         kw  // owned
     );
 }
@@ -1119,8 +436,21 @@ PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    json_t *desc = gobj_topic_desc(gobj, topic_name);
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *desc = kwid_new_dict("", priv->tranger, "topics`%s`cols", topic_name);
 
     return msg_iev_build_webix(gobj,
         desc?0:-1,
@@ -1134,282 +464,15 @@ PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE json_t *cmd_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-    BOOL set = kw_get_bool(kw, "set", 0, KW_WILD_NUMBER);
-
-    if(set) {
-        treedb_set_trace(TRUE);
-    } else {
-        treedb_set_trace(FALSE);
-    }
-    return msg_iev_build_webix(
-        gobj,
-        0,
-        json_sprintf("Set trace %s", set?"on":"false"),
-        0,
-        0,
-        kw  // owned
-    );
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_list_records(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    const char *filter = kw_get_str(kw, "filter", "", 0);
-//     BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
-
-    if(empty_string(topic_name)) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_sprintf("What topic_name?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
-    json_t *jn_filter = 0;
-    if(!empty_string(filter)) {
-        jn_filter = legalstring2json(filter, TRUE);
-        if(!jn_filter) {
-            return msg_iev_build_webix(
-                gobj,
-                -1,
-                json_sprintf("Can't decode filter json"),
-                0,
-                0,
-                kw  // owned
-            );
-        }
-    }
-
-// TODO    json_t *records = gobj_list_records(
-//         gobj,
-//         topic_name,
-//         jn_filter,  // owned
-//         json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
-//     );
-//
-//     return msg_iev_build_webix(
-//         gobj,
-//         records?0:-1,
-//         json_sprintf("%d records", json_array_size(records)),
-//         tranger_list_topic_desc(priv->tranger, topic_name),
-//         records,
-//         kw  // owned
-//     );
-    return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_get_record(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-//
-//     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-//     const char *record_id = kw_get_str(kw, "record_id", "", 0);
-// //     BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
-//
-//     if(empty_string(topic_name)) {
-//         return msg_iev_build_webix(
-//             gobj,
-//             -1,
-//             json_sprintf("What topic_name?"),
-//             0,
-//             0,
-//             kw  // owned
-//         );
-//     }
-//     if(empty_string(record_id)) {
-//         return msg_iev_build_webix(
-//             gobj,
-//             -1,
-//             json_sprintf("What record id?"),
-//             0,
-//             0,
-//             kw  // owned
-//         );
-//     }
-
-// TODO    json_t *record = gobj_get_record(
-//         gobj,
-//         topic_name,
-//         record_id,
-//         json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
-//     );
-//
-//     return msg_iev_build_webix(gobj,
-//         record?0:-1,
-//         record?0:json_sprintf("Tranger not found"),
-//         tranger_list_topic_desc(priv->tranger, topic_name),
-//         kw_incref(record),
-//         kw  // owned
-//     );
-    return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_record_instances(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-//
-//     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-//     const char *record_id = kw_get_str(kw, "record_id", "", 0);
-//     const char *pkey2 = kw_get_str(kw, "pkey2", "", 0);
-//     const char *filter = kw_get_str(kw, "filter", "", 0);
-//     BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
-//
-//     if(empty_string(topic_name)) {
-//         return msg_iev_build_webix(
-//             gobj,
-//             -1,
-//             json_sprintf("What topic_name?"),
-//             0,
-//             0,
-//             kw  // owned
-//         );
-//     }
-//     json_t *jn_filter = 0;
-//     if(!empty_string(filter)) {
-//         jn_filter = legalstring2json(filter, TRUE);
-//         if(!jn_filter) {
-//             return msg_iev_build_webix(
-//                 gobj,
-//                 -1,
-//                 json_sprintf("Can't decode filter json"),
-//                 0,
-//                 0,
-//                 kw  // owned
-//             );
-//         }
-//     }
-//     if(!empty_string(record_id)) {
-//         if(!jn_filter) {
-//             jn_filter = json_pack("{s:s}", "id", record_id);
-//         } else {
-//             json_object_set_new(jn_filter, "id", json_string(record_id));
-//         }
-//     }
-
-// TODO    json_t *instances = gobj_record_instances(
-//         gobj,
-//         topic_name,
-//         pkey2,
-//         jn_filter,  // owned
-//         json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
-//     );
-//
-//     return msg_iev_build_webix(
-//         gobj,
-//         0,
-//         json_sprintf("%d instances", json_array_size(instances)),
-//         tranger_list_topic_desc(priv->tranger, topic_name),
-//         instances,
-//         kw  // owned
-//     );
-    return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-//
-//     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-//     const char *record_id = kw_get_str(kw, "record_id", "", 0);
-//     const char *pkey2 = kw_get_str(kw, "pkey2", "", 0);
-//     const char *filter = kw_get_str(kw, "filter", "", 0);
-//
-//     if(empty_string(topic_name)) {
-//         return msg_iev_build_webix(
-//             gobj,
-//             -1,
-//             json_sprintf("What topic_name?"),
-//             0,
-//             0,
-//             kw  // owned
-//         );
-//     }
-//     json_t *jn_filter = 0;
-//     if(!empty_string(filter)) {
-//         jn_filter = legalstring2json(filter, TRUE);
-//         if(!jn_filter) {
-//             return msg_iev_build_webix(
-//                 gobj,
-//                 -1,
-//                 json_sprintf("Can't decode filter json"),
-//                 0,
-//                 0,
-//                 kw  // owned
-//             );
-//         }
-//     }
-//     if(!empty_string(record_id)) {
-//         if(!jn_filter) {
-//             jn_filter = json_pack("{s:s}", "id", record_id);
-//         } else {
-//             json_object_set_new(jn_filter, "id", json_string(record_id));
-//         }
-//     }
-
-// TODO    json_t *instances = gobj_record_instances(
-//         gobj,
-//         topic_name,
-//         pkey2,
-//         jn_filter,  // owned
-//         0
-//     );
-//
-//     /*
-//      *  This is a danger operation, only one instance please
-//      */
-//     if(json_array_size(instances)!=1) {
-//         return msg_iev_build_webix(
-//             gobj,
-//             -1,
-//             json_sprintf("Select only one instance please"),
-//             tranger_list_topic_desc(priv->tranger, topic_name),
-//             instances,
-//             kw  // owned
-//         );
-//     }
-//     int idx; json_t *instance;
-//     json_array_foreach(instances, idx, instance) {
-//         gobj_save_record(gobj, instance);
-//     }
-//
-//     return msg_iev_build_webix(
-//         gobj,
-//         0,
-//         json_sprintf("%d instances touched", json_array_size(instances)),
-//         tranger_list_topic_desc(priv->tranger, topic_name),
-//         instances,
-//         kw  // owned
-//     );
-    return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_record_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+PRIVATE json_t *cmd_open_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    const char *id = kw_get_str(kw, "id", "", 0);
+    BOOL return_data = kw_get_bool(kw, "return_data", 0, 0);
+
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
             gobj,
@@ -1420,18 +483,141 @@ PRIVATE json_t *cmd_record_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj
             kw  // owned
         );
     }
+    if(empty_string(id)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_sprintf("An id to the list is required"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
 
-    json_t *pkey2s = treedb_topic_pkey2s(
-        priv->tranger,
-        topic_name
+    json_t *list = tranger_get_list(priv->tranger, id);
+    if(list) {
+        return msg_iev_build_webix(
+            gobj,
+            0,
+            json_sprintf("List '%s' is already open", id),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    BOOL  backward = kw_get_bool(kw, "backward", 0, 0);
+    BOOL  only_md = kw_get_bool(kw, "only_md", TRUE, 0); // WARNING by default only_md
+    int64_t from_rowid = (int64_t)kw_get_int(kw, "from_rowid", 0, 0);
+    int64_t to_rowid = (int64_t)kw_get_int(kw, "to_rowid", 0, 0);
+    uint32_t user_flag = (uint32_t)kw_get_int(kw, "user_flag", 0, 0);
+    uint32_t not_user_flag = (uint32_t)kw_get_int(kw, "not_user_flag", 0, 0);
+    uint32_t user_flag_mask_set = (uint32_t)kw_get_int(kw, "user_flag_mask_set", 0, 0);
+    uint32_t user_flag_mask_notset = (uint32_t)kw_get_int(kw, "user_flag_mask_notset", 0, 0);
+    const char *key = kw_get_str(kw, "key", 0, 0);
+    const char *notkey = kw_get_str(kw, "notkey", 0, 0);
+    const char *rkey = kw_get_str(kw, "rkey", 0, 0);
+    const char *from_t = kw_get_str(kw, "from_t", 0, 0);
+    const char *to_t = kw_get_str(kw, "to_t", 0, 0);
+    const char *from_tm = kw_get_str(kw, "from_tm", 0, 0);
+    const char *to_tm = kw_get_str(kw, "to_tm", 0, 0);
+    const char *fields = kw_get_str(kw, "fields", 0, 0);
+
+    json_t *match_cond = json_pack("{s:b, s:b}",
+        "backward", backward,
+        "only_md", only_md
     );
+    if(from_rowid) {
+        json_object_set_new(match_cond, "from_rowid", json_integer(from_rowid));
+    }
+    if(to_rowid) {
+        json_object_set_new(match_cond, "to_rowid", json_integer(to_rowid));
+    }
+    if(user_flag) {
+        json_object_set_new(match_cond, "user_flag", json_integer(user_flag));
+    }
+    if(not_user_flag) {
+        json_object_set_new(match_cond, "not_user_flag", json_integer(not_user_flag));
+    }
+    if(user_flag_mask_set) {
+        json_object_set_new(match_cond, "user_flag_mask_set", json_integer(user_flag_mask_set));
+    }
+    if(user_flag_mask_notset) {
+        json_object_set_new(match_cond, "user_flag_mask_notset", json_integer(user_flag_mask_notset));
+    }
+    if(key) {
+        json_object_set_new(match_cond, "key", json_string(key));
+    }
+    if(notkey) {
+        json_object_set_new(match_cond, "notkey", json_string(notkey));
+    }
+    if(rkey) {
+        json_object_set_new(match_cond, "rkey", json_string(rkey));
+    }
+    if(from_t) {
+        timestamp_t timestamp;
+        int offset;
+        if(all_numbers(from_t)) {
+            timestamp = atoll(from_t);
+        } else {
+            parse_date_basic(from_t, &timestamp, &offset);
+        }
+        json_object_set_new(match_cond, "from_t", json_integer(timestamp));
+    }
+    if(to_t) {
+        timestamp_t timestamp;
+        int offset;
+        if(all_numbers(to_t)) {
+            timestamp = atoll(to_t);
+        } else {
+            parse_date_basic(to_t, &timestamp, &offset);
+        }
+        json_object_set_new(match_cond, "to_t", json_integer(timestamp));
+    }
+    if(from_tm) {
+        timestamp_t timestamp;
+        int offset;
+        if(all_numbers(from_tm)) {
+            timestamp = atoll(from_tm);
+        } else {
+            parse_date_basic(from_tm, &timestamp, &offset);
+        }
+        json_object_set_new(match_cond, "from_tm", json_integer(timestamp));
+    }
+    if(to_tm) {
+        timestamp_t timestamp;
+        int offset;
+        if(all_numbers(to_tm)) {
+            timestamp = atoll(to_tm);
+        } else {
+            parse_date_basic(to_tm, &timestamp, &offset);
+        }
+        json_object_set_new(match_cond, "to_tm", json_integer(timestamp));
+    }
+    if(!empty_string(fields)) {
+        json_object_set_new(
+            match_cond,
+            "fields",
+            json_string(fields)
+        );
+    }
+
+    json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:I}",
+        "id", id,
+        "topic_name", topic_name,
+        "match_cond", match_cond,
+        "load_record_callback", (json_int_t)(size_t)load_record_callback,
+        "gobj", (json_int_t)(size_t)gobj
+    );
+
+    list = tranger_open_list(priv->tranger, jn_list);
 
     return msg_iev_build_webix(
         gobj,
-        pkey2s?0:-1,
-        json_sprintf("%d pkey2s", (int)json_object_size(pkey2s)),
+        list?0:-1,
+        list?json_sprintf("List '%s' open", id):json_string(log_last_message()),
         0,
-        pkey2s,
+        return_data?kw_get_list(list, "data", 0, KW_REQUIRED):0,
         kw  // owned
     );
 }
@@ -1456,6 +642,49 @@ PRIVATE json_t *cmd_record_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE int load_record_callback(
+    json_t *tranger,
+    json_t *topic,
+    json_t *list,
+    md_record_t *md_record,
+    json_t *jn_record  // owned
+)
+{
+    if(!(md_record->__system_flag__ & sf_loading_from_disk)) {
+        json_t *match_cond = kw_get_dict(list, "match_cond", 0, KW_REQUIRED);
+        if(kw_has_key(match_cond, "fields")) {
+            if(!jn_record) {
+                jn_record = tranger_read_record_content(tranger, topic, md_record);
+            }
+            const char *fields = kw_get_str(match_cond, "fields", "", 0);
+            const char ** keys = 0;
+            keys = split2(fields, ", ", 0);
+            json_t *jn_record_with_fields = kw_clone_by_path(
+                jn_record,   // owned
+                keys
+            );
+            split_free2(keys);
+            jn_record = jn_record_with_fields;
+        }
+
+        hgobj gobj = (hgobj)kw_get_int(list, "gobj", 0, KW_REQUIRED);
+        json_t *jn_data_ = json_array();
+        json_t *jn_data = json_object();
+        json_array_append_new(jn_data_, jn_data);
+        json_object_set_new(
+            jn_data,
+            "__list_id__",
+            json_string(kw_get_str(list, "id", "", KW_REQUIRED))
+        );
+        json_object_update(jn_data, jn_record);
+        gobj_publish_event(gobj, "EV_TRANGER_NEW_RECORD", jn_data_);
+    }
+
+    JSON_DECREF(jn_record);
+
+    return 1; // HACK add record to list.data
+}
+
 
 
 
@@ -1473,6 +702,7 @@ PRIVATE const EVENT input_events[] = {
     {NULL, 0, 0, 0}
 };
 PRIVATE const EVENT output_events[] = {
+    {"EV_TRANGER_NEW_RECORD",  EVF_PUBLIC_EVENT,   0,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const char *state_names[] = {
@@ -1516,7 +746,7 @@ PRIVATE GCLASS _gclass = {
         0, //mt_pause,
         mt_writing,
         0, //mt_reading,
-        0, //mt_subscription_added,
+        mt_subscription_added,
         0, //mt_subscription_deleted,
         0, //mt_child_added,
         0, //mt_child_removed,
@@ -1536,8 +766,8 @@ PRIVATE GCLASS _gclass = {
         0, //mt_stats_updated,
         0, //mt_disable,
         0, //mt_enable,
-        mt_trace_on,
-        mt_trace_off,
+        0, //mt_trace_on,
+        0, //mt_trace_off,
         0, //mt_gobj_created,
         0, //mt_future33,
         0, //mt_future34,
@@ -1546,27 +776,27 @@ PRIVATE GCLASS _gclass = {
         0, //mt_publication_filter,
         0, //mt_future38,
         0, //mt_future39,
-        mt_create_record,           //mt_create_node,
-        mt_update_record,           //mt_update_node,
-        mt_delete_record,           //mt_delete_node,
+        0, //mt_create_node,
+        0, //mt_update_node,
+        0, //mt_delete_node,
         0, //mt_link_nodes,
         0, //mt_link_nodes2,
         0, //mt_unlink_nodes,
         0, //mt_unlink_nodes2,
-        mt_get_record,              //mt_get_node,
-        mt_list_records,            //mt_list_nodes,
+        0, //mt_get_node,
+        0, //mt_list_nodes,
         0, //mt_shoot_snap,
         0, //mt_activate_snap,
         0, //mt_list_snaps,
         0, //mt_treedbs,
-        0, // TODO mt_treedb_topics,
-        mt_topic_desc,
+        0, //mt_treedb_topics,
+        0, //mt_topic_desc,
         0, //mt_topic_links,
         0, //mt_topic_hooks,
         0, //mt_node_parents,
         0, //mt_node_childs,
-        mt_record_instances,        //mt_node_instances,
-        mt_save_record,             //mt_save_node,
+        0, //mt_node_instances,
+        0, //mt_save_node,
         0, //mt_future61,
         0, //mt_future62,
         0, //mt_future63,
