@@ -10,6 +10,8 @@ command-yuno id=1911 service=tranger command=open-list list_id=pepe topic_name=p
 
 command-yuno id=1911 service=__yuno__ command=subscribe-event gobj_name=tranger event_name=EV_TRANGER_RECORD_ADDED rename_event_name=EV_MT_COMMAND_ANSWER first_shot=1 config={"__list_id__":"pepe"}
 
+command-yuno id=1911 service=__yuno__ command=subscribe-event gobj_name=tranger event_name=EV_TRANGER_RECORD_ADDED rename_event_name=EV_MT_COMMAND_ANSWER  config={"__list_id__":"pepe"}
+
 command-yuno id=1911 service=tranger command=add-record topic_name=pp record='{"id":"1","tm":0}'
 
 command-yuno id=1911 service=tranger command=close-list list_id=pepe
