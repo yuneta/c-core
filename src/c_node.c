@@ -275,8 +275,8 @@ typedef struct _PRIVATE_DATA {
     int32_t exit_on_error;
     kw_match_fn kw_match;
 
-    int32_t timeout;
-    hgobj timer;
+//     int32_t timeout;
+//     hgobj timer;
     uint64_t *ptxMsgs;
     uint64_t *prxMsgs;
     uint64_t txMsgsec;
@@ -300,7 +300,7 @@ PRIVATE void mt_create(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    priv->timer = gobj_create(gobj_name(gobj), GCLASS_TIMER, 0, gobj);
+//     priv->timer = gobj_create(gobj_name(gobj), GCLASS_TIMER, 0, gobj);
     priv->ptxMsgs = gobj_danger_attr_ptr(gobj, "txMsgs");
     priv->prxMsgs = gobj_danger_attr_ptr(gobj, "rxMsgs");
 
@@ -396,8 +396,8 @@ PRIVATE int mt_start(hgobj gobj)
     /*
      *  Periodic timer for tasks
      */
-    gobj_start(priv->timer);
-    set_timeout_periodic(priv->timer, priv->timeout); // La verdadera
+//     gobj_start(priv->timer);
+//     set_timeout_periodic(priv->timer, priv->timeout); // La verdadera
 
     return 0;
 }
@@ -409,8 +409,8 @@ PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    clear_timeout(priv->timer);
-    gobj_stop(priv->timer);
+//     clear_timeout(priv->timer);
+//     gobj_stop(priv->timer);
 
     treedb_close_db(priv->tranger, priv->treedb_name);
 
