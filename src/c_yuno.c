@@ -135,7 +135,7 @@ PRIVATE json_t* cmd_system_topic_schema(hgobj gobj, const char* cmd, json_t* kw,
 
 PRIVATE sdata_desc_t pm_help[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "cmd",          0,              0,          "command about you want help."),
+SDATAPM (ASN_OCTET_STR, "cmd",          0,              0,          "command about you want help"),
 SDATAPM (ASN_UNSIGNED,  "level",        0,              0,          "command search level in childs"),
 SDATA_END()
 };
@@ -146,17 +146,17 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_gobj_root_name[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__yuno__", "named-gobj or full gobj name."),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__yuno__", "named-gobj or full gobj name"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_gobj_def_name[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name."),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_list_childs[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj."),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj"),
 SDATAPM (ASN_OCTET_STR, "child_gclass", 0,              0,          "Child gclass-name (list separated by blank or |,;)"),
 SDATAPM (ASN_OCTET_STR, "attributes",   0,              0,          "Attributes to see (list separated by blank or |,;)"),
 SDATA_END()
@@ -164,73 +164,77 @@ SDATA_END()
 
 PRIVATE sdata_desc_t pm_wr_attr[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name."),
-SDATAPM (ASN_OCTET_STR, "attribute",    0,              0,          "attribute name."),
-SDATAPM (ASN_OCTET_STR, "value",        0,              0,          "value."),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "attribute",    0,              0,          "attribute name"),
+SDATAPM (ASN_OCTET_STR, "value",        0,              0,          "value"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_rd_attr[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name."),
-SDATAPM (ASN_OCTET_STR, "attribute",    0,              0,          "attribute name."),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "attribute",    0,              0,          "attribute name"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_set_gobj_tr[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name."),
-SDATAPM (ASN_OCTET_STR, "level",        0,              0,          "attribute name."),
-SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value."),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "level",        0,              0,          "attribute name"),
+SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_set_global_tr[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "level",        0,              0,          "attribute name."),
-SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value."),
+SDATAPM (ASN_OCTET_STR, "level",        0,              0,          "attribute name"),
+SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value"),
 SDATA_END()
 };
 
 PRIVATE sdata_desc_t pm_set_gclass_tr[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gclass_name",  0,              0,          "gclass-name."),
-SDATAPM (ASN_OCTET_STR, "level",        0,              0,          "attribute name."),
-SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value."),
+SDATAPM (ASN_OCTET_STR, "gclass_name",  0,              0,          "gclass-name"),
+SDATAPM (ASN_OCTET_STR, "level",        0,              0,          "attribute name"),
+SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value"),
 SDATA_END()
 };
 // PRIVATE sdata_desc_t pm_spawn[] = {
 // /*-PM----type-----------name------------flag------------default-----description---------- */
-// SDATAPM (ASN_OCTET_STR, "process",      0,              0,          "Process to execute."),
+// SDATAPM (ASN_OCTET_STR, "process",      0,              0,          "Process to execute"),
 // SDATA_END()
 // };
 PRIVATE sdata_desc_t pm_set_daemon_debug[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value."),
+SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value"),
 SDATA_END()
 };
 
 PRIVATE sdata_desc_t pm_add_log_handler[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "name",         0,              0,          "Handler log name."),
-SDATAPM (ASN_OCTET_STR, "type",         0,              0,          "Handler log type."),
-SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Handler log options."),
-SDATAPM (ASN_OCTET_STR, "url",          0,              0,          "Url for log 'udp' type."),
+SDATAPM (ASN_OCTET_STR, "name",         0,              0,          "Handler log name"),
+SDATAPM (ASN_OCTET_STR, "type",         0,              0,          "Handler log type"),
+SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Handler log options"),
+SDATAPM (ASN_OCTET_STR, "url",          0,              0,          "Url for log 'udp' type"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_del_log_handler[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "name",         0,              0,          "Handler name."),
+SDATAPM (ASN_OCTET_STR, "name",         0,              0,          "Handler name"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_subscribe_event[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name."),
-SDATAPM (ASN_OCTET_STR, "event_name",   0,              0,          "Event name."),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "event_name",   0,              0,          "Event name"),
+SDATAPM (ASN_OCTET_STR, "rename_event_name",0,          0,          "Rename event name"),
+SDATAPM (ASN_BOOLEAN,   "first_shot",   0,              0,          "First shot (send all records on subcribing"),
+SDATAPM (ASN_JSON,      "config",       0,              0,          "subcription config"),
+SDATAPM (ASN_JSON,      "filter",       0,              0,          "subcription filter"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_list_subscriptions[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name."),
-SDATAPM (ASN_BOOLEAN,   "recursive",    0,              0,          "Walk over childs."),
-SDATAPM (ASN_BOOLEAN,   "full-names",   0,              0,          "Show full names."),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name"),
+SDATAPM (ASN_BOOLEAN,   "recursive",    0,              0,          "Walk over childs"),
+SDATAPM (ASN_BOOLEAN,   "full-names",   0,              0,          "Show full names"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_add_allowed_ip[] = {
@@ -290,9 +294,9 @@ SDATACM (ASN_SCHEMA,    "public-attrs",             0,      pm_gclass_name, cmd_
 SDATACM (ASN_SCHEMA,    "view-attrs",               a_read_attrs,pm_gobj_def_name, cmd_view_attrs,      "View gobj's attrs"),
 SDATACM (ASN_SCHEMA,    "view-attrs2",              a_read_attrs2,pm_gobj_def_name, cmd_view_attrs2,    "View gobj's attrs with details"),
 
-SDATACM (ASN_SCHEMA,    "webix-gobj-tree",          0,      pm_gobj_root_name,cmd_webix_gobj_tree,      "View webix style gobj tree."),
-SDATACM (ASN_SCHEMA,    "view-gobj-tree",           0,      pm_gobj_root_name,cmd_view_gobj_tree,       "View gobj tree."),
-SDATACM (ASN_SCHEMA,    "view-gobj-treedb",         0,      pm_gobj_root_name,cmd_view_gobj_treedb,     "View gobj treedb."),
+SDATACM (ASN_SCHEMA,    "webix-gobj-tree",          0,      pm_gobj_root_name,cmd_webix_gobj_tree,      "View webix style gobj tree"),
+SDATACM (ASN_SCHEMA,    "view-gobj-tree",           0,      pm_gobj_root_name,cmd_view_gobj_tree,       "View gobj tree"),
+SDATACM (ASN_SCHEMA,    "view-gobj-treedb",         0,      pm_gobj_root_name,cmd_view_gobj_treedb,     "View gobj treedb"),
 
 SDATACM (ASN_SCHEMA,    "list-childs",              0,      pm_list_childs, cmd_list_childs,            "List childs of the specified gclass"),
 SDATACM (ASN_SCHEMA,    "write-bool",               0,      pm_wr_attr,     cmd_write_bool,             "Write a boolean attribute)"),
@@ -323,22 +327,22 @@ SDATACM (ASN_SCHEMA,    "trunk-rotatory-file",      0,      0,              cmd_
 SDATACM (ASN_SCHEMA,    "reset-log-counters",       0,      0,              cmd_reset_log_counters,     "Reset log counters"),
 
 // HACK DANGER backdoor, use Yuneta only in private networks, or public but encrypted and assured connections.
-//SDATACM (ASN_SCHEMA,    "spawn",                    0,      pm_spawn,       cmd_spawn,                  "Spawn a new process."),
+//SDATACM (ASN_SCHEMA,    "spawn",                    0,      pm_spawn,       cmd_spawn,                  "Spawn a new process"),
 
-SDATACM (ASN_SCHEMA,    "set-daemon-debug",         0,      pm_set_daemon_debug,cmd_set_daemon_debug,   "Set daemon debug."),
+SDATACM (ASN_SCHEMA,    "set-daemon-debug",         0,      pm_set_daemon_debug,cmd_set_daemon_debug,   "Set daemon debug"),
 
-SDATACM (ASN_SCHEMA,    "add-log-handler",          0,      pm_add_log_handler,cmd_add_log_handler,     "Add log handler."),
-SDATACM (ASN_SCHEMA,    "delete-log-handler",       0,      pm_del_log_handler,cmd_del_log_handler,     "Delete log handler."),
-SDATACM (ASN_SCHEMA,    "list-log-handler",         0,      0,              cmd_list_log_handler,       "List log handlers."),
-SDATACM (ASN_SCHEMA,    "list-persistent-attrs",    0,      0,              cmd_list_persistent_attrs,  "List persistent attributes of yuno."),
-SDATACM (ASN_SCHEMA,    "start-gobj-tree",          0,      pm_gobj_def_name,cmd_start_gobj_tree,       "Start named-gobj tree."),
-SDATACM (ASN_SCHEMA,    "stop-gobj-tree",           0,      pm_gobj_def_name,cmd_stop_gobj_tree,        "Stop named-gobj tree."),
-SDATACM (ASN_SCHEMA,    "enable-gobj",              0,      pm_gobj_def_name,cmd_enable_gobj,           "Enable named-gobj."),
-SDATACM (ASN_SCHEMA,    "disable-gobj",             0,      pm_gobj_def_name,cmd_disable_gobj,          "Disable named-gobj."),
-SDATACM (ASN_SCHEMA,    "subscribe-event",          0,      pm_subscribe_event,cmd_subscribe_event,          "Subscribe event [of __default_service__]."),
-SDATACM (ASN_SCHEMA,    "unsubscribe-event",        0,      pm_subscribe_event,cmd_unsubscribe_event,          "Unsubscribe event [of __default_service__]."),
-SDATACM (ASN_SCHEMA,    "list-subscriptions",       0,      pm_list_subscriptions,cmd_list_subscriptions,          "List subscriptions [of __default_service__]."),
-SDATACM (ASN_SCHEMA,    "list-subscribings",        0,      pm_list_subscriptions,cmd_list_subscribings,          "List subcribings [of __default_service__]."),
+SDATACM (ASN_SCHEMA,    "add-log-handler",          0,      pm_add_log_handler,cmd_add_log_handler,     "Add log handler"),
+SDATACM (ASN_SCHEMA,    "delete-log-handler",       0,      pm_del_log_handler,cmd_del_log_handler,     "Delete log handler"),
+SDATACM (ASN_SCHEMA,    "list-log-handler",         0,      0,              cmd_list_log_handler,       "List log handlers"),
+SDATACM (ASN_SCHEMA,    "list-persistent-attrs",    0,      0,              cmd_list_persistent_attrs,  "List persistent attributes of yuno"),
+SDATACM (ASN_SCHEMA,    "start-gobj-tree",          0,      pm_gobj_def_name,cmd_start_gobj_tree,       "Start named-gobj tree"),
+SDATACM (ASN_SCHEMA,    "stop-gobj-tree",           0,      pm_gobj_def_name,cmd_stop_gobj_tree,        "Stop named-gobj tree"),
+SDATACM (ASN_SCHEMA,    "enable-gobj",              0,      pm_gobj_def_name,cmd_enable_gobj,           "Enable named-gobj"),
+SDATACM (ASN_SCHEMA,    "disable-gobj",             0,      pm_gobj_def_name,cmd_disable_gobj,          "Disable named-gobj"),
+SDATACM (ASN_SCHEMA,    "subscribe-event",          0,      pm_subscribe_event,cmd_subscribe_event,          "Subscribe event [of __default_service__]"),
+SDATACM (ASN_SCHEMA,    "unsubscribe-event",        0,      pm_subscribe_event,cmd_unsubscribe_event,          "Unsubscribe event [of __default_service__]"),
+SDATACM (ASN_SCHEMA,    "list-subscriptions",       0,      pm_list_subscriptions,cmd_list_subscriptions,          "List subscriptions [of __default_service__]"),
+SDATACM (ASN_SCHEMA,    "list-subscribings",        0,      pm_list_subscriptions,cmd_list_subscribings,          "List subcribings [of __default_service__]"),
 
 SDATACM (ASN_SCHEMA,    "list-allowed-ips",         0,      0,              cmd_list_allowed_ips,          "List allowed ips"),
 SDATACM (ASN_SCHEMA,    "add-allowed-ip",           0,      pm_add_allowed_ip,  cmd_add_allowed_ip,          "Add a ip to allowed list"),
@@ -363,16 +367,16 @@ SDATA (ASN_OCTET_STR,   "appDesc",          SDF_RD,                     "",     
 SDATA (ASN_OCTET_STR,   "appDate",          SDF_RD,                     "",             "App date/time"),
 SDATA (ASN_OCTET_STR,   "work_dir",         SDF_RD,                     "",             "Work dir"),
 SDATA (ASN_OCTET_STR,   "domain_dir",       SDF_RD,                     "",             "Domain dir"),
-SDATA (ASN_OCTET_STR,   "realm_name",       SDF_RD,                     0,              "Realm name belongs the yuno. Set by agent."),
-SDATA (ASN_COUNTER64,   "realm_id",         SDF_RD,                     0,              "Realm Id. Set by agent."),
+SDATA (ASN_OCTET_STR,   "realm_name",       SDF_RD,                     0,              "Realm name belongs the yuno. Set by agent"),
+SDATA (ASN_COUNTER64,   "realm_id",         SDF_RD,                     0,              "Realm Id. Set by agent"),
 SDATA (ASN_OCTET_STR,   "yuno_role",        SDF_RD,                     0,              "Yuno Role"),
-SDATA (ASN_OCTET_STR,   "yuno_name",        SDF_RD,                     "",             "Yuno Name. Set by agent."),
-SDATA (ASN_OCTET_STR,   "yuno_alias",       SDF_RD,                     "",             "Yuno Alias. Set by agent."),
-SDATA (ASN_OCTET_STR,   "yuno_release",     SDF_RD,                     "",             "Yuno Release. Set by agent."),
+SDATA (ASN_OCTET_STR,   "yuno_name",        SDF_RD,                     "",             "Yuno Name. Set by agent"),
+SDATA (ASN_OCTET_STR,   "yuno_alias",       SDF_RD,                     "",             "Yuno Alias. Set by agent"),
+SDATA (ASN_OCTET_STR,   "yuno_release",     SDF_RD,                     "",             "Yuno Release. Set by agent"),
 SDATA (ASN_OCTET_STR,   "yuno_version",     SDF_RD,                     "",             "Yuno version"),
 SDATA (ASN_OCTET_STR,   "yuneta_version",   SDF_RD,                     __yuneta_version__, "Yuneta version"),
-SDATA (ASN_OCTET_STR,   "bind_ip",          SDF_RD,                     0,              "Bind ip of yuno's realm. Set by agent."),
-SDATA (ASN_BOOLEAN,     "multiple",         SDF_RD,                     0,              "True when yuno can open shared ports. Set by agent."),
+SDATA (ASN_OCTET_STR,   "bind_ip",          SDF_RD,                     0,              "Bind ip of yuno's realm. Set by agent"),
+SDATA (ASN_BOOLEAN,     "multiple",         SDF_RD,                     0,              "True when yuno can open shared ports. Set by agent"),
 SDATA (ASN_JSON,        "classifiers",      SDF_RD,                     "",             "classifiers"),
 SDATA (ASN_JSON,        "required_services",SDF_RD,                     0,              "Required services"),
 SDATA (ASN_JSON,        "public_services",  SDF_RD,                     0,              "Public services"),
@@ -384,62 +388,62 @@ SDATA (ASN_UNSIGNED,    "timeout",          SDF_RD,                     1000,   
 SDATA (ASN_UNSIGNED,    "timeout_stats",    SDF_RD,                     1,              "timeout (seconds) for publishing stats"),
 SDATA (ASN_UNSIGNED,    "timeout_flush",    SDF_RD,                     2,              "timeout (seconds) for rotatory flush"),
 SDATA (ASN_UNSIGNED,    "watcher_pid",      SDF_RD,                     0,              "Watcher pid"),
-SDATA (ASN_OCTET_STR,   "info_msg",         SDF_RD,                     0,              "Info msg, like errno."),
-SDATA (ASN_COUNTER64,   "launch_id",        SDF_RD,                     0,              "Launch Id. Set by agent."),
+SDATA (ASN_OCTET_STR,   "info_msg",         SDF_RD,                     0,              "Info msg, like errno"),
+SDATA (ASN_COUNTER64,   "launch_id",        SDF_RD,                     0,              "Launch Id. Set by agent"),
 SDATA (ASN_OCTET_STR,   "dynamicDoc",       SDF_WR|SDF_PERSIST,         0,              "Dynamic documentation"),
-SDATA (ASN_OCTET_STR,   "start_date",       SDF_RD|SDF_STATS,           0,              "Yuno starting date."),
+SDATA (ASN_OCTET_STR,   "start_date",       SDF_RD|SDF_STATS,           0,              "Yuno starting date"),
 
 SDATA (ASN_UNSIGNED64,  "max_proc_mem",     SDF_WR,                     0,              "NOT USED! If not zero, abort if proc memory is greater"),
 
-SDATA (ASN_COUNTER64,   "uptime",           SDF_RD|SDF_STATS,           0,              "Yuno living time."),
+SDATA (ASN_COUNTER64,   "uptime",           SDF_RD|SDF_STATS,           0,              "Yuno living time"),
 SDATA (ASN_UNSIGNED,    "log_emergencies",  SDF_WR|SDF_STATS,           0,              "Emergencies log counter"),
-SDATA (ASN_UNSIGNED,    "log_alerts",       SDF_WR|SDF_STATS,           0,              "Alerts counter."),
-SDATA (ASN_UNSIGNED,    "log_criticals",    SDF_WR|SDF_STATS,           0,              "Criticals counter."),
-SDATA (ASN_UNSIGNED,    "log_errors",       SDF_WR|SDF_STATS,           0,              "Errors counter."),
-SDATA (ASN_UNSIGNED,    "log_warnings",     SDF_WR|SDF_STATS,           0,              "Warnings counter."),
-SDATA (ASN_UNSIGNED,    "log_notices",      SDF_WR|SDF_STATS,           0,              "Notices counter."),
-SDATA (ASN_UNSIGNED,    "log_infos",        SDF_WR|SDF_STATS,           0,              "Infos counter."),
-SDATA (ASN_UNSIGNED,    "log_debugs",       SDF_WR|SDF_STATS,           0,              "Debugs counter."),
-SDATA (ASN_UNSIGNED,    "log_audits",       SDF_WR|SDF_STATS,           0,              "Audits counter."),
-SDATA (ASN_UNSIGNED,    "log_monitors",     SDF_WR|SDF_STATS,           0,              "Monitor counter."),
+SDATA (ASN_UNSIGNED,    "log_alerts",       SDF_WR|SDF_STATS,           0,              "Alerts counter"),
+SDATA (ASN_UNSIGNED,    "log_criticals",    SDF_WR|SDF_STATS,           0,              "Criticals counter"),
+SDATA (ASN_UNSIGNED,    "log_errors",       SDF_WR|SDF_STATS,           0,              "Errors counter"),
+SDATA (ASN_UNSIGNED,    "log_warnings",     SDF_WR|SDF_STATS,           0,              "Warnings counter"),
+SDATA (ASN_UNSIGNED,    "log_notices",      SDF_WR|SDF_STATS,           0,              "Notices counter"),
+SDATA (ASN_UNSIGNED,    "log_infos",        SDF_WR|SDF_STATS,           0,              "Infos counter"),
+SDATA (ASN_UNSIGNED,    "log_debugs",       SDF_WR|SDF_STATS,           0,              "Debugs counter"),
+SDATA (ASN_UNSIGNED,    "log_audits",       SDF_WR|SDF_STATS,           0,              "Audits counter"),
+SDATA (ASN_UNSIGNED,    "log_monitors",     SDF_WR|SDF_STATS,           0,              "Monitor counter"),
 
-SDATA (ASN_COUNTER64,   "rusage_ru_utime_us",SDF_RD|SDF_STATS,          0,              "See getrusage()."),
-SDATA (ASN_COUNTER64,   "rusage_ru_stime_us",SDF_RD|SDF_STATS,          0,              "See getrusage()."),
-SDATA (ASN_COUNTER64,   "rusage_ru_maxrss", SDF_RD|SDF_STATS,           0,              "See getrusage()."),
-SDATA (ASN_COUNTER64,   "rusage_ru_minflt", SDF_RD|SDF_STATS,           0,              "See getrusage()."),
-SDATA (ASN_COUNTER64,   "rusage_ru_majflt", SDF_RD|SDF_STATS,           0,              "See getrusage()."),
-SDATA (ASN_COUNTER64,   "rusage_ru_inblock",SDF_RD|SDF_STATS,           0,              "See getrusage()."),
-SDATA (ASN_COUNTER64,   "rusage_ru_oublock",SDF_RD|SDF_STATS,           0,              "See getrusage()."),
-SDATA (ASN_COUNTER64,   "rusage_ru_nvcsw",  SDF_RD|SDF_STATS,           0,              "See getrusage()."),
-SDATA (ASN_COUNTER64,   "rusage_ru_nivcsw", SDF_RD|SDF_STATS,           0,              "See getrusage()."),
+SDATA (ASN_COUNTER64,   "rusage_ru_utime_us",SDF_RD|SDF_STATS,          0,              "See getrusage()"),
+SDATA (ASN_COUNTER64,   "rusage_ru_stime_us",SDF_RD|SDF_STATS,          0,              "See getrusage()"),
+SDATA (ASN_COUNTER64,   "rusage_ru_maxrss", SDF_RD|SDF_STATS,           0,              "See getrusage()"),
+SDATA (ASN_COUNTER64,   "rusage_ru_minflt", SDF_RD|SDF_STATS,           0,              "See getrusage()"),
+SDATA (ASN_COUNTER64,   "rusage_ru_majflt", SDF_RD|SDF_STATS,           0,              "See getrusage()"),
+SDATA (ASN_COUNTER64,   "rusage_ru_inblock",SDF_RD|SDF_STATS,           0,              "See getrusage()"),
+SDATA (ASN_COUNTER64,   "rusage_ru_oublock",SDF_RD|SDF_STATS,           0,              "See getrusage()"),
+SDATA (ASN_COUNTER64,   "rusage_ru_nvcsw",  SDF_RD|SDF_STATS,           0,              "See getrusage()"),
+SDATA (ASN_COUNTER64,   "rusage_ru_nivcsw", SDF_RD|SDF_STATS,           0,              "See getrusage()"),
 
-SDATA (ASN_COUNTER64,   "mem_memory_node_total_in_kb", SDF_RD|SDF_STATS,0,              "Mem."),
-SDATA (ASN_COUNTER64,   "mem_memory_node_free_in_kb", SDF_RD|SDF_STATS, 0,              "Mem."),
-SDATA (ASN_COUNTER64,   "mem_memory_rss_in_kb", SDF_RD|SDF_STATS,       0,              "Mem."),
-SDATA (ASN_COUNTER64,   "mem_gbmem_total_in_kb", SDF_RD|SDF_STATS,      0,              "Mem."),
-SDATA (ASN_COUNTER64,   "mem_gbmem_using_in_kb", SDF_RD|SDF_STATS,      0,              "Mem."),
-SDATA (ASN_COUNTER64,   "mem_gbmem_max_sm_in_kb", SDF_RD|SDF_STATS,     0,              "Mem."),
-SDATA (ASN_COUNTER64,   "mem_gbmem_cur_sm_in_kb", SDF_RD|SDF_STATS,     0,              "Mem."),
+SDATA (ASN_COUNTER64,   "mem_memory_node_total_in_kb", SDF_RD|SDF_STATS,0,              "Mem"),
+SDATA (ASN_COUNTER64,   "mem_memory_node_free_in_kb", SDF_RD|SDF_STATS, 0,              "Mem"),
+SDATA (ASN_COUNTER64,   "mem_memory_rss_in_kb", SDF_RD|SDF_STATS,       0,              "Mem"),
+SDATA (ASN_COUNTER64,   "mem_gbmem_total_in_kb", SDF_RD|SDF_STATS,      0,              "Mem"),
+SDATA (ASN_COUNTER64,   "mem_gbmem_using_in_kb", SDF_RD|SDF_STATS,      0,              "Mem"),
+SDATA (ASN_COUNTER64,   "mem_gbmem_max_sm_in_kb", SDF_RD|SDF_STATS,     0,              "Mem"),
+SDATA (ASN_COUNTER64,   "mem_gbmem_cur_sm_in_kb", SDF_RD|SDF_STATS,     0,              "Mem"),
 
-SDATA (ASN_COUNTER64,   "disk_size_in_gigas", SDF_RD|SDF_STATS,         0,              "Disk."),
-SDATA (ASN_COUNTER64,   "disk_free_percent", SDF_RD|SDF_STATS,          0,              "Disk."),
+SDATA (ASN_COUNTER64,   "disk_size_in_gigas", SDF_RD|SDF_STATS,         0,              "Disk"),
+SDATA (ASN_COUNTER64,   "disk_free_percent", SDF_RD|SDF_STATS,          0,              "Disk"),
 
-SDATA (ASN_COUNTER64,   "qs_txmsgs",        SDF_RD|SDF_STATS,           0,              "Qs."),
-SDATA (ASN_COUNTER64,   "qs_rxmsgs",        SDF_RD|SDF_STATS,           0,              "Qs."),
-SDATA (ASN_COUNTER64,   "qs_txbytes",       SDF_RD|SDF_STATS,           0,              "Qs."),
-SDATA (ASN_COUNTER64,   "qs_rxbytes",       SDF_RD|SDF_STATS,           0,              "Qs."),
-SDATA (ASN_COUNTER64,   "qs_output_queue",  SDF_RD|SDF_STATS,           0,              "Qs."),
-SDATA (ASN_COUNTER64,   "qs_input_queue",   SDF_RD|SDF_STATS,           0,              "Qs."),
-SDATA (ASN_COUNTER64,   "qs_internal_queue",SDF_RD|SDF_STATS,           0,              "Qs."),
-SDATA (ASN_COUNTER64,   "qs_drop_by_overflow",SDF_RD|SDF_STATS,         0,              "Qs."),
-SDATA (ASN_COUNTER64,   "qs_drop_by_no_exit",SDF_RD|SDF_STATS,          0,              "Qs."),
-SDATA (ASN_COUNTER64,   "qs_drop_by_down",  SDF_RD|SDF_STATS,           0,              "Qs."),
-SDATA (ASN_COUNTER64,   "qs_lower_response_time", SDF_RD|SDF_STATS,     0,              "Qs."),
-SDATA (ASN_COUNTER64,   "qs_medium_response_time", SDF_RD|SDF_STATS,    0,              "Qs."),
-SDATA (ASN_COUNTER64,   "qs_higher_response_time", SDF_RD|SDF_STATS,    -1,              "Qs."),
-SDATA (ASN_COUNTER64,   "qs_repeated",      SDF_RD|SDF_STATS,           0,              "Qs."),
-SDATA (ASN_COUNTER64,   "cpu_ticks",        SDF_RD|SDF_STATS,           0,              "Cpu ticks."),
-SDATA (ASN_UNSIGNED,    "cpu",              SDF_RD|SDF_STATS,           0,              "Cpu percent."),
+SDATA (ASN_COUNTER64,   "qs_txmsgs",        SDF_RD|SDF_STATS,           0,              "Qs"),
+SDATA (ASN_COUNTER64,   "qs_rxmsgs",        SDF_RD|SDF_STATS,           0,              "Qs"),
+SDATA (ASN_COUNTER64,   "qs_txbytes",       SDF_RD|SDF_STATS,           0,              "Qs"),
+SDATA (ASN_COUNTER64,   "qs_rxbytes",       SDF_RD|SDF_STATS,           0,              "Qs"),
+SDATA (ASN_COUNTER64,   "qs_output_queue",  SDF_RD|SDF_STATS,           0,              "Qs"),
+SDATA (ASN_COUNTER64,   "qs_input_queue",   SDF_RD|SDF_STATS,           0,              "Qs"),
+SDATA (ASN_COUNTER64,   "qs_internal_queue",SDF_RD|SDF_STATS,           0,              "Qs"),
+SDATA (ASN_COUNTER64,   "qs_drop_by_overflow",SDF_RD|SDF_STATS,         0,              "Qs"),
+SDATA (ASN_COUNTER64,   "qs_drop_by_no_exit",SDF_RD|SDF_STATS,          0,              "Qs"),
+SDATA (ASN_COUNTER64,   "qs_drop_by_down",  SDF_RD|SDF_STATS,           0,              "Qs"),
+SDATA (ASN_COUNTER64,   "qs_lower_response_time", SDF_RD|SDF_STATS,     0,              "Qs"),
+SDATA (ASN_COUNTER64,   "qs_medium_response_time", SDF_RD|SDF_STATS,    0,              "Qs"),
+SDATA (ASN_COUNTER64,   "qs_higher_response_time", SDF_RD|SDF_STATS,    -1,              "Qs"),
+SDATA (ASN_COUNTER64,   "qs_repeated",      SDF_RD|SDF_STATS,           0,              "Qs"),
+SDATA (ASN_COUNTER64,   "cpu_ticks",        SDF_RD|SDF_STATS,           0,              "Cpu ticks"),
+SDATA (ASN_UNSIGNED,    "cpu",              SDF_RD|SDF_STATS,           0,              "Cpu percent"),
 SDATA (ASN_UNSIGNED,    "timeout_restart",  SDF_WR|SDF_PERSIST,         0,              "timeout (seconds) to restart"),
 SDATA (ASN_JSON,        "trace_levels",     SDF_WR|SDF_PERSIST,         0,              "Trace levels"),
 SDATA (ASN_JSON,        "no_trace_levels",  SDF_WR|SDF_PERSIST,         0,              "No trace levels"),
@@ -2683,7 +2687,7 @@ PRIVATE json_t* cmd_add_log_handler(hgobj gobj, const char* cmd, json_t* kw, hgo
     if(strcmp(handler_type, "file")==0) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("Handler 'file' type not allowed."),
+            json_local_sprintf("Handler 'file' type not allowed"),
             0,
             0,
             kw  // owned
@@ -3019,6 +3023,10 @@ PRIVATE json_t* cmd_subscribe_event(hgobj gobj, const char* cmd, json_t* kw, hgo
 {
     const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
     const char *event_name = kw_get_str(kw, "event_name", 0, 0);
+    const char *rename_event_name = kw_get_str(kw, "rename_event_name", 0, 0);
+    BOOL first_shot = kw_get_bool(kw, "first_shot", 0, 0);
+    json_t *filter = kw_get_dict(kw, "filter", 0, 0);
+    json_t *config = kw_get_dict(kw, "config", 0, 0);
 
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
@@ -3038,36 +3046,43 @@ PRIVATE json_t* cmd_subscribe_event(hgobj gobj, const char* cmd, json_t* kw, hgo
     }
 
     json_t *kw_sub = json_object();
-    json_t *kw2 = json_deep_copy(kw);
-
-    // Delete keys from command-yuno command
-    json_object_del(kw2, "gobj_name");
-    json_object_del(kw2, "event_name");
-    json_object_del(kw2, "service");
-    json_object_del(kw2, "command");
-    json_object_del(kw2, "__command__");
 
     // Prepare the return of response
-    json_t *__md_iev__ = kw_get_dict(kw2, "__md_iev__", 0, 0);
+    json_t *__md_iev__ = kw_get_dict(kw, "__md_iev__", 0, 0);
     if(__md_iev__) {
-        KW_INCREF(kw2);
-        json_t *kw3 = msg_iev_answer(gobj, kw2, 0, 0);
-        json_object_del(kw2, "__md_iev__");
+        KW_INCREF(kw);
+        json_t *kw3 = msg_iev_answer(gobj, kw, 0, 0);
         json_object_set_new(kw_sub, "__global__", kw3);
     }
 
-    // Any more key is for filter
-    if(json_object_size(kw2)>0) {
-        KW_INCREF(kw2);
-        json_object_set_new(kw_sub, "__filter__", kw2);
+    if(filter) {
+        json_object_set(kw_sub, "__filter__", filter);
     }
-    KW_DECREF(kw2);
+    if(config) {
+        json_object_set(kw_sub, "__config__", config);
+    }
 
     // Remove locals
     kw_set_subdict_value(kw_sub, "__local__", "__temp__", json_null());
 
     // Configure webix response format
     kw_set_subdict_value(kw_sub, "__config__", "__trans_filter__", json_string("webix"));
+    if(!empty_string(rename_event_name)) {
+        kw_set_subdict_value(
+            kw_sub,
+            "__config__",
+            "__rename_event_name__",
+            json_string(rename_event_name)
+        );
+    }
+    if(first_shot) {
+        kw_set_subdict_value(
+            kw_sub,
+            "__config__",
+            "__first_shot__",
+            json_true()
+        );
+    }
 
     // Subscribe
     gobj_subscribe_event(gobj2view, event_name, kw_sub, src);
@@ -3093,6 +3108,7 @@ PRIVATE json_t* cmd_unsubscribe_event(hgobj gobj, const char* cmd, json_t* kw, h
 {
     const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
     const char *event_name = kw_get_str(kw, "event_name", 0, 0);
+    json_t *__filter__ = kw_get_dict(kw, "__filter__", 0, 0);
 
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
@@ -3112,24 +3128,18 @@ PRIVATE json_t* cmd_unsubscribe_event(hgobj gobj, const char* cmd, json_t* kw, h
     }
 
     json_t *kw_sub = json_object();
-    json_t *kw2 = json_deep_copy(kw);
-    json_object_del(kw2, "gobj_name");
-    json_object_del(kw2, "event_name");
-    json_object_del(kw2, "service");
-    json_object_del(kw2, "command");
-    json_object_del(kw2, "__command__");
-    json_t *__md_iev__ = kw_get_dict(kw2, "__md_iev__", 0, 0);
+
+    // Prepare the return of response
+    json_t *__md_iev__ = kw_get_dict(kw, "__md_iev__", 0, 0);
     if(__md_iev__) {
-        KW_INCREF(kw2);
-        json_t *kw3 = msg_iev_answer(gobj, kw2, 0, 0);
-        json_object_del(kw2, "__md_iev__");
+        KW_INCREF(kw);
+        json_t *kw3 = msg_iev_answer(gobj, kw, 0, 0);
         json_object_set_new(kw_sub, "__global__", kw3);
     }
-    if(json_object_size(kw2)>0) {
-        KW_INCREF(kw2);
-        json_object_set_new(kw_sub, "__filter__", kw2);
+
+    if(__filter__) {
+        json_object_set(kw_sub, "__filter__", __filter__);
     }
-    KW_DECREF(kw2);
 
     gobj_unsubscribe_event(gobj2view, event_name, kw_sub, src);
 

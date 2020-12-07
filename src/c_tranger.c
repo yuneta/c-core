@@ -3,7 +3,14 @@
  *          Tranger GClass.
  *
  *          Trangers: resources with tranger
- *
+
+To test with CLI:
+
+command-yuno id=1911 service=tranger command=open-list list_id=pepe topic_name=pp fields=tm,id
+command-yuno id=1911 service=__yuno__ command=subscribe-event gobj_name=tranger event_name=EV_TRANGER_RECORD_ADDED rename_event_name=EV_MT_COMMAND_ANSWER first_shot=1 config={"__list_id__":"pepe"}
+command-yuno id=1911 service=tranger command=add-record topic_name=pp record='{"id":"1","tm":0}'
+
+
  *          Copyright (c) 2020 Niyamaka.
  *          All Rights Reserved.
  ***********************************************************************/
@@ -36,11 +43,13 @@ PRIVATE int load_record_callback(
  ***************************************************************************/
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_create_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_create_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_open_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_close_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_add_record(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE sdata_desc_t pm_help[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
@@ -58,6 +67,11 @@ SDATAPM (ASN_UNSIGNED,  "dicts_limit",  0,              0,          "Expand dict
 SDATA_END()
 };
 
+PRIVATE sdata_desc_t pm_desc[] = {
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATA_END()
+};
+
 PRIVATE sdata_desc_t pm_create_topic[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "pkey",         0,              "id",       "Primary Key"),
@@ -72,14 +86,17 @@ SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"
 SDATAPM (ASN_BOOLEAN,   "force",        0,              0,          "Force delete"),
 SDATA_END()
 };
-
-PRIVATE sdata_desc_t pm_desc[] = {
+PRIVATE sdata_desc_t pm_add_record[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATAPM (ASN_COUNTER64, "__t__",        0,              0,          "Time of record"),
+SDATAPM (ASN_UNSIGNED,  "user_flag",    0,              0,          "User flag of record"),
+SDATAPM (ASN_JSON,      "record",       0,              0,          "Record json"),
 SDATA_END()
 };
+
 PRIVATE sdata_desc_t pm_open_list[] = {
 /*-PM----type-----------name--------------------flag----default-description---------- */
-SDATAPM (ASN_OCTET_STR, "id",                   0,      0,      "Id of list"),
+SDATAPM (ASN_OCTET_STR, "list_id",              0,      0,      "Id of list"),
 SDATAPM (ASN_BOOLEAN,   "return_data",          0,      0,      "True for return list data"),
 SDATAPM (ASN_OCTET_STR, "topic_name",           0,      0,      "Topic name"),
 SDATAPM (ASN_OCTET_STR, "fields",               0,      0,      "match_cond: Only this fields"),
@@ -100,6 +117,11 @@ SDATAPM (ASN_OCTET_STR, "to_tm",                0,      0,      "match_cond:"),
 SDATAPM (ASN_OCTET_STR, "rkey",                 0,      0,      "match_cond: regular expression of key"),
 SDATA_END()
 };
+PRIVATE sdata_desc_t pm_close_list[] = {
+/*-PM----type-----------name--------------------flag----default-description---------- */
+SDATAPM (ASN_OCTET_STR, "list_id",              0,      0,      "Id of list"),
+SDATA_END()
+};
 
 PRIVATE const char *a_help[] = {"h", "?", 0};
 
@@ -114,6 +136,8 @@ SDATACM (ASN_SCHEMA,    "desc",             0,      pm_desc,            cmd_desc
 SDATACM (ASN_SCHEMA,    "create-topic",     0,      pm_create_topic,    cmd_create_topic,   "Create topic"),
 SDATACM (ASN_SCHEMA,    "delete-topic",     0,      pm_delete_topic,    cmd_delete_topic,   "Delete topic"),
 SDATACM (ASN_SCHEMA,    "open-list",        0,      pm_open_list,       cmd_open_list,      "Open list"),
+SDATACM (ASN_SCHEMA,    "close-list",       0,      pm_close_list,      cmd_close_list,     "Close list"),
+SDATACM (ASN_SCHEMA,    "add-record",       0,      pm_add_record,      cmd_add_record,     "Add record"),
 SDATA_END()
 };
 
@@ -283,7 +307,7 @@ PRIVATE int mt_subscription_added(
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     json_t *__config__ = sdata_read_json(subs, "__config__");
-    BOOL first_shot = kw_get_bool(__config__, "__first_shot__", TRUE, 0);
+    BOOL first_shot = kw_get_bool(__config__, "__first_shot__", FALSE, 0);
     if(!first_shot) {
         return 0;
     }
@@ -304,11 +328,13 @@ PRIVATE int mt_subscription_added(
     json_t *__global__ = sdata_read_json(subs, "__global__");
     json_t *__filter__ = sdata_read_json(subs, "__filter__");
 
+    const char *event_name = sdata_read_str(subs, "renamed_event");
+
     const char *__list_id__ = kw_get_str(__config__, "__list_id__", "", 0);
     if(empty_string(__list_id__)) {
         return gobj_send_event(
             subscriber,
-            event,
+            (!empty_string(event_name))?event_name:event,
             msg_iev_build_webix2_without_answer_filter(gobj,
                 -1,
                 json_sprintf("__list_id__ required"),
@@ -325,7 +351,7 @@ PRIVATE int mt_subscription_added(
     if(!list) {
         return gobj_send_event(
             subscriber,
-            event,
+            (!empty_string(event_name))?event_name:event,
             msg_iev_build_webix2_without_answer_filter(gobj,
                 -1,
                 json_sprintf("tranger list not found: '%s'", __list_id__),
@@ -350,20 +376,18 @@ PRIVATE int mt_subscription_added(
         size_t idx;
         json_t *jn_record;
         json_array_foreach(kw_get_list(list, "data", 0, KW_REQUIRED), idx, jn_record) {
-            if(__filter__) {
-                JSON_INCREF(__filter__);
-                if(!kw_match_simple(jn_record, __filter__)) {
-                    continue;
-                }
-                if(keys) {
-                    json_t *jn_record_with_fields = kw_clone_by_path(
-                        jn_record,   // owned
-                        keys
-                    );
-                    jn_record = jn_record_with_fields;
-                }
-                json_array_append(jn_data, jn_record);
+            JSON_INCREF(__filter__);
+            if(!kw_match_simple(jn_record, __filter__)) {
+                continue;
             }
+            if(keys) {
+                json_t *jn_record_with_fields = kw_clone_by_path(
+                    jn_record,   // owned
+                    keys
+                );
+                jn_record = jn_record_with_fields;
+            }
+            json_array_append(jn_data, jn_record);
         }
 
         split_free2(keys);
@@ -373,7 +397,7 @@ PRIVATE int mt_subscription_added(
          */
         return gobj_send_event(
             subscriber,
-            event,
+            (!empty_string(event_name))?event_name:event,
             msg_iev_build_webix2_without_answer_filter(gobj,
                 0,
                 0,
@@ -531,6 +555,17 @@ PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
     }
     BOOL force = kw_get_bool(kw, "force", 0, 0);
     json_t *topic = tranger_topic(priv->tranger, topic_name);
+    if(!topic) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_sprintf("Topic not found: '%s'", topic_name),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
     json_int_t topic_size = tranger_topic_size(topic);
     if(topic_size != 0) {
         if(!force) {
@@ -602,6 +637,17 @@ PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         );
     }
 
+    json_t *topic = tranger_topic(priv->tranger, topic_name);
+    if(!topic) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_sprintf("Topic not found: '%s'", topic_name),
+            0,
+            0,
+            kw  // owned
+        );
+    }
     json_t *desc = kwid_new_dict("", priv->tranger, "topics`%s`cols", topic_name);
 
     return msg_iev_build_webix(gobj,
@@ -620,10 +666,21 @@ PRIVATE json_t *cmd_open_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    const char *id = kw_get_str(kw, "id", "", 0);
+    const char *list_id = kw_get_str(kw, "list_id", "", 0);
     BOOL return_data = kw_get_bool(kw, "return_data", 0, 0);
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+
+    if(empty_string(list_id)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_sprintf("What list_id?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -635,23 +692,24 @@ PRIVATE json_t *cmd_open_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src
             kw  // owned
         );
     }
-    if(empty_string(id)) {
+    json_t *topic = tranger_topic(priv->tranger, topic_name);
+    if(!topic) {
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_sprintf("An id to the list is required"),
+            json_sprintf("Topic not found: '%s'", topic_name),
             0,
             0,
             kw  // owned
         );
     }
 
-    json_t *list = tranger_get_list(priv->tranger, id);
+    json_t *list = tranger_get_list(priv->tranger, list_id);
     if(list) {
         return msg_iev_build_webix(
             gobj,
             0,
-            json_sprintf("List '%s' is already open", id),
+            json_sprintf("List is already open: '%s'", list_id),
             0,
             0,
             kw  // owned
@@ -755,7 +813,7 @@ PRIVATE json_t *cmd_open_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src
     }
 
     json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:I}",
-        "id", id,
+        "id", list_id,
         "topic_name", topic_name,
         "match_cond", match_cond,
         "load_record_callback", (json_int_t)(size_t)load_record_callback,
@@ -767,9 +825,137 @@ PRIVATE json_t *cmd_open_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src
     return msg_iev_build_webix(
         gobj,
         list?0:-1,
-        list?json_sprintf("List '%s' open", id):json_string(log_last_message()),
+        list?json_sprintf("List opened: '%s'", list_id):json_string(log_last_message()),
         0,
         return_data?kw_get_list(list, "data", 0, KW_REQUIRED):0,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_close_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *list_id = kw_get_str(kw, "list_id", "", 0);
+    BOOL return_data = kw_get_bool(kw, "return_data", 0, 0);
+
+    if(empty_string(list_id)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_sprintf("What list_id?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *list = tranger_get_list(priv->tranger, list_id);
+    if(!list) {
+        return msg_iev_build_webix(
+            gobj,
+            0,
+            json_sprintf("List not found: '%s'", list_id),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    int result = tranger_close_list(priv->tranger, list);
+
+    return msg_iev_build_webix(
+        gobj,
+        result,
+        result>=0?json_sprintf("List closed: '%s'", list_id):json_string(log_last_message()),
+        0,
+        return_data?kw_get_list(list, "data", 0, KW_REQUIRED):0,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_add_record(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    int result = 0;
+    json_t *jn_comment = 0;
+
+    //json_t *access_roles = kw_get_dict(jwt_payload, "access_roles", 0, KW_REQUIRED);
+    //json_t *fichajes_roles = kw_get_list(access_roles, "fichajes", 0, 0);
+
+    do {
+        //if(!fichajes_roles || !json_str_in_list(fichajes_roles, "user", FALSE)) {
+        //    jn_data = kw_incref(kw);
+        //    jn_comment = json_string("User has not 'user' role");
+        //    result = -1;
+        //    break;
+        //}
+
+        /*
+         *  Get parameters
+         */
+        const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+        uint64_t __t__ = kw_get_int(kw, "__t__", 0, 0);
+        uint32_t user_flag = kw_get_int(kw, "user_flag", 0, 0);
+        json_t *record = kw_get_dict(kw, "record", 0, 0);
+
+        /*
+         *  Check parameters
+         */
+        if(empty_string(topic_name)) {
+           jn_comment = json_sprintf("What topic_name?");
+           result = -1;
+           break;
+        }
+        json_t *topic = tranger_topic(priv->tranger, topic_name);
+        if(!topic) {
+           jn_comment = json_sprintf("Topic not found: '%s'", topic_name);
+           result = -1;
+           break;
+        }
+        if(!record) {
+           jn_comment = json_sprintf("What record?");
+           result = -1;
+           break;
+        }
+
+        /*
+         *  Append record to tranger topic
+         */
+        md_record_t md_record;
+        result = tranger_append_record(
+            priv->tranger,
+            topic_name,
+            __t__,                  // if 0 then the time will be set by TimeRanger with now time
+            user_flag,
+            &md_record,             // required
+            json_incref(record)     // owned
+        );
+
+        if(result<0) {
+            jn_comment = json_string(log_last_message());
+            break;
+        } else {
+           jn_comment = json_sprintf("Record added");
+        }
+    } while(0);
+
+    /*
+     *  Response
+     */
+    return msg_iev_build_webix(
+        gobj,
+        result,
+        jn_comment,
+        0,
+        0,
         kw  // owned
     );
 }
@@ -834,7 +1020,7 @@ PRIVATE int load_record_callback(
 
     JSON_DECREF(jn_record);
 
-    return 1; // HACK add record to list.data
+    return 1; // HACK lest timeranger to add record to list.data
 }
 
 
@@ -919,6 +1105,8 @@ PRIVATE int ac_tranger_add_record(hgobj gobj, const char *event, json_t *kw, hgo
         if(result<0) {
             jn_comment = json_string(log_last_message());
             break;
+        } else {
+           jn_comment = json_sprintf("Record added");
         }
     } while(0);
 
