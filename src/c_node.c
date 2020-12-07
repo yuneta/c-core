@@ -239,6 +239,14 @@ SDATA (ASN_OCTET_STR,   "treedb_name",      SDF_RD|SDF_REQUIRED,"",             
 SDATA (ASN_JSON,        "treedb_schema",    SDF_RD|SDF_REQUIRED,0,              "Treedb schema"),
 SDATA (ASN_INTEGER,     "exit_on_error",    0,                  LOG_OPT_EXIT_ZERO,"exit on error"),
 SDATA (ASN_POINTER,     "kw_match",         0,                  kw_match_simple,"kw_match default function"),
+SDATA (ASN_INTEGER,     "timeout",          SDF_RD,             1*1000,         "Timeout"),
+SDATA (ASN_COUNTER64,   "txMsgs",           SDF_RD|SDF_PSTATS,  0,              "Messages transmitted"),
+SDATA (ASN_COUNTER64,   "rxMsgs",           SDF_RD|SDF_RSTATS,  0,              "Messages receiveds"),
+
+SDATA (ASN_COUNTER64,   "txMsgsec",         SDF_RD|SDF_RSTATS,  0,              "Messages by second"),
+SDATA (ASN_COUNTER64,   "rxMsgsec",         SDF_RD|SDF_RSTATS,  0,              "Messages by second"),
+SDATA (ASN_COUNTER64,   "maxtxMsgsec",      SDF_WR|SDF_RSTATS,  0,              "Max Tx Messages by second"),
+SDATA (ASN_COUNTER64,   "maxrxMsgsec",      SDF_WR|SDF_RSTATS,  0,              "Max Rx Messages by second"),
 SDATA (ASN_POINTER,     "user_data",        0,                  0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                  0,              "more user data"),
 SDATA (ASN_POINTER,     "subscriber",       0,                  0,              "subscriber of output-events. Not a child gobj."),
@@ -267,6 +275,12 @@ typedef struct _PRIVATE_DATA {
     int32_t exit_on_error;
     kw_match_fn kw_match;
 
+    int32_t timeout;
+    hgobj timer;
+    uint64_t *ptxMsgs;
+    uint64_t *prxMsgs;
+    uint64_t txMsgsec;
+    uint64_t rxMsgsec;
 } PRIVATE_DATA;
 
 
@@ -285,6 +299,10 @@ typedef struct _PRIVATE_DATA {
 PRIVATE void mt_create(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    priv->timer = gobj_create(gobj_name(gobj), GCLASS_TIMER, 0, gobj);
+    priv->ptxMsgs = gobj_danger_attr_ptr(gobj, "txMsgs");
+    priv->prxMsgs = gobj_danger_attr_ptr(gobj, "rxMsgs");
 
     /*
      *  SERVICE subscription model
@@ -374,6 +392,13 @@ PRIVATE int mt_start(hgobj gobj)
         gobj
     );
 
+
+    /*
+     *  Periodic timer for tasks
+     */
+    gobj_start(priv->timer);
+    set_timeout_periodic(priv->timer, priv->timeout); // La verdadera
+
     return 0;
 }
 
@@ -383,6 +408,9 @@ PRIVATE int mt_start(hgobj gobj)
 PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    clear_timeout(priv->timer);
+    gobj_stop(priv->timer);
 
     treedb_close_db(priv->tranger, priv->treedb_name);
 
@@ -2075,9 +2103,41 @@ PRIVATE int treedb_callback(
 
 
 /***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    uint64_t maxtxMsgsec = gobj_read_uint64_attr(gobj, "maxtxMsgsec");
+    uint64_t maxrxMsgsec = gobj_read_uint64_attr(gobj, "maxrxMsgsec");
+    if(priv->txMsgsec > maxtxMsgsec) {
+        gobj_write_uint64_attr(gobj, "maxtxMsgsec", priv->txMsgsec);
+    }
+    if(priv->rxMsgsec > maxrxMsgsec) {
+        gobj_write_uint64_attr(gobj, "maxrxMsgsec", priv->rxMsgsec);
+    }
+
+    gobj_write_uint64_attr(gobj, "txMsgsec", priv->txMsgsec);
+    gobj_write_uint64_attr(gobj, "rxMsgsec", priv->rxMsgsec);
+
+    priv->rxMsgsec = 0;
+    priv->txMsgsec = 0;
+
+    KW_DECREF(kw);
+    return 0;
+}
+
+
+
+
+/***************************************************************************
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
+    // bottom input
+    {"EV_TIMEOUT",              0,  0,  0},
+    {"EV_STOPPED",              0,  0,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const EVENT output_events[] = {
@@ -2091,6 +2151,8 @@ PRIVATE const char *state_names[] = {
 };
 
 PRIVATE EV_ACTION ST_IDLE[] = {
+    {"EV_TIMEOUT",                  ac_timeout,                 0},
+    {"EV_STOPPED",                  0,                          0},
     {0,0,0}
 };
 

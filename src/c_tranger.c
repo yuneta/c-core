@@ -36,6 +36,8 @@ PRIVATE int load_record_callback(
  ***************************************************************************/
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_create_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_open_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -53,6 +55,21 @@ SDATAPM (ASN_OCTET_STR, "path",         0,              "",         "Path"),
 SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "No expanded (default) return [[size]]"),
 SDATAPM (ASN_UNSIGNED,  "lists_limit",  0,              0,          "Expand lists only if size < limit. 0 no limit"),
 SDATAPM (ASN_UNSIGNED,  "dicts_limit",  0,              0,          "Expand dicts only if size < limit. 0 no limit"),
+SDATA_END()
+};
+
+PRIVATE sdata_desc_t pm_create_topic[] = {
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "pkey",         0,              "id",       "Primary Key"),
+SDATAPM (ASN_OCTET_STR, "tkey",         0,              "tm",       "Time Key"),
+SDATAPM (ASN_OCTET_STR, "system_flag",  0,              "sf_string_key|sf_t_ms", "System flag: sf_string_key|sf_rowid_key|sf_int_key|sf_t_ms|sf_tm_ms|sf_no_record_disk|sf_no_md_disk, future: sf_zip_record|sf_cipher_record"),
+SDATAPM (ASN_JSON,      "jn_cols",      0,              0,          "Cols"),
+SDATAPM (ASN_JSON,      "jn_var",       0,              0,          "Var"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_delete_topic[] = {
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATAPM (ASN_BOOLEAN,   "force",        0,              0,          "Force delete"),
 SDATA_END()
 };
 
@@ -94,6 +111,8 @@ SDATACM (ASN_SCHEMA,    "help",             a_help,     pm_help,    cmd_help,   
 SDATACM (ASN_SCHEMA,    "print-tranger",    0,      pm_print_tranger,   cmd_print_tranger,  "Print tranger"),
 SDATACM (ASN_SCHEMA,    "topics",           0,      0,                  cmd_topics,         "List topics"),
 SDATACM (ASN_SCHEMA,    "desc",             0,      pm_desc,            cmd_desc,           "Schema of topic or full"),
+SDATACM (ASN_SCHEMA,    "create-topic",     0,      pm_create_topic,    cmd_create_topic,   "Create topic"),
+SDATACM (ASN_SCHEMA,    "delete-topic",     0,      pm_delete_topic,    cmd_delete_topic,   "Delete topic"),
 SDATACM (ASN_SCHEMA,    "open-list",        0,      pm_open_list,       cmd_open_list,      "Open list"),
 SDATA_END()
 };
@@ -112,6 +131,14 @@ SDATA (ASN_INTEGER,     "xpermission",      SDF_RD,             02770,          
 SDATA (ASN_INTEGER,     "rpermission",      SDF_RD,             0660,           "Use in creation, default 0660"),
 SDATA (ASN_INTEGER,     "on_critical_error",SDF_RD,             LOG_OPT_EXIT_ZERO,"exit on error (Zero to avoid restart)"),
 SDATA (ASN_BOOLEAN,     "master",           SDF_RD,             FALSE,          "the master is the only that can write"),
+SDATA (ASN_INTEGER,     "timeout",          SDF_RD,             1*1000,         "Timeout"),
+SDATA (ASN_COUNTER64,   "txMsgs",           SDF_RD|SDF_PSTATS,  0,              "Messages transmitted"),
+SDATA (ASN_COUNTER64,   "rxMsgs",           SDF_RD|SDF_RSTATS,  0,              "Messages receiveds"),
+
+SDATA (ASN_COUNTER64,   "txMsgsec",         SDF_RD|SDF_RSTATS,  0,              "Messages by second"),
+SDATA (ASN_COUNTER64,   "rxMsgsec",         SDF_RD|SDF_RSTATS,  0,              "Messages by second"),
+SDATA (ASN_COUNTER64,   "maxtxMsgsec",      SDF_WR|SDF_RSTATS,  0,              "Max Tx Messages by second"),
+SDATA (ASN_COUNTER64,   "maxrxMsgsec",      SDF_WR|SDF_RSTATS,  0,              "Max Rx Messages by second"),
 SDATA (ASN_POINTER,     "user_data",        0,                  0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                  0,              "more user data"),
 SDATA (ASN_POINTER,     "subscriber",       0,                  0,              "subscriber of output-events. Not a child gobj."),
@@ -134,8 +161,15 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
  *              Private data
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
+
     json_t *tranger;
 
+    int32_t timeout;
+    hgobj timer;
+    uint64_t *ptxMsgs;
+    uint64_t *prxMsgs;
+    uint64_t txMsgsec;
+    uint64_t rxMsgsec;
 } PRIVATE_DATA;
 
 
@@ -153,6 +187,12 @@ typedef struct _PRIVATE_DATA {
  ***************************************************************************/
 PRIVATE void mt_create(hgobj gobj)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    priv->timer = gobj_create(gobj_name(gobj), GCLASS_TIMER, 0, gobj);
+    priv->ptxMsgs = gobj_danger_attr_ptr(gobj, "txMsgs");
+    priv->prxMsgs = gobj_danger_attr_ptr(gobj, "rxMsgs");
+
     /*
      *  SERVICE subscription model
      */
@@ -165,7 +205,7 @@ PRIVATE void mt_create(hgobj gobj)
      *  Do copy of heavy used parameters, for quick access.
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
-    //SET_PRIV(xxx,                   gobj_read_pointer_attr)
+    SET_PRIV(timeout,               gobj_read_int32_attr)
 }
 
 /***************************************************************************
@@ -173,10 +213,10 @@ PRIVATE void mt_create(hgobj gobj)
  ***************************************************************************/
 PRIVATE void mt_writing(hgobj gobj, const char *path)
 {
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-//
-//     IF_EQ_SET_PRIV(xxx,             gobj_read_pointer_attr)
-//     END_EQ_SET_PRIV()
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    IF_EQ_SET_PRIV(timeout,         gobj_read_int32_attr)
+    END_EQ_SET_PRIV()
 }
 
 /***************************************************************************
@@ -208,6 +248,12 @@ PRIVATE int mt_start(hgobj gobj)
     );
     gobj_write_pointer_attr(gobj, "tranger", priv->tranger);
 
+    /*
+     *  Periodic timer for tasks
+     */
+    gobj_start(priv->timer);
+    set_timeout_periodic(priv->timer, priv->timeout); // La verdadera
+
     return 0;
 }
 
@@ -217,6 +263,10 @@ PRIVATE int mt_start(hgobj gobj)
 PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    clear_timeout(priv->timer);
+    gobj_stop(priv->timer);
+
     EXEC_AND_RESET(tranger_shutdown, priv->tranger);
     gobj_write_pointer_attr(gobj, "tranger", 0);
 
@@ -239,6 +289,18 @@ PRIVATE int mt_subscription_added(
     }
     hgobj subscriber = sdata_read_pointer(subs, "subscriber");
     const char *event = sdata_read_str(subs, "event");
+    if(empty_string(event)) {
+        log_warning(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INFO,
+            "msg",          "%s", "tranger subscription must be with explicit event",
+            "subscriber",   "%s", gobj_full_name(subscriber),
+            NULL
+        );
+        return 0;
+    }
+
     json_t *__global__ = sdata_read_json(subs, "__global__");
     json_t *__filter__ = sdata_read_json(subs, "__filter__");
 
@@ -276,7 +338,7 @@ PRIVATE int mt_subscription_added(
         );
     }
 
-    if(strcasecmp(event, "EV_TRANGER_NEW_RECORD")==0) {
+    if(strcasecmp(event, "EV_TRANGER_RECORD_ADDED")==0) {
         json_t *match_cond = kw_get_dict(list, "match_cond", 0, KW_REQUIRED);
         const char ** keys = 0;
         if(kw_has_key(match_cond, "fields")) {
@@ -400,6 +462,96 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
         0,
         0,
         value,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_create_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    const char *pkey = kw_get_str(kw, "pkey", "", 0);
+    const char *tkey = kw_get_str(kw, "tkey", "", 0);
+    const char *system_flag_ = kw_get_str(kw, "system_flag", "", 0);
+    json_t *jn_cols = kw_get_dict(kw, "jn_cols", 0, 0);
+    json_t *jn_var = kw_get_dict(kw, "jn_var", 0, 0);
+
+    system_flag_t system_flag = tranger_str2system_flag(system_flag_);
+
+    json_t *topic = tranger_create_topic( // WARNING returned json IS NOT YOURS, HACK IDEMPOTENT function
+        priv->tranger,      // If topic exists then only needs (tranger, topic_name) parameters
+        topic_name,
+        pkey,
+        tkey,
+        system_flag,
+        json_incref(jn_cols),    // owned
+        json_incref(jn_var)      // owned
+    );
+
+    return msg_iev_build_webix(gobj,
+        topic?0:-1,
+        topic?json_sprintf("Topic created: '%s'", topic_name):json_string(log_last_message()),
+        0,
+        json_incref(topic),
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    BOOL force = kw_get_bool(kw, "force", 0, 0);
+    json_t *topic = tranger_topic(priv->tranger, topic_name);
+    json_int_t topic_size = tranger_topic_size(topic);
+    if(topic_size != 0) {
+        if(!force) {
+            return msg_iev_build_webix(
+                gobj,
+                -1,
+                json_sprintf("'%s' topic with records, you must force to delete", topic_name),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+    }
+
+    int ret = tranger_delete_topic(priv->tranger, topic_name);
+
+    return msg_iev_build_webix(gobj,
+        ret,
+        ret>=0?json_sprintf("Topic deleted: '%s'", topic_name):json_string(log_last_message()),
+        0,
+        0,
         kw  // owned
     );
 }
@@ -677,7 +829,7 @@ PRIVATE int load_record_callback(
             json_string(kw_get_str(list, "id", "", KW_REQUIRED))
         );
         json_object_update(jn_data, jn_record);
-        gobj_publish_event(gobj, "EV_TRANGER_NEW_RECORD", jn_data_);
+        gobj_publish_event(gobj, "EV_TRANGER_RECORD_ADDED", jn_data_);
     }
 
     JSON_DECREF(jn_record);
@@ -696,13 +848,146 @@ PRIVATE int load_record_callback(
 
 
 /***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int ac_tranger_add_record(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    (*priv->prxMsgs)++;
+    priv->rxMsgsec++;
+
+    json_t *__temp__ = kw_get_dict_value(kw, "__temp__", 0, KW_REQUIRED);
+    JSON_INCREF(__temp__); // Save to __answer__
+
+    /*
+     *  Get user from jwt_payload TODO
+     */
+    //hgobj channel_gobj = (hgobj)(size_t)kw_get_int(kw, "__temp__`channel_gobj", 0, KW_REQUIRED);
+    //json_t *jwt_payload = gobj_read_user_data(channel_gobj, "jwt_payload");
+
+    int result = 0;
+    json_t *jn_comment = 0;
+
+    //json_t *access_roles = kw_get_dict(jwt_payload, "access_roles", 0, KW_REQUIRED);
+    //json_t *fichajes_roles = kw_get_list(access_roles, "fichajes", 0, 0);
+
+    do {
+        //if(!fichajes_roles || !json_str_in_list(fichajes_roles, "user", FALSE)) {
+        //    jn_data = kw_incref(kw);
+        //    jn_comment = json_string("User has not 'user' role");
+        //    result = -1;
+        //    break;
+        //}
+
+        /*
+         *  Get parameters
+         */
+        const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+        uint64_t __t__ = kw_get_int(kw, "__t__", 0, 0);
+        uint32_t user_flag = kw_get_int(kw, "user_flag", 0, 0);
+        json_t *record = kw_get_dict(kw, "record", 0, 0);
+
+        /*
+         *  Check parameters
+         */
+        json_t *topic = tranger_topic(priv->tranger, topic_name);
+        if(!topic) {
+           jn_comment = json_sprintf("Topic not found: '%s'", topic_name);
+           result = -1;
+           break;
+        }
+        if(!record) {
+           jn_comment = json_sprintf("What record?");
+           result = -1;
+           break;
+        }
+
+        /*
+         *  Append record to tranger topic
+         */
+        md_record_t md_record;
+        result = tranger_append_record(
+            priv->tranger,
+            topic_name,
+            __t__,                  // if 0 then the time will be set by TimeRanger with now time
+            user_flag,
+            &md_record,             // required
+            json_incref(record)     // owned
+        );
+
+        if(result<0) {
+            jn_comment = json_string(log_last_message());
+            break;
+        }
+    } while(0);
+
+    /*
+     *  Response
+     */
+    json_t *iev = iev_create(
+        event,
+        msg_iev_build_webix2(gobj,
+            result,
+            jn_comment,
+            0,
+            0,  // owned
+            kw,  // owned
+            "__answer__"
+        )
+    );
+    json_object_set_new(iev, "__temp__", __temp__);  // Set the channel
+
+    /*
+     *  Inform
+     */
+    return gobj_send_event(
+        src,
+        "EV_SEND_IEV",
+        iev,
+        gobj
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    uint64_t maxtxMsgsec = gobj_read_uint64_attr(gobj, "maxtxMsgsec");
+    uint64_t maxrxMsgsec = gobj_read_uint64_attr(gobj, "maxrxMsgsec");
+    if(priv->txMsgsec > maxtxMsgsec) {
+        gobj_write_uint64_attr(gobj, "maxtxMsgsec", priv->txMsgsec);
+    }
+    if(priv->rxMsgsec > maxrxMsgsec) {
+        gobj_write_uint64_attr(gobj, "maxrxMsgsec", priv->rxMsgsec);
+    }
+
+    gobj_write_uint64_attr(gobj, "txMsgsec", priv->txMsgsec);
+    gobj_write_uint64_attr(gobj, "rxMsgsec", priv->rxMsgsec);
+
+    priv->rxMsgsec = 0;
+    priv->txMsgsec = 0;
+
+    KW_DECREF(kw);
+    return 0;
+}
+
+
+/***************************************************************************
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
+    {"EV_TRANGER_ADD_RECORD",       EVF_PUBLIC_EVENT,   0,  0},
+    // bottom input
+    {"EV_TIMEOUT",              0,  0,  0},
+    {"EV_STOPPED",              0,  0,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const EVENT output_events[] = {
-    {"EV_TRANGER_NEW_RECORD",  EVF_PUBLIC_EVENT,   0,  0},
+    {"EV_TRANGER_RECORD_ADDED",     EVF_PUBLIC_EVENT,   0,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const char *state_names[] = {
@@ -711,6 +996,9 @@ PRIVATE const char *state_names[] = {
 };
 
 PRIVATE EV_ACTION ST_IDLE[] = {
+    {"EV_TRANGER_ADD_RECORD",       ac_tranger_add_record,      0},
+    {"EV_TIMEOUT",                  ac_timeout,                 0},
+    {"EV_STOPPED",                  0,                          0},
     {0,0,0}
 };
 
