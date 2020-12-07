@@ -6,9 +6,23 @@
 
 To test with CLI:
 
-command-yuno id=1911 service=tranger command=open-list list_id=pepe topic_name=pp fields=tm,id
+command-yuno id=1911 service=tranger command=open-list list_id=pepe topic_name=pp fields=id,__md_tranger__
+
 command-yuno id=1911 service=__yuno__ command=subscribe-event gobj_name=tranger event_name=EV_TRANGER_RECORD_ADDED rename_event_name=EV_MT_COMMAND_ANSWER first_shot=1 config={"__list_id__":"pepe"}
+
 command-yuno id=1911 service=tranger command=add-record topic_name=pp record='{"id":"1","tm":0}'
+
+command-yuno id=1911 service=tranger command=close-list list_id=pepe
+
+command-yuno id=1911 service=tranger command=open-list list_id=pepe topic_name=pp only_md=1
+command-yuno id=1911 service=tranger command=get-list-data list_id=pepe
+command-yuno id=1911 service=tranger command=add-record topic_name=pp record='{"id":"1","tm":0}'
+command-yuno id=1911 service=tranger command=close-list list_id=pepe
+
+command-yuno id=1911 service=tranger command=open-list list_id=pepe topic_name=pp
+command-yuno id=1911 service=tranger command=get-list-data list_id=pepe
+command-yuno id=1911 service=tranger command=add-record topic_name=pp record='{"id":"1","tm":0}'
+command-yuno id=1911 service=tranger command=close-list list_id=pepe
 
 
  *          Copyright (c) 2020 Niyamaka.
@@ -50,6 +64,7 @@ PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
 PRIVATE json_t *cmd_open_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_close_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_add_record(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_get_list_data(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE sdata_desc_t pm_help[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
@@ -101,7 +116,7 @@ SDATAPM (ASN_BOOLEAN,   "return_data",          0,      0,      "True for return
 SDATAPM (ASN_OCTET_STR, "topic_name",           0,      0,      "Topic name"),
 SDATAPM (ASN_OCTET_STR, "fields",               0,      0,      "match_cond: Only this fields"),
 SDATAPM (ASN_BOOLEAN,   "backward",             0,      0,      "match_cond:"),
-SDATAPM (ASN_BOOLEAN,   "only_md",              0,      0,      "match_cond: don't load jn_record on loading disk, by default TRUE"),
+SDATAPM (ASN_BOOLEAN,   "only_md",              0,      0,      "match_cond: don't load jn_record on loading disk"),
 SDATAPM (ASN_INTEGER64, "from_rowid",           0,      0,      "match_cond:"),
 SDATAPM (ASN_INTEGER64, "to_rowid",             0,      0,      "match_cond:"),
 SDATAPM (ASN_OCTET_STR, "from_t",               0,      0,      "match_cond:"),
@@ -117,7 +132,14 @@ SDATAPM (ASN_OCTET_STR, "to_tm",                0,      0,      "match_cond:"),
 SDATAPM (ASN_OCTET_STR, "rkey",                 0,      0,      "match_cond: regular expression of key"),
 SDATA_END()
 };
+
 PRIVATE sdata_desc_t pm_close_list[] = {
+/*-PM----type-----------name--------------------flag----default-description---------- */
+SDATAPM (ASN_OCTET_STR, "list_id",              0,      0,      "Id of list"),
+SDATA_END()
+};
+
+PRIVATE sdata_desc_t pm_get_list_data[] = {
 /*-PM----type-----------name--------------------flag----default-description---------- */
 SDATAPM (ASN_OCTET_STR, "list_id",              0,      0,      "Id of list"),
 SDATA_END()
@@ -138,6 +160,7 @@ SDATACM (ASN_SCHEMA,    "delete-topic",     0,      pm_delete_topic,    cmd_dele
 SDATACM (ASN_SCHEMA,    "open-list",        0,      pm_open_list,       cmd_open_list,      "Open list"),
 SDATACM (ASN_SCHEMA,    "close-list",       0,      pm_close_list,      cmd_close_list,     "Close list"),
 SDATACM (ASN_SCHEMA,    "add-record",       0,      pm_add_record,      cmd_add_record,     "Add record"),
+SDATACM (ASN_SCHEMA,    "get-list-data",    0,      pm_get_list_data,   cmd_get_list_data,   "Get list data"),
 SDATA_END()
 };
 
@@ -365,13 +388,6 @@ PRIVATE int mt_subscription_added(
     }
 
     if(strcasecmp(event, "EV_TRANGER_RECORD_ADDED")==0) {
-        json_t *match_cond = kw_get_dict(list, "match_cond", 0, KW_REQUIRED);
-        const char ** keys = 0;
-        if(kw_has_key(match_cond, "fields")) {
-            const char *fields = kw_get_str(match_cond, "fields", "", 0);
-            keys = split2(fields, ", ", 0);
-        }
-
         json_t *jn_data = json_array();
         size_t idx;
         json_t *jn_record;
@@ -380,17 +396,8 @@ PRIVATE int mt_subscription_added(
             if(!kw_match_simple(jn_record, __filter__)) {
                 continue;
             }
-            if(keys) {
-                json_t *jn_record_with_fields = kw_clone_by_path(
-                    jn_record,   // owned
-                    keys
-                );
-                jn_record = jn_record_with_fields;
-            }
             json_array_append(jn_data, jn_record);
         }
-
-        split_free2(keys);
 
         /*
          *  Inform
@@ -717,7 +724,7 @@ PRIVATE json_t *cmd_open_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src
     }
 
     BOOL  backward = kw_get_bool(kw, "backward", 0, 0);
-    BOOL  only_md = kw_get_bool(kw, "only_md", TRUE, 0); // WARNING by default only_md
+    BOOL  only_md = kw_get_bool(kw, "only_md", 0, 0);
     int64_t from_rowid = (int64_t)kw_get_int(kw, "from_rowid", 0, 0);
     int64_t to_rowid = (int64_t)kw_get_int(kw, "to_rowid", 0, 0);
     uint32_t user_flag = (uint32_t)kw_get_int(kw, "user_flag", 0, 0);
@@ -827,7 +834,7 @@ PRIVATE json_t *cmd_open_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         list?0:-1,
         list?json_sprintf("List opened: '%s'", list_id):json_string(log_last_message()),
         0,
-        return_data?kw_get_list(list, "data", 0, KW_REQUIRED):0,
+        return_data?json_incref(kw_get_list(list, "data", 0, KW_REQUIRED)):0,
         kw  // owned
     );
 }
@@ -840,7 +847,6 @@ PRIVATE json_t *cmd_close_list(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     const char *list_id = kw_get_str(kw, "list_id", "", 0);
-    BOOL return_data = kw_get_bool(kw, "return_data", 0, 0);
 
     if(empty_string(list_id)) {
         return msg_iev_build_webix(
@@ -872,7 +878,7 @@ PRIVATE json_t *cmd_close_list(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         result,
         result>=0?json_sprintf("List closed: '%s'", list_id):json_string(log_last_message()),
         0,
-        return_data?kw_get_list(list, "data", 0, KW_REQUIRED):0,
+        0,
         kw  // owned
     );
 }
@@ -960,6 +966,48 @@ PRIVATE json_t *cmd_add_record(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
     );
 }
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_get_list_data(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *list_id = kw_get_str(kw, "list_id", "", 0);
+
+    if(empty_string(list_id)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_sprintf("What list_id?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *list = tranger_get_list(priv->tranger, list_id);
+    if(!list) {
+        return msg_iev_build_webix(
+            gobj,
+            0,
+            json_sprintf("List not found: '%s'", list_id),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        0,
+        0,
+        json_incref(kw_get_list(list, "data", 0, KW_REQUIRED)),
+        kw  // owned
+    );
+}
+
 
 
 
@@ -988,39 +1036,65 @@ PRIVATE int load_record_callback(
     json_t *jn_record  // owned
 )
 {
+    json_t *match_cond = kw_get_dict(list, "match_cond", 0, KW_REQUIRED);
+    BOOL only_md = kw_get_bool(match_cond, "only_md", 0, 0);
+    BOOL has_fields = kw_has_key(match_cond, "fields");
+    if(has_fields) {
+        only_md = FALSE;
+    }
+
+    if(jn_record) {
+        json_object_set_new(jn_record, "__md_tranger__", tranger_md2json(md_record));
+    } else {
+        if(only_md) {
+            jn_record = json_object();
+        } else {
+            jn_record = tranger_read_record_content(tranger, topic, md_record);
+        }
+        json_object_set_new(jn_record, "__md_tranger__", tranger_md2json(md_record));
+    }
+
+    json_t *list_data = kw_get_list(list, "data", 0, KW_REQUIRED);
+
+    const char ** keys = 0;
+    if(has_fields) {
+        const char *fields = kw_get_str(match_cond, "fields", "", 0);
+        keys = split2(fields, ", ", 0);
+    }
+    if(keys) {
+        json_t *jn_record_with_fields = kw_clone_by_path(
+            jn_record,   // owned
+            keys
+        );
+        jn_record = jn_record_with_fields;
+        json_array_append(
+            list_data,
+            jn_record
+        );
+        split_free2(keys);
+    } else {
+        json_array_append(
+            list_data,
+            jn_record
+        );
+    }
+
     if(!(md_record->__system_flag__ & sf_loading_from_disk)) {
-        json_t *match_cond = kw_get_dict(list, "match_cond", 0, KW_REQUIRED);
-        if(kw_has_key(match_cond, "fields")) {
-            if(!jn_record) {
-                jn_record = tranger_read_record_content(tranger, topic, md_record);
-            }
-            const char *fields = kw_get_str(match_cond, "fields", "", 0);
-            const char ** keys = 0;
-            keys = split2(fields, ", ", 0);
-            json_t *jn_record_with_fields = kw_clone_by_path(
-                jn_record,   // owned
-                keys
-            );
-            split_free2(keys);
-            jn_record = jn_record_with_fields;
+        json_t *jn_data = json_array();
+
+        if(only_md) {
+            json_array_append(jn_data, kw_get_dict(jn_record, "__md_tranger__", 0, KW_REQUIRED));
+        } else {
+            json_array_append(jn_data, jn_record);
         }
 
         hgobj gobj = (hgobj)kw_get_int(list, "gobj", 0, KW_REQUIRED);
-        json_t *jn_data_ = json_array();
-        json_t *jn_data = json_object();
-        json_array_append_new(jn_data_, jn_data);
-        json_object_set_new(
-            jn_data,
-            "__list_id__",
-            json_string(kw_get_str(list, "id", "", KW_REQUIRED))
-        );
-        json_object_update(jn_data, jn_record);
-        gobj_publish_event(gobj, "EV_TRANGER_RECORD_ADDED", jn_data_);
+        gobj_publish_event(gobj, "EV_TRANGER_RECORD_ADDED", jn_data);
     }
 
     JSON_DECREF(jn_record);
 
-    return 1; // HACK lest timeranger to add record to list.data
+    return 0; // HACK lest timeranger to add record to list.data
 }
 
 
