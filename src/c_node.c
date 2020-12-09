@@ -74,7 +74,7 @@ SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"
 SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Node content in base64"),
 SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Node content in string"),
 SDATAPM (ASN_JSON,      "record",       0,              0,          "Node content in json"),
-SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: \"permissive\" \"multiple\""),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: \"permissive\" \"multiple\""),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_update_node[] = {
@@ -454,7 +454,8 @@ PRIVATE json_t *mt_create_node( // Return is NOT YOURS
     hgobj gobj,
     const char *topic_name,
     json_t *kw, // owned
-    const char *options // "permissive"
+    json_t *jn_options, // bool "permissive"
+    hgobj src
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -464,7 +465,7 @@ PRIVATE json_t *mt_create_node( // Return is NOT YOURS
         priv->treedb_name,
         topic_name,
         kw, // owned
-        options
+        jn_options
     );
     return record;
 }
@@ -474,7 +475,8 @@ PRIVATE json_t *mt_create_node( // Return is NOT YOURS
  ***************************************************************************/
 PRIVATE int mt_save_node(
     hgobj gobj,
-    json_t *node
+    json_t *node, // NOT owned
+    hgobj src
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -489,7 +491,8 @@ PRIVATE json_t *mt_update_node( // Return is NOT YOURS
     hgobj gobj,
     const char *topic_name,
     json_t *kw,    // owned
-    const char *options // "create" ["permissive"], "clean"
+    json_t *jn_options, // "create" ["permissive"], "clean"
+    hgobj src
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -499,7 +502,7 @@ PRIVATE json_t *mt_update_node( // Return is NOT YOURS
         priv->treedb_name,
         topic_name,
         kw, // owned
-        options
+        jn_options
     );
     return record;
 }
@@ -511,7 +514,8 @@ PRIVATE int mt_delete_node(
     hgobj gobj,
     const char *topic_name,
     json_t *kw,    // owned
-    const char *options
+    json_t *jn_options, // "force"
+    hgobj src
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -521,31 +525,48 @@ PRIVATE int mt_delete_node(
         priv->treedb_name,
         topic_name,
         kw, // owned
-        options
+        jn_options
     );
 }
 
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE int mt_link_nodes(hgobj gobj, const char *hook, json_t *parent, json_t *child)
+PRIVATE int mt_link_nodes(
+    hgobj gobj,
+    const char *hook,
+    json_t *parent_node,    // NOT owned
+    json_t *child_node,     // NOT owned
+    json_t *kw,
+    hgobj src
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    KW_DECREF(kw);
 
     return treedb_link_nodes(
         priv->tranger,
         hook,
-        parent,
-        child
+        parent_node,
+        child_node
     );
 }
 
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE int mt_link_nodes2(hgobj gobj, const char *parent_ref, const char *child_ref)
+PRIVATE int mt_link_nodes2(
+    hgobj gobj,
+    const char *parent_ref,
+    const char *child_ref,
+    json_t *kw,
+    hgobj src
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    KW_DECREF(kw);
 
     return treedb_link_nodes2(
         priv->tranger,
@@ -558,24 +579,41 @@ PRIVATE int mt_link_nodes2(hgobj gobj, const char *parent_ref, const char *child
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE int mt_unlink_nodes(hgobj gobj, const char *hook, json_t *parent, json_t *child)
+PRIVATE int mt_unlink_nodes(
+    hgobj gobj,
+    const char *hook,
+    json_t *parent_node,    // NOT owned
+    json_t *child_node,     // NOT owned
+    json_t *kw,
+    hgobj src
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    KW_DECREF(kw);
 
     return treedb_unlink_nodes(
         priv->tranger,
         hook,
-        parent,
-        child
+        parent_node,
+        child_node
     );
 }
 
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE int mt_unlink_nodes2(hgobj gobj, const char *parent_ref, const char *child_ref)
+PRIVATE int mt_unlink_nodes2(
+    hgobj gobj,
+    const char *parent_ref,     // parent_topic_name^parent_id^hook_name
+    const char *child_ref,      // child_topic_name^child_id
+    json_t *kw,
+    hgobj src
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    KW_DECREF(kw);
 
     return treedb_unlink_nodes2(
         priv->tranger,
@@ -592,7 +630,8 @@ PRIVATE json_t *mt_get_node(
     hgobj gobj,
     const char *topic_name,
     const char *id,
-    json_t *jn_options
+    json_t *jn_options, // "collapsed"
+    hgobj src
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -613,7 +652,8 @@ PRIVATE json_t *mt_list_nodes(
     hgobj gobj,
     const char *topic_name,
     json_t *jn_filter,
-    json_t *jn_options
+    json_t *jn_options, // "collapsed"
+    hgobj src
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -636,7 +676,8 @@ PRIVATE json_t *mt_node_instances(
     const char *topic_name,
     const char *pkey2,
     json_t *jn_filter,
-    json_t *jn_options
+    json_t *jn_options, // "collapsed"
+    hgobj src
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -655,9 +696,16 @@ PRIVATE json_t *mt_node_instances(
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE int mt_shoot_snap(hgobj gobj, const char *tag)
+PRIVATE int mt_shoot_snap(
+    hgobj gobj,
+    const char *tag,
+    json_t *kw,
+    hgobj src
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    KW_DECREF(kw);
 
     return treedb_shoot_snap(
         priv->tranger,
@@ -669,9 +717,16 @@ PRIVATE int mt_shoot_snap(hgobj gobj, const char *tag)
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE int mt_activate_snap(hgobj gobj, const char *tag)
+PRIVATE int mt_activate_snap(
+    hgobj gobj,
+    const char *tag,
+    json_t *kw,
+    hgobj src
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    KW_DECREF(kw);
 
     return treedb_activate_snap(
         priv->tranger,
@@ -683,7 +738,11 @@ PRIVATE int mt_activate_snap(hgobj gobj, const char *tag)
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE json_t *mt_list_snaps(hgobj gobj, json_t *filter)
+PRIVATE json_t *mt_list_snaps(
+    hgobj gobj,
+    json_t *filter,
+    hgobj src
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
@@ -697,26 +756,36 @@ PRIVATE json_t *mt_list_snaps(hgobj gobj, json_t *filter)
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE json_t *mt_treedbs(hgobj gobj)
+PRIVATE json_t *mt_treedbs(
+    hgobj gobj,
+    json_t *kw,
+    hgobj src
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     return treedb_list_treedb(
-        priv->tranger
+        priv->tranger,
+        kw
     );
 }
 
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE json_t *mt_treedb_topics(hgobj gobj, const char *treedb_name, const char *options)
+PRIVATE json_t *mt_treedb_topics(
+    hgobj gobj,
+    const char *treedb_name,
+    json_t *kw, // "dict" return list of dicts, otherwise return list of strings
+    hgobj src
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     return treedb_topics(
         priv->tranger,
         empty_string(treedb_name)?priv->treedb_name:treedb_name,
-        options
+        kw
     );
 }
 
@@ -733,7 +802,7 @@ PRIVATE json_t *mt_topic_desc(hgobj gobj, const char *topic_name)
         json_t *topics_list = treedb_topics( //Return a list with topic names of the treedb
             priv->tranger,
             priv->treedb_name,
-            ""
+            0
         );
         json_t *jn_topics_desc = json_object();
         int idx; json_t *jn_topic_name;
@@ -756,11 +825,18 @@ PRIVATE json_t *mt_topic_desc(hgobj gobj, const char *topic_name)
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE json_t *mt_topic_links(hgobj gobj, const char *treedb_name, const char *topic_name)
+PRIVATE json_t *mt_topic_links(
+    hgobj gobj,
+    const char *treedb_name,
+    const char *topic_name,
+    json_t *kw,
+    hgobj src
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     if(!empty_string(topic_name)) {
+        KW_DECREF(kw);
         return treedb_get_topic_links(priv->tranger, treedb_name, topic_name);
     }
 
@@ -782,17 +858,25 @@ PRIVATE json_t *mt_topic_links(hgobj gobj, const char *treedb_name, const char *
         );
     }
     JSON_DECREF(topics);
+    KW_DECREF(kw);
     return links;
 }
 
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE json_t *mt_topic_hooks(hgobj gobj, const char *treedb_name, const char *topic_name)
+PRIVATE json_t *mt_topic_hooks(
+    hgobj gobj,
+    const char *treedb_name,
+    const char *topic_name,
+    json_t *kw,
+    hgobj src
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     if(!empty_string(topic_name)) {
+        KW_DECREF(kw);
         return treedb_get_topic_hooks(priv->tranger, treedb_name, topic_name);
     }
 
@@ -815,6 +899,7 @@ PRIVATE json_t *mt_topic_hooks(hgobj gobj, const char *treedb_name, const char *
     }
 
     JSON_DECREF(topics);
+    KW_DECREF(kw);
     return hooks;
 }
 
@@ -826,7 +911,8 @@ PRIVATE json_t *mt_node_parents(
     const char *topic_name,
     const char *id,
     const char *link,
-    json_t *options
+    json_t *jn_options,  // "collapsed"
+    hgobj src
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -840,6 +926,7 @@ PRIVATE json_t *mt_node_parents(
     );
     if(!node) {
         // silence
+        JSON_DECREF(jn_options);
         return 0;
     }
 
@@ -851,7 +938,7 @@ PRIVATE json_t *mt_node_parents(
             priv->tranger,
             link, // must be a fkey field
             node, // not owned
-            options
+            jn_options
         );
     }
 
@@ -866,13 +953,13 @@ PRIVATE json_t *mt_node_parents(
             priv->tranger,
             json_string_value(jn_link), // must be a fkey field
             node, // not owned
-            json_incref(options)
+            json_incref(jn_options)
         );
         json_array_extend(parents, parents_);
         JSON_DECREF(parents_);
     }
     JSON_DECREF(links);
-    JSON_DECREF(options);
+    JSON_DECREF(jn_options);
 
     return parents;
 }
@@ -885,7 +972,8 @@ PRIVATE json_t *mt_node_childs(
     const char *topic_name,
     const char *id,
     const char *hook,
-    json_t *options
+    json_t *jn_options,  // "collapsed"
+    hgobj src
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -899,6 +987,7 @@ PRIVATE json_t *mt_node_childs(
     );
     if(!node) {
         // silence
+        JSON_DECREF(jn_options);
         return 0;
     }
 
@@ -910,7 +999,7 @@ PRIVATE json_t *mt_node_childs(
             priv->tranger,
             hook, // must be a fkey field
             node, // not owned
-            options
+            jn_options
         );
     }
 
@@ -925,13 +1014,13 @@ PRIVATE json_t *mt_node_childs(
             priv->tranger,
             json_string_value(jn_hook), // must be a fkey field
             node, // not owned
-            json_incref(options)
+            json_incref(jn_options)
         );
         json_array_extend(childs, childs_);
         JSON_DECREF(childs_);
     }
     JSON_DECREF(hooks);
-    JSON_DECREF(options);
+    JSON_DECREF(jn_options);
 
     return childs;
 }
@@ -1020,7 +1109,7 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *content64 = kw_get_str(kw, "content64", "", 0);
     const char *content = kw_get_str(kw, "content", "", 0);
-    const char *options = kw_get_str(kw, "options", "", 0);
+    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -1092,7 +1181,8 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         gobj,
         topic_name,
         jn_content, // owned
-        options // options  "permissive"
+        json_incref(jn_options), // options  "permissive"
+        src
     );
     JSON_INCREF(node);
     return msg_iev_build_webix(gobj,
@@ -1112,7 +1202,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *content64 = kw_get_str(kw, "content64", "", 0);
     const char *content = kw_get_str(kw, "content", "", 0);
-    const char *options = kw_get_str(kw, "options", "", 0);
+    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -1184,7 +1274,8 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         gobj,
         topic_name,
         jn_content, // owned
-        options // "permissive"
+        json_incref(jn_options), // options  "permissive"
+        src
     );
     JSON_INCREF(node);
     return msg_iev_build_webix(gobj,
@@ -1253,7 +1344,8 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         gobj,
         topic_name,
         jn_filter,  // filter
-        0
+        0,
+        src
     );
 
     if(json_array_size(iter)==0) {
@@ -1281,7 +1373,7 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     json_array_foreach(iter, idx, node) {
         const char *id = kw_get_str(node, "id", "", KW_REQUIRED);
         JSON_INCREF(node);
-        if(gobj_delete_node(gobj, topic_name, node, force?"force":"")<0) {
+        if(gobj_delete_node(gobj, topic_name, node, json_pack("{s:b}", "force", force), src)<0) {
             JSON_DECREF(iter);
             JSON_DECREF(jn_data);
             return msg_iev_build_webix(
@@ -1340,7 +1432,9 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
     int result = gobj_link_nodes2(
         gobj,
         parent,
-        child
+        child,
+        0,
+        src
     );
 
     return msg_iev_build_webix(gobj,
@@ -1384,7 +1478,9 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
     int result = gobj_unlink_nodes2(
         gobj,
         parent,
-        child
+        child,
+        0,
+        src
     );
 
     return msg_iev_build_webix(gobj,
@@ -1401,7 +1497,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
  ***************************************************************************/
 PRIVATE json_t *cmd_treedbs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    json_t *treedbs = gobj_treedbs(gobj);
+    json_t *treedbs = gobj_treedbs(gobj, kw, src);
 
     return msg_iev_build_webix(gobj,
         treedbs?0:-1,
@@ -1418,9 +1514,17 @@ PRIVATE json_t *cmd_treedbs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     const char *treedb_name = kw_get_str(kw, "treedb_name", "", 0);
-    const char *options = kw_get_str(kw, "options", "", 0);
-
-    json_t *topics = gobj_treedb_topics(gobj, treedb_name, options);
+    if(empty_string(treedb_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What treedb_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    json_t *topics = gobj_treedb_topics(gobj, treedb_name, kw, src);
 
     return msg_iev_build_webix(gobj,
         topics?0:-1,
@@ -1437,6 +1541,16 @@ PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
     json_t *desc = gobj_topic_desc(gobj, topic_name);
 
     return msg_iev_build_webix(gobj,
@@ -1479,7 +1593,7 @@ PRIVATE json_t *cmd_links(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
 
-    json_t *links = gobj_topic_links(gobj, priv->treedb_name, topic_name);
+    json_t *links = gobj_topic_links(gobj, priv->treedb_name, topic_name, kw, src);
 
     return msg_iev_build_webix(gobj,
         links?0:-1,
@@ -1499,7 +1613,7 @@ PRIVATE json_t *cmd_hooks(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
 
-    json_t *hooks = gobj_topic_hooks(gobj, priv->treedb_name, topic_name);
+    json_t *hooks = gobj_topic_hooks(gobj, priv->treedb_name, topic_name, kw, src);
 
     return msg_iev_build_webix(gobj,
         hooks?0:-1,
@@ -1547,7 +1661,8 @@ PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         topic_name,
         node_id,
         link,
-        json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
+        json_pack("{s:b}", "collapsed", collapsed),  // jn_options, owned "collapsed"
+        src
     );
 
     return msg_iev_build_webix(
@@ -1596,7 +1711,8 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         topic_name,
         node_id,
         hook,
-        json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
+        json_pack("{s:b}", "collapsed", collapsed),  // jn_options, owned "collapsed"
+        src
     );
 
     return msg_iev_build_webix(
@@ -1650,7 +1766,8 @@ PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         gobj,
         topic_name,
         jn_filter,  // owned
-        json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
+        json_pack("{s:b}", "collapsed", collapsed),  // jn_options, owned "collapsed"
+        src
     );
 
     return msg_iev_build_webix(
@@ -1701,7 +1818,8 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         gobj,
         topic_name,
         node_id,
-        json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
+        json_pack("{s:b}", "collapsed", collapsed),  // jn_options, owned "collapsed"
+        src
     );
 
     return msg_iev_build_webix(gobj,
@@ -1763,7 +1881,8 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
         topic_name,
         pkey2,
         jn_filter,  // owned
-        json_pack("{s:b}", "collapsed", collapsed)  // jn_options, owned "collapsed"
+        json_pack("{s:b}", "collapsed", collapsed),  // jn_options, owned "collapsed"
+        src
     );
 
     return msg_iev_build_webix(
@@ -1827,7 +1946,8 @@ PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgob
         topic_name,
         pkey2,
         jn_filter,  // owned
-        0
+        0,
+        src
     );
 
     /*
@@ -1845,7 +1965,7 @@ PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgob
     }
     int idx; json_t *instance;
     json_array_foreach(instances, idx, instance) {
-        gobj_save_node(gobj, instance);
+        gobj_save_node(gobj, instance, src);
     }
 
     return msg_iev_build_webix(
@@ -1961,7 +2081,8 @@ PRIVATE json_t *cmd_list_snaps(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 
     json_t *jn_data = gobj_list_snaps(
         gobj,
-        kw_incref(kw)
+        kw_incref(kw),
+        src
     );
 
     return msg_iev_build_webix(gobj,
@@ -1994,13 +2115,16 @@ PRIVATE json_t *cmd_shoot_snap(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
     }
     int ret = gobj_shoot_snap(
         gobj,
-        name
+        name,
+        kw_incref(kw),
+        src
     );
     json_t *jn_data = 0;
     if(ret == 0) {
         jn_data = gobj_list_snaps(
             gobj,
-            json_pack("{s:s}", "name", name)
+            json_pack("{s:s}", "name", name),
+            src
         );
     }
 
@@ -2032,7 +2156,9 @@ PRIVATE json_t *cmd_activate_snap(hgobj gobj, const char *cmd, json_t *kw, hgobj
     }
     int ret = gobj_activate_snap(
         gobj,
-        name
+        name,
+        kw_incref(kw),
+        src
     );
     if(ret>=0) {
         // TODO publish changes?
@@ -2053,7 +2179,9 @@ PRIVATE json_t *cmd_deactivate_snap(hgobj gobj, const char *cmd, json_t *kw, hgo
 {
     int ret = gobj_activate_snap(
         gobj,
-        "__clear__"
+        "__clear__",
+        kw_incref(kw),
+        src
     );
     return msg_iev_build_webix(gobj,
         ret,
