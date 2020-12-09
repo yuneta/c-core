@@ -264,6 +264,16 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
 {0, 0},
 };
 
+/*---------------------------------------------*
+ *      GClass permission levels
+ *---------------------------------------------*/
+enum {
+    PERMISSION_XXXX = 0x00000001,
+};
+PRIVATE const permission_level_t s_user_permission_level[32] = {
+{"xxxx",        "Sample"},
+{0, 0},
+};
 
 /*---------------------------------------------*
  *              Private data
@@ -275,8 +285,8 @@ typedef struct _PRIVATE_DATA {
     int32_t exit_on_error;
     kw_match_fn kw_match;
 
-//     int32_t timeout;
-//     hgobj timer;
+    //int32_t timeout;
+    //hgobj timer;
     uint64_t *ptxMsgs;
     uint64_t *prxMsgs;
     uint64_t txMsgsec;
@@ -300,7 +310,7 @@ PRIVATE void mt_create(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-//     priv->timer = gobj_create(gobj_name(gobj), GCLASS_TIMER, 0, gobj);
+    //priv->timer = gobj_create(gobj_name(gobj), GCLASS_TIMER, 0, gobj);
     priv->ptxMsgs = gobj_danger_attr_ptr(gobj, "txMsgs");
     priv->prxMsgs = gobj_danger_attr_ptr(gobj, "rxMsgs");
 
@@ -2247,7 +2257,7 @@ PRIVATE GCLASS _gclass = {
     0,  // lmt
     tattr_desc,
     sizeof(PRIVATE_DATA),
-    0,  // acl
+    s_user_permission_level,  // acl
     s_user_trace_level,
     command_table,  // command_table
     0,  // gcflag
