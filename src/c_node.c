@@ -1541,17 +1541,7 @@ PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    if(empty_string(topic_name)) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_local_sprintf("What topic_name?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-    json_t *desc = gobj_topic_desc(gobj, topic_name);
+    json_t *desc = gobj_topic_desc(gobj, topic_name); // Empty topic_name -> return all
 
     return msg_iev_build_webix(gobj,
         desc?0:-1,
