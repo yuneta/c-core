@@ -4002,6 +4002,9 @@ PRIVATE int set_user_traces(hgobj gobj)
         if(strcmp(name, "__yuno__")==0) {
             continue;
         }
+        if(strcmp(name, "__root__")==0) {
+            continue;
+        }
         if(strcmp(name, "__global_trace__")==0) {
             continue;
         }
@@ -4069,6 +4072,9 @@ PRIVATE int set_user_no_traces(hgobj gobj)
             continue;
         }
         if(strcmp(name, "__yuno__")==0) {
+            continue;
+        }
+        if(strcmp(name, "__root__")==0) {
             continue;
         }
         if(strcmp(name, "__global_trace__")==0) {
