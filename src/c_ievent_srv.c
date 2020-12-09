@@ -668,6 +668,9 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
      *-------------------------*/
     gobj_write_bool_attr(gobj, "authenticated", FALSE);
 
+    // WARNING TODO if not a localhost connection the authentication must be required!
+    // See mt_authenticate of c_agent.c
+
     KW_INCREF(kw);
     json_t *webix_resp = gobj_authenticate(named_gobj, iev_dst_service, kw, gobj);
     if(webix_resp) {
