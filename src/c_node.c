@@ -402,7 +402,6 @@ PRIVATE int mt_start(hgobj gobj)
         gobj
     );
 
-
     /*
      *  Periodic timer for tasks
      */
@@ -910,8 +909,8 @@ PRIVATE json_t *mt_node_parents(
     hgobj gobj,
     const char *topic_name,
     const char *id,
-    const char *link,
-    json_t *jn_options,  // "collapsed"
+    const char *link,   // fkey
+    json_t *jn_options, // "collapsed"
     hgobj src
 )
 {

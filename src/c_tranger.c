@@ -153,16 +153,16 @@ PRIVATE sdata_desc_t command_table[] = {
 /*-CMD---type-----------name----------------alias-------items-------json_fn---------description--*/
 SDATACM (ASN_SCHEMA,    "help",             a_help,     pm_help,    cmd_help,       "Command's help"),
 
-/*-CMD---type-----------name----------------alias---items---------------json_fn-------------description--*/
-SDATACM (ASN_SCHEMA,    "print-tranger",    0,      pm_print_tranger,   cmd_print_tranger,  "Print tranger"),
-SDATACM (ASN_SCHEMA,    "topics",           0,      0,                  cmd_topics,         "List topics"),
-SDATACM (ASN_SCHEMA,    "desc",             0,      pm_desc,            cmd_desc,           "Schema of topic or full"),
-SDATACM (ASN_SCHEMA,    "create-topic",     0,      pm_create_topic,    cmd_create_topic,   "Create topic"),
-SDATACM (ASN_SCHEMA,    "delete-topic",     0,      pm_delete_topic,    cmd_delete_topic,   "Delete topic"),
-SDATACM (ASN_SCHEMA,    "open-list",        0,      pm_open_list,       cmd_open_list,      "Open list"),
-SDATACM (ASN_SCHEMA,    "close-list",       0,      pm_close_list,      cmd_close_list,     "Close list"),
-SDATACM (ASN_SCHEMA,    "add-record",       0,      pm_add_record,      cmd_add_record,     "Add record"),
-SDATACM (ASN_SCHEMA,    "get-list-data",    0,      pm_get_list_data,   cmd_get_list_data,   "Get list data"),
+/*-CMD2---type-----------name----------------flag-------alias---items---------------json_fn-------------description--*/
+SDATACM2 (ASN_SCHEMA,    "print-tranger",    SDF_XAUTH, 0,      pm_print_tranger,   cmd_print_tranger,  "Print tranger"),
+SDATACM2 (ASN_SCHEMA,    "topics",           SDF_XAUTH, 0,      0,                  cmd_topics,         "List topics"),
+SDATACM2 (ASN_SCHEMA,    "desc",             SDF_XAUTH, 0,      pm_desc,            cmd_desc,           "Schema of topic or full"),
+SDATACM2 (ASN_SCHEMA,    "create-topic",     SDF_XAUTH, 0,      pm_create_topic,    cmd_create_topic,   "Create topic"),
+SDATACM2 (ASN_SCHEMA,    "delete-topic",     SDF_XAUTH, 0,      pm_delete_topic,    cmd_delete_topic,   "Delete topic"),
+SDATACM2 (ASN_SCHEMA,    "open-list",        SDF_XAUTH, 0,      pm_open_list,       cmd_open_list,      "Open list"),
+SDATACM2 (ASN_SCHEMA,    "close-list",       SDF_XAUTH, 0,      pm_close_list,      cmd_close_list,     "Close list"),
+SDATACM2 (ASN_SCHEMA,    "add-record",       SDF_XAUTH, 0,      pm_add_record,      cmd_add_record,     "Add record"),
+SDATACM2 (ASN_SCHEMA,    "get-list-data",    SDF_XAUTH, 0,      pm_get_list_data,   cmd_get_list_data,  "Get list data"),
 SDATA_END()
 };
 
@@ -186,8 +186,8 @@ SDATA (ASN_COUNTER64,   "rxMsgs",           SDF_RD|SDF_RSTATS,  0,              
 
 SDATA (ASN_COUNTER64,   "txMsgsec",         SDF_RD|SDF_RSTATS,  0,              "Messages by second"),
 SDATA (ASN_COUNTER64,   "rxMsgsec",         SDF_RD|SDF_RSTATS,  0,              "Messages by second"),
-SDATA (ASN_COUNTER64,   "maxtxMsgsec",      SDF_WR|SDF_RSTATS,  0,              "Max Tx Messages by second"),
-SDATA (ASN_COUNTER64,   "maxrxMsgsec",      SDF_WR|SDF_RSTATS,  0,              "Max Rx Messages by second"),
+SDATA (ASN_COUNTER64,   "maxtxMsgsec",      SDF_WR|SDF_RSTATS|SDF_WAUTH,  0,    "Max Tx Messages by second"),
+SDATA (ASN_COUNTER64,   "maxrxMsgsec",      SDF_WR|SDF_RSTATS|SDF_WAUTH,  0,    "Max Rx Messages by second"),
 SDATA (ASN_POINTER,     "user_data",        0,                  0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                  0,              "more user data"),
 SDATA (ASN_POINTER,     "subscriber",       0,                  0,              "subscriber of output-events. Not a child gobj."),
@@ -208,13 +208,58 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
 /*---------------------------------------------*
  *      GClass permission levels
  *---------------------------------------------*/
+/* Same as Python Pyramid framework
+    __acl__ = [
+        (Allow, Authenticated, 'view'),
+        (Allow, Everyone, 'view'),
+        (Allow, 'group:WebStratusLog', ('view', 'log')),
+        (Allow, 'group:WebStratusControl', ('view', 'action', 'log')),
+        (Allow, 'group:WebStratusAdministracion', ('view', 'new', 'action', 'edit', 'delete', 'log')),
+        DENY_ALL
+        ]
+
+    "read": {
+        "attribute": ["database"]
+    }
+    "write": {
+        "attribute": ["database"]
+    }
+    "execute": {
+        "command": ["print-tranger"]
+    }
+    "action": {
+        "event": ["EV_TRANGER_ADD_RECORD"]
+    }
+
+"Allow", "owner", ALL            (implicito,los permisos van en el yuno)
+"Allow", "pepe@xx.com", "read": {["yuno":"controlcenter^mulesol",] "service": "tranger", attributes: "*"}
+
+
+"owner": ALL
+"user@kk": [
+]
+"groupxx": [
+]
+*/
+
+typedef struct {
+    const char *name;
+    const char *operation;
+    const char *path;
+    const char *description;
+} xpermission_level_t;
+
+
 enum {
-    PERMISSION_XXXX = 0x00000001,
+    PERMISSION_READ = 0x00000001,
 };
 PRIVATE const permission_level_t s_user_permission_level[32] = {
-{"xxxx",        "Sample"},
+{"read",        "Read"},
 {0, 0},
 };
+
+
+
 
 /*---------------------------------------------*
  *              Private data
@@ -274,8 +319,86 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+
+    hsdata hs = gobj_hsdata2(gobj, path, FALSE);
+    if(hs) {
+        const sdata_desc_t *it = sdata_it_desc(sdata_schema(hs), path);
+        if(it->flag & SDF_WAUTH) {
+            /*
+             *  AUTHZ Require "attrs" "write" permission
+             */
+            /*
+                if(gobj_has_permission(gobj, "attrs.write", path, src))
+            */
+        }
+    }
+
     IF_EQ_SET_PRIV(timeout,         gobj_read_int32_attr)
     END_EQ_SET_PRIV()
+}
+
+/***************************************************************************
+ *      Framework Method reading
+ ***************************************************************************/
+PRIVATE SData_Value_t mt_reading(hgobj gobj, const char *name, int type, SData_Value_t data)
+{
+    hsdata hs = gobj_hsdata2(gobj, name, FALSE);
+    if(hs) {
+        const sdata_desc_t *it = sdata_it_desc(sdata_schema(hs), name);
+        if(it->flag & SDF_RAUTH) {
+            /*
+             *  AUTHZ Require "attrs" "read" permission
+             */
+            /*
+                if(gobj_has_permission(gobj, "attrs.write", path, src))
+            */
+        }
+    }
+
+    return data;
+}
+
+/***************************************************************************
+ *      Framework Method destroy
+ ***************************************************************************/
+PRIVATE json_t * mt_command_parser(
+    hgobj gobj,
+    const char *command,
+    json_t *kw, // Owned
+    hgobj src
+)
+{
+    const sdata_desc_t *cnf_cmd = gobj_find_command(gobj, command);
+    if(cnf_cmd->flag & SDF_XAUTH) {
+        /*
+         *  AUTHZ Require "commands" "execute" permission
+         */
+        /*
+            if(gobj_has_permission(gobj, "commands.execute", path, src))
+        */
+    }
+
+    return 0;
+}
+
+/***************************************************************************
+ *      Framework Method inject_event
+ ***************************************************************************/
+PRIVATE int mt_inject_event(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    const EVENT *ev_desc = gobj_input_event(gobj, event);
+    if(ev_desc) {
+        if(ev_desc->authz & AUTHZ_INJECT) {
+            /*
+             *  AUTHZ Require "events" "inject" permission
+             */
+            /*
+                if(gobj_has_permission(gobj, "events.inject", path, src))
+            */
+        }
+    }
+
+    return 0;
 }
 
 /***************************************************************************
@@ -341,13 +464,26 @@ PRIVATE int mt_subscription_added(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    const char *event = sdata_read_str(subs, "event");
+
+    const EVENT *ev_desc = gobj_output_event(gobj, event);
+    if(ev_desc) {
+        if(ev_desc->authz & AUTHZ_INJECT) {
+            /*
+             *  AUTHZ Require "events" "subscribe" permission
+             */
+            /*
+                if(gobj_has_permission(gobj, "events.subscribe", path, src))
+            */
+        }
+    }
+
     json_t *__config__ = sdata_read_json(subs, "__config__");
     BOOL first_shot = kw_get_bool(__config__, "__first_shot__", FALSE, 0);
     if(!first_shot) {
         return 0;
     }
     hgobj subscriber = sdata_read_pointer(subs, "subscriber");
-    const char *event = sdata_read_str(subs, "event");
     if(empty_string(event)) {
         log_warning(0,
             "gobj",         "%s", gobj_full_name(gobj),
@@ -466,6 +602,33 @@ PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    BOOL forbidden = FALSE;
+    forbidden |= !gobj_has_permission(
+        gobj,
+        "read",
+        json_pack("{s:s}",
+            "attribute", "database"
+        ),
+        src
+    );
+    forbidden |= !gobj_has_permission(
+        gobj,
+        "execute",
+        json_pack("{s:s}",
+            "command", cmd
+        ),
+        src
+    );
+    if(forbidden) {
+        return msg_iev_build_webix(gobj,
+            -403,
+            json_sprintf("Forbidden: %s", log_last_message()),
+            0,
+            0,
+            kw  // owned
+        );
+    }
 
     BOOL expanded = kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
     int lists_limit = kw_get_int(kw, "lists_limit", 100, KW_WILD_NUMBER);
@@ -1152,6 +1315,35 @@ PRIVATE int ac_tranger_add_record(hgobj gobj, const char *event, json_t *kw, hgo
         //    break;
         //}
 
+        // TODO AUTHZ Require "attrs" "write" permission
+//         hsdata hs = gobj_hsdata2(gobj, path, FALSE);
+//         if(hs) {
+//             const sdata_desc_t *it = sdata_it_desc(sdata_schema(hs), path);
+//         }
+
+        BOOL forbidden = FALSE;
+        forbidden |= !gobj_has_permission(
+            gobj,
+            "write",
+            json_pack("{s:s}",
+                "attribute", "database"
+            ),
+            src
+        );
+        forbidden |= !gobj_has_permission(
+            gobj,
+            "execute",
+            json_pack("{s:s}",
+                "action", event
+            ),
+            src
+        );
+        if(forbidden) {
+           jn_comment = json_sprintf("Forbidden: %s", log_last_message());
+           result = -403;
+           break;
+        }
+
         /*
          *  Get parameters
          */
@@ -1254,14 +1446,14 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
-    {"EV_TRANGER_ADD_RECORD",       EVF_PUBLIC_EVENT,   0,  0},
+    {"EV_TRANGER_ADD_RECORD",       EVF_PUBLIC_EVENT,   AUTHZ_INJECT,  0},
     // bottom input
-    {"EV_TIMEOUT",              0,  0,  0},
-    {"EV_STOPPED",              0,  0,  0},
+    {"EV_TIMEOUT",  0,  0,  0},
+    {"EV_STOPPED",  0,  0,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const EVENT output_events[] = {
-    {"EV_TRANGER_RECORD_ADDED",     EVF_PUBLIC_EVENT,   0,  0},
+    {"EV_TRANGER_RECORD_ADDED",     EVF_PUBLIC_EVENT,   AUTHZ_SUBSCRIBE,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const char *state_names[] = {
@@ -1307,14 +1499,14 @@ PRIVATE GCLASS _gclass = {
         0, //mt_play,
         0, //mt_pause,
         mt_writing,
-        0, //mt_reading,
+        mt_reading,
         mt_subscription_added,
         0, //mt_subscription_deleted,
         0, //mt_child_added,
         0, //mt_child_removed,
-        0,
-        0, //mt_command,
-        0, //mt_inject_event,
+        0, //mt_stats
+        mt_command_parser,
+        mt_inject_event,
         0, //mt_create_resource,
         0, //mt_list_resource,
         0, //mt_update_resource,
