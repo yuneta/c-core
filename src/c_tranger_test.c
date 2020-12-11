@@ -77,7 +77,7 @@ SDATA_END()
 
 PRIVATE sdata_desc_t pm_print_tranger[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   SDF_AUTHZ_P,    0,          "Topic name"), // TODO pon database
+SDATAPM (ASN_OCTET_STR, "name",         0,              "",         "Path"),
 SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "No expanded (default) return [[size]]"),
 SDATAPM (ASN_UNSIGNED,  "lists_limit",  0,              0,          "Expand lists only if size < limit. 0 no limit"),
 SDATAPM (ASN_UNSIGNED,  "dicts_limit",  0,              0,          "Expand dicts only if size < limit. 0 no limit"),
@@ -85,14 +85,12 @@ SDATA_END()
 };
 
 PRIVATE sdata_desc_t pm_desc[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   SDF_AUTHZ_P,    0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATA_END()
 };
 
 PRIVATE sdata_desc_t pm_create_topic[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   SDF_AUTHZ_P,    0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "pkey",         0,              "id",       "Primary Key"),
 SDATAPM (ASN_OCTET_STR, "tkey",         0,              "tm",       "Time Key"),
 SDATAPM (ASN_OCTET_STR, "system_flag",  0,              "sf_string_key|sf_t_ms", "System flag: sf_string_key|sf_rowid_key|sf_int_key|sf_t_ms|sf_tm_ms|sf_no_record_disk|sf_no_md_disk, future: sf_zip_record|sf_cipher_record"),
@@ -101,14 +99,12 @@ SDATAPM (ASN_JSON,      "jn_var",       0,              0,          "Var"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_delete_topic[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   SDF_AUTHZ_P,    0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_BOOLEAN,   "force",        0,              0,          "Force delete"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_add_record[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   SDF_AUTHZ_P,    0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_COUNTER64, "__t__",        0,              0,          "Time of record"),
 SDATAPM (ASN_UNSIGNED,  "user_flag",    0,              0,          "User flag of record"),
 SDATAPM (ASN_JSON,      "record",       0,              0,          "Record json"),
@@ -116,26 +112,26 @@ SDATA_END()
 };
 
 PRIVATE sdata_desc_t pm_open_list[] = {
-/*-PM----type-----------name--------------------flag--------default-description---------- */
-SDATAPM (ASN_OCTET_STR, "list_id",              0,          0,      "Id of list"),
-SDATAPM (ASN_BOOLEAN,   "return_data",          0,          0,      "True for return list data"),
-SDATAPM (ASN_OCTET_STR, "topic_name",           SDF_AUTHZ_P,0,      "Topic name"),
-SDATAPM (ASN_OCTET_STR, "fields",               0,          0,      "match_cond: Only this fields"),
-SDATAPM (ASN_BOOLEAN,   "backward",             0,          0,      "match_cond:"),
-SDATAPM (ASN_BOOLEAN,   "only_md",              0,          0,      "match_cond: don't load jn_record on loading disk"),
-SDATAPM (ASN_INTEGER64, "from_rowid",           0,          0,      "match_cond:"),
-SDATAPM (ASN_INTEGER64, "to_rowid",             0,          0,      "match_cond:"),
-SDATAPM (ASN_OCTET_STR, "from_t",               0,          0,      "match_cond:"),
-SDATAPM (ASN_OCTET_STR, "to_t",                 0,          0,      "match_cond:"),
-SDATAPM (ASN_UNSIGNED,  "user_flag",            0,          0,      "match_cond:"),
-SDATAPM (ASN_UNSIGNED,  "not_user_flag",        0,          0,      "match_cond:"),
-SDATAPM (ASN_UNSIGNED,  "user_flag_mask_set",   0,          0,      "match_cond:"),
-SDATAPM (ASN_UNSIGNED,  "user_flag_mask_notset",0,          0,      "match_cond:"),
-SDATAPM (ASN_OCTET_STR, "key",                  0,          0,      "match_cond:"),
-SDATAPM (ASN_OCTET_STR, "notkey",               0,          0,      "match_cond:"),
-SDATAPM (ASN_OCTET_STR, "from_tm",              0,          0,      "match_cond:"),
-SDATAPM (ASN_OCTET_STR, "to_tm",                0,          0,      "match_cond:"),
-SDATAPM (ASN_OCTET_STR, "rkey",                 0,          0,      "match_cond: regular expression of key"),
+/*-PM----type-----------name--------------------flag----default-description---------- */
+SDATAPM (ASN_OCTET_STR, "list_id",              0,      0,      "Id of list"),
+SDATAPM (ASN_BOOLEAN,   "return_data",          0,      0,      "True for return list data"),
+SDATAPM (ASN_OCTET_STR, "topic_name",           0,      0,      "Topic name"),
+SDATAPM (ASN_OCTET_STR, "fields",               0,      0,      "match_cond: Only this fields"),
+SDATAPM (ASN_BOOLEAN,   "backward",             0,      0,      "match_cond:"),
+SDATAPM (ASN_BOOLEAN,   "only_md",              0,      0,      "match_cond: don't load jn_record on loading disk"),
+SDATAPM (ASN_INTEGER64, "from_rowid",           0,      0,      "match_cond:"),
+SDATAPM (ASN_INTEGER64, "to_rowid",             0,      0,      "match_cond:"),
+SDATAPM (ASN_OCTET_STR, "from_t",               0,      0,      "match_cond:"),
+SDATAPM (ASN_OCTET_STR, "to_t",                 0,      0,      "match_cond:"),
+SDATAPM (ASN_UNSIGNED,  "user_flag",            0,      0,      "match_cond:"),
+SDATAPM (ASN_UNSIGNED,  "not_user_flag",        0,      0,      "match_cond:"),
+SDATAPM (ASN_UNSIGNED,  "user_flag_mask_set",   0,      0,      "match_cond:"),
+SDATAPM (ASN_UNSIGNED,  "user_flag_mask_notset",0,      0,      "match_cond:"),
+SDATAPM (ASN_OCTET_STR, "key",                  0,      0,      "match_cond:"),
+SDATAPM (ASN_OCTET_STR, "notkey",               0,      0,      "match_cond:"),
+SDATAPM (ASN_OCTET_STR, "from_tm",              0,      0,      "match_cond:"),
+SDATAPM (ASN_OCTET_STR, "to_tm",                0,      0,      "match_cond:"),
+SDATAPM (ASN_OCTET_STR, "rkey",                 0,      0,      "match_cond: regular expression of key"),
 SDATA_END()
 };
 
@@ -176,8 +172,8 @@ SDATA_END()
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag----------------default---------description---------- */
 SDATA (ASN_POINTER,     "tranger",          SDF_RD,             0,              "Tranger handler"),
-SDATA (ASN_OCTET_STR,   "path",             SDF_RD|SDF_REQUIRED|SDF_AUTHZ_P,"", "Path of database"),
-SDATA (ASN_OCTET_STR,   "database",         SDF_RD|SDF_REQUIRED|SDF_AUTHZ_P,"", "Database name"),
+SDATA (ASN_OCTET_STR,   "name",             SDF_RD|SDF_REQUIRED,"",             "If database exists then only needs (name,[database]) params"),
+SDATA (ASN_OCTET_STR,   "database",         SDF_RD,             "",             "If null, name must contains the 'database'"),
 SDATA (ASN_OCTET_STR,   "filename_mask",    SDF_RD|SDF_REQUIRED,"%Y-%m-%d",    "Organization of tables (file name format, see strftime())"),
 
 SDATA (ASN_INTEGER,     "xpermission",      SDF_RD,             02770,          "Use in creation, default 02770"),
@@ -200,9 +196,6 @@ SDATA_END()
 
 /*---------------------------------------------*
  *      GClass trace levels
- *  HACK strict ascendent value!
- *  required paired correlative strings
- *  in s_user_trace_level
  *---------------------------------------------*/
 enum {
     TRACE_MESSAGES = 0x0001,
@@ -213,42 +206,160 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
 };
 
 /*---------------------------------------------*
- *      GClass authz levels
+ *      GClass permission levels
  *---------------------------------------------*/
-PRIVATE sdata_desc_t pm_authz_create[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_authz_read[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_authz_write[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_authz_delete[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATA_END()
-};
+/* Same as Python Pyramid framework
+    __acl__ = [
+        (Allow, Authenticated, 'view'),
+        (Allow, Everyone, 'view'),
+        (Allow, 'group:WebStratusLog', ('view', 'log')),
+        (Allow, 'group:WebStratusControl', ('view', 'action', 'log')),
+        (Allow, 'group:WebStratusAdministracion', ('view', 'new', 'action', 'edit', 'delete', 'log')),
+        DENY_ALL
+        ]
 
-PRIVATE sdata_desc_t authz_table[] = {
-/*-AUTHZ-- type---------name------------flag----alias---items---------------description--*/
-SDATAAUTHZ (ASN_SCHEMA, "create",       0,      0,      pm_authz_create,    "Permission to create tranger topics"),
-SDATAAUTHZ (ASN_SCHEMA, "read",         0,      0,      pm_authz_read,      "Permission to read tranger topics data"),
-SDATAAUTHZ (ASN_SCHEMA, "write",        0,      0,      pm_authz_write,     "Permission to add records to tranger topics"),
-SDATAAUTHZ (ASN_SCHEMA, "delete",       0,      0,      pm_authz_delete,    "Permission to delete tranger topics"),
-SDATA_END()
+allow:*.*:*
+allow:gclass_name.__attrs__:write,read
+
++:*:*:*:*    (+- allow,deny) : (gclass_name,service,unique) : (group) : (subgroup): (subsubgroup)
+
+- : Tranger : __commands__ : print-tranger      # todos los comandos de Tranger menos print-tranger
++ : Tranger : __commands__ : *
+
++ : Tranger : __attrs__ : read                  # solo lectura de attributes de Tranger
+
+- : * : __attrs__ : write                       # deny escritura de todas las clases/servicios
+
+- : Tranger : __events__ : subscribe : EV_TRANGER_RECORD_ADDED #  deny subscribe of EV... de Tranger
+
++ : Tranger : __events__ : *                    # allow inject/subscribe de todos eventos de Tranger
+
+
++ : tranger : Mulesol : *               # admin del servicio tranger, nodo Mulesol
+
++ : tranger : Fichador :
+
+
+
+
+        if(gobj_has_permission(
+            gobj,
+            "__attrs__.write",
+            json_pack("{s:s}",
+                "name", name
+            ),
+            src
+        )
+        if(gobj_has_permission(
+            gobj,
+            "__attrs__.read",
+            json_pack("{s:s}",
+                "name", name
+            ),
+            src
+        )
+        if(gobj_has_permission(
+            gobj,
+            "__commands__.execute",
+            json_pack("{s:s, s:O}",
+                "command", command,
+                "kw", kw
+            ),
+            src
+        )
+        if(gobj_has_permission(
+            gobj,
+            "__events__.inject",
+            json_pack("{s:s, s:O}",
+                "event", event,
+                "kw", kw
+            ),
+            src
+        )
+        if(gobj_has_permission(
+            gobj,
+            "__events__.subscribe",
+            json_pack("{s:s, s:O}",
+                "event", event,
+                "kw", kw
+            ),
+            src
+        )
+
+
+"pepe@xx.com": [
+    {
+        "write": {
+            "__attrs__": "*"
+        },
+        "read": {
+        },
+        "execute": {
+        },
+        "inject": {
+        },
+        "subscribe": {
+        }
+
+            "__attrs__": {
+                "read": "*",
+                "write": "*"
+            },
+            "__commands__": {
+                "execute": "*"
+            },
+            "__events__": {
+                "inject": "*",
+                "subscribe": "*",
+            }
+        }
+    },
+    {
+        "deny": {
+        }
+    }
+]
+
+
+    "read": {
+        "attribute": ["database"]
+    }
+    "write": {
+        "attribute": ["database"]
+    }
+    "execute": {
+        "command": ["print-tranger"]
+    }
+    "action": {
+        "event": ["EV_TRANGER_ADD_RECORD"]
+    }
+
+"Allow", "owner", ALL            (implicito,los permisos van en el yuno)
+"Allow", "pepe@xx.com", "read": {["yuno":"controlcenter^mulesol",] "service": "tranger", attributes: "*"}
+
+
+*/
+
+typedef struct {
+    const char *name;
+    const char *operation;
+    const char *description;
+} xpermission_level_t;
+
+
+enum {
+    PERMISSION_READ = 0x00000001,
+};
+PRIVATE const permission_level_t s_user_permission_level[32] = {
+{"read",        "Read"},
+{0, 0},
 };
 
 /*---------------------------------------------*
  *              Private data
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
+
     json_t *tranger;
 
     int32_t timeout;
@@ -308,10 +419,17 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
         const sdata_desc_t *it = sdata_it_desc(sdata_schema(hs), path);
         if(it->flag & SDF_AUTHZ_W) {
             /*
-             *  AUTHZ Require "attrs" "write" authz
+             *  AUTHZ Require "attrs" "write" permission
              */
             /*
-                if(gobj_has_authz(gobj, "attrs.write", path, src))
+                if(gobj_has_permission(
+                    gobj,
+                    "__attrs__.write",
+                    json_pack("{s:s}",
+                        "name", name
+                    ),
+                    src
+                )
             */
         }
     }
@@ -330,10 +448,18 @@ PRIVATE SData_Value_t mt_reading(hgobj gobj, const char *name, int type, SData_V
         const sdata_desc_t *it = sdata_it_desc(sdata_schema(hs), name);
         if(it->flag & SDF_AUTHZ_R) {
             /*
-             *  AUTHZ Require "attrs" "read" authz
+             *  AUTHZ Require "attrs" "read" permission
              */
             /*
-                if(gobj_has_authz(gobj, "attrs.write", path, src))
+                if(gobj_has_permission(
+                    gobj,
+                    "__attrs__.read",
+                    json_pack("{s:s}",
+                        "name", name
+                    ),
+                    src
+                )
+
             */
         }
     }
@@ -351,13 +477,22 @@ PRIVATE json_t * mt_command_parser(
     hgobj src
 )
 {
-    const sdata_desc_t *cnf_cmd = gobj_get_command_desc(gobj, command);
+    const sdata_desc_t *cnf_cmd = gobj_find_command(gobj, command);
     if(cnf_cmd->flag & SDF_AUTHZ_X) {
         /*
-         *  AUTHZ Require "commands" "execute" authz
+         *  AUTHZ Require "commands" "execute" permission
          */
         /*
-            if(gobj_has_authz(gobj, "commands.execute", path, src))
+            if(gobj_has_permission(
+                gobj,
+                "__commands__.execute",
+                json_pack("{s:s, s:O}",
+                    "command", command,
+                    "kw", kw
+                ),
+                src
+            )
+
         */
     }
 
@@ -373,10 +508,31 @@ PRIVATE int mt_inject_event(hgobj gobj, const char *event, json_t *kw, hgobj src
     if(ev_desc) {
         if(ev_desc->authz & EV_AUTHZ_INJECT) {
             /*
-             *  AUTHZ Require "events" "inject" authz
+             *  AUTHZ Require "events" "inject" permission
              */
+            if(!gobj_has_permission(
+                gobj,
+                "__events__.inject",
+                json_pack("{s:s, s:O}",
+                    "event", event,
+                    "kw", kw
+                ),
+                src
+            )) {
+                return -1;
+            }
+
             /*
-                if(gobj_has_authz(gobj, "events.inject", path, src))
+                if(gobj_has_permission(
+                    gobj,
+                    "__events__.inject",
+                    json_pack("{s:s, s:O}",
+                        "event", event,
+                        "kw", kw
+                    ),
+                    src
+                )
+
             */
         }
     }
@@ -399,7 +555,7 @@ PRIVATE int mt_start(hgobj gobj)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     json_t *jn_tranger = json_pack("{s:s, s:s, s:s, s:i, s:i, s:i, s:b}",
-        "path", gobj_read_str_attr(gobj, "path"),
+        "name", gobj_read_str_attr(gobj, "name"),
         "database", gobj_read_str_attr(gobj, "database"),
         "filename_mask", gobj_read_str_attr(gobj, "filename_mask"),
         "xpermission", (int)gobj_read_int32_attr(gobj, "xpermission"),
@@ -453,10 +609,18 @@ PRIVATE int mt_subscription_added(
     if(ev_desc) {
         if(ev_desc->authz & EV_AUTHZ_INJECT) {
             /*
-             *  AUTHZ Require "events" "subscribe" authz
+             *  AUTHZ Require "events" "subscribe" permission
              */
             /*
-                if(gobj_has_authz(gobj, "events.subscribe", path, src))
+                if(gobj_has_permission(
+                    gobj,
+                    "__events__.subscribe",
+                    json_pack("{s:s, s:O}",
+                        "event", event,
+                        "kw", kw
+                    ),
+                    src
+                )
             */
         }
     }
@@ -586,24 +750,15 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    BOOL forbidden = FALSE;
-
-    forbidden |= !gobj_has_authz(
+    if(!gobj_has_permission(
         gobj,
-        "__execute_command__",
+        "__commands__.execute",
         json_pack("{s:s, s:O}",
             "command", cmd,
             "kw", kw
         ),
         src
-    );
-    forbidden |= !gobj_has_authz(
-        gobj,
-        "read",
-        kw,
-        src
-    );
-    if(forbidden) {
+    )) {
         return msg_iev_build_webix(gobj,
             -403,
             json_sprintf("Forbidden: %s", log_last_message()),
@@ -616,16 +771,16 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
     BOOL expanded = kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
     int lists_limit = kw_get_int(kw, "lists_limit", 100, KW_WILD_NUMBER);
     int dicts_limit = kw_get_int(kw, "dicts_limit", 100, KW_WILD_NUMBER);
-    const char *path = kw_get_str(kw, "path", "", 0);
+    const char *name = kw_get_str(kw, "name", "", 0);
 
     json_t *value = priv->tranger;
 
-    if(!empty_string(path)) {
-        value = kw_find_path(value, path, FALSE);
+    if(!empty_string(name)) {
+        value = kw_find_path(value, name, FALSE);
         if(!value) {
             return msg_iev_build_webix(gobj,
                 -1,
-                json_sprintf("Path not found: '%s'", path),
+                json_sprintf("Path not found: '%s'", name),
                 0,
                 0,
                 kw  // owned
@@ -662,23 +817,6 @@ PRIVATE json_t *cmd_create_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
-        gobj,
-        "create",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
-            -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -690,7 +828,6 @@ PRIVATE json_t *cmd_create_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
             kw  // owned
         );
     }
-
     const char *pkey = kw_get_str(kw, "pkey", "", 0);
     const char *tkey = kw_get_str(kw, "tkey", "", 0);
     const char *system_flag_ = kw_get_str(kw, "system_flag", "", 0);
@@ -725,23 +862,6 @@ PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
-        gobj,
-        "delete",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
-            -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -753,7 +873,6 @@ PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
             kw  // owned
         );
     }
-
     BOOL force = kw_get_bool(kw, "force", 0, 0);
     json_t *topic = tranger_topic(priv->tranger, topic_name);
     if(!topic) {
@@ -799,23 +918,6 @@ PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
-        gobj,
-        "read",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
-            -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
     json_t *topics = kw_get_dict(priv->tranger, "topics", 0, KW_REQUIRED);
     json_t *topic_list = json_array();
 
@@ -842,23 +944,6 @@ PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
-        gobj,
-        "read",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
-            -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
-            0,
-            0,
-            kw  // owned
-        );
-    }
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     if(empty_string(topic_name)) {
@@ -900,23 +985,6 @@ PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 PRIVATE json_t *cmd_open_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
-        gobj,
-        "read",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
-            -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
-            0,
-            0,
-            kw  // owned
-        );
-    }
 
     const char *list_id = kw_get_str(kw, "list_id", "", 0);
     BOOL return_data = kw_get_bool(kw, "return_data", 0, 0);
@@ -1091,23 +1159,6 @@ PRIVATE json_t *cmd_close_list(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
-        gobj,
-        "read",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
-            -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
     const char *list_id = kw_get_str(kw, "list_id", "", 0);
 
     if(empty_string(list_id)) {
@@ -1151,23 +1202,6 @@ PRIVATE json_t *cmd_close_list(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 PRIVATE json_t *cmd_add_record(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
-        gobj,
-        "write",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
-            -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
-            0,
-            0,
-            kw  // owned
-        );
-    }
 
     int result = 0;
     json_t *jn_comment = 0;
@@ -1251,23 +1285,6 @@ PRIVATE json_t *cmd_add_record(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 PRIVATE json_t *cmd_get_list_data(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
-        gobj,
-        "read",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
-            -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
-            0,
-            0,
-            kw  // owned
-        );
-    }
 
     const char *list_id = kw_get_str(kw, "list_id", "", 0);
 
@@ -1413,28 +1430,6 @@ PRIVATE int ac_tranger_add_record(hgobj gobj, const char *event, json_t *kw, hgo
     (*priv->prxMsgs)++;
     priv->rxMsgsec++;
 
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
-        gobj,
-        "read",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return gobj_send_event( // TODO check, why EV_SEND_IEV below? what is better?
-            src,
-            event,
-            msg_iev_build_webix(gobj,
-                -403,
-                json_sprintf("Forbidden: %s", log_last_message()),
-                0,
-                0,
-                kw  // owned
-            ),
-            gobj
-        );
-    }
-
     json_t *__temp__ = kw_get_dict_value(kw, "__temp__", 0, KW_REQUIRED);
     JSON_INCREF(__temp__); // Save to __answer__
 
@@ -1458,26 +1453,34 @@ PRIVATE int ac_tranger_add_record(hgobj gobj, const char *event, json_t *kw, hgo
         //    break;
         //}
 
-        // TODO AUTHZ Require "attrs" "write" authz
-//         hsdata hs = gobj_hsdata2(gobj, path, FALSE);
+        // TODO AUTHZ Require "attrs" "write" permission
+//         hsdata hs = gobj_hsdata2(gobj, name, FALSE);
 //         if(hs) {
-//             const sdata_desc_t *it = sdata_it_desc(sdata_schema(hs), path);
+//             const sdata_desc_t *it = sdata_it_desc(sdata_schema(hs), name);
 //         }
 
         BOOL forbidden = FALSE;
-        forbidden |= !gobj_has_authz(
+
+        forbidden |= !gobj_has_permission(
             gobj,
-            "write",
-            json_pack("{s:s}",
-                "attribute", "database"
+            "__events__.inject",
+            json_pack("{s:s, s:O}",
+                "event", event,
+                "kw", kw
             ),
             src
         );
-        forbidden |= !gobj_has_authz(
+
+        // Puedo dar permisos: a todas las clases Tranger (gclass),
+        //  a solo un servicio de Tranger (service)
+        //  a ciertas operaciones del service (CRUDLU)
+        //  solo sobre ciertos nodos del servicio (con +up o +down)
+        forbidden |= !gobj_has_permission(
             gobj,
-            "execute",
-            json_pack("{s:s}",
-                "action", event
+            "write",
+            json_pack("{s:s, s:O}",
+                "event", event,
+                "kw", kw
             ),
             src
         );
@@ -1666,8 +1669,8 @@ PRIVATE GCLASS _gclass = {
         0, //mt_trace_on,
         0, //mt_trace_off,
         0, //mt_gobj_created,
-        0, //mt_authz_on,
-        0, //mt_authz_off,
+        0, //mt_authz_allow,
+        0, //mt_authz_deny,
         0, //mt_publish_event,
         0, //mt_publication_pre_filter,
         0, //mt_publication_filter,
@@ -1702,7 +1705,7 @@ PRIVATE GCLASS _gclass = {
     0,  // lmt
     tattr_desc,
     sizeof(PRIVATE_DATA),
-    authz_table,  // acl
+    s_user_permission_level,  // acl
     s_user_trace_level,
     command_table,  // command_table
     0,  // gcflag

@@ -264,16 +264,6 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
 {0, 0},
 };
 
-/*---------------------------------------------*
- *      GClass permission levels
- *---------------------------------------------*/
-enum {
-    PERMISSION_XXXX = 0x00000001,
-};
-PRIVATE const permission_level_t s_user_permission_level[32] = {
-{"xxxx",        "Sample"},
-{0, 0},
-};
 
 /*---------------------------------------------*
  *              Private data
@@ -2329,7 +2319,7 @@ PRIVATE GCLASS _gclass = {
         0, //mt_add_child_resource_link,
         0, //mt_delete_child_resource_link,
         0, //mt_get_resource,
-        0, //mt_future24,
+        0, //mt_authorization_parser,
         0, //mt_authenticate,
         0, //mt_list_childs,
         0, //mt_stats_updated,
@@ -2338,8 +2328,8 @@ PRIVATE GCLASS _gclass = {
         mt_trace_on,
         mt_trace_off,
         0, //mt_gobj_created,
-        0, //mt_permission_on,
-        0, //mt_permission_off,
+        0, //mt_authz_allow,
+        0, //mt_authz_deny,
         0, //mt_publish_event,
         0, //mt_publication_pre_filter,
         0, //mt_publication_filter,
@@ -2374,7 +2364,7 @@ PRIVATE GCLASS _gclass = {
     0,  // lmt
     tattr_desc,
     sizeof(PRIVATE_DATA),
-    s_user_permission_level,  // acl
+    0,
     s_user_trace_level,
     command_table,  // command_table
     0,  // gcflag
