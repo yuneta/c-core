@@ -41,10 +41,10 @@ PRIVATE BOOL __ordered_death__ = 1;  // WARNING Vamos a probar otra vez las muer
 
 PRIVATE int __print__ = 0;
 
-PRIVATE int (*__global_load_persistent_attrs_fn__)(hgobj gobj) = db_load_persistent_attrs;
-PRIVATE int (*__global_save_persistent_attrs_fn__)(hgobj gobj) = db_save_persistent_attrs;
-PRIVATE int (*__global_remove_persistent_attrs_fn__)(hgobj gobj) = db_remove_persistent_attrs;
-PRIVATE json_t * (*__global_list_persistent_attrs_fn__)(void) = db_list_persistent_attrs;
+PRIVATE int (*__global_load_persistent_attrs_fn__)(hgobj gobj) = 0;
+PRIVATE int (*__global_save_persistent_attrs_fn__)(hgobj gobj) = 0;
+PRIVATE int (*__global_remove_persistent_attrs_fn__)(hgobj gobj) = 0;
+PRIVATE json_t * (*__global_list_persistent_attrs_fn__)(void) = 0;
 
 PRIVATE json_t * (*__global_command_parser_fn__)(
     hgobj gobj,
