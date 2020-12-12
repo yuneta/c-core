@@ -346,7 +346,7 @@ PRIVATE int mt_subscription_added(
 {
     if(!gobj_in_this_state(gobj, "ST_SESSION")) {
         // on_open will send all subscriptions
-        return -1;
+        return 0;
     }
     return send_remote_subscription(gobj, subs);
 }
@@ -938,7 +938,7 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
         /*-------------------------*
          *  Dispatch the event
          *-------------------------*/
-        hgobj gobj_service = gobj_find_unique_gobj(iev_dst_service, FALSE); // TODO change to service?
+        hgobj gobj_service = gobj_find_unique_gobj(iev_dst_service, TRUE);
         if(gobj_service) {
             if(gobj_event_in_input_event_list(gobj_service, iev_event, EVF_PUBLIC_EVENT)) {
                 gobj_send_event(gobj_service, iev_event, iev_kw, gobj);
