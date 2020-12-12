@@ -41,10 +41,11 @@ PRIVATE BOOL __ordered_death__ = 1;  // WARNING Vamos a probar otra vez las muer
 
 PRIVATE int __print__ = 0;
 
-PRIVATE int (*__global_load_persistent_attrs_fn__)(hgobj gobj) = 0;
-PRIVATE int (*__global_save_persistent_attrs_fn__)(hgobj gobj) = 0;
-PRIVATE int (*__global_remove_persistent_attrs_fn__)(hgobj gobj) = 0;
-PRIVATE json_t * (*__global_list_persistent_attrs_fn__)(void) = 0;
+PRIVATE int (*__global_load_persistent_attrs_fn__)(hgobj gobj) = db_load_persistent_attrs;
+PRIVATE int (*__global_save_persistent_attrs_fn__)(hgobj gobj) = db_save_persistent_attrs;
+PRIVATE int (*__global_remove_persistent_attrs_fn__)(hgobj gobj) = db_remove_persistent_attrs;
+PRIVATE json_t * (*__global_list_persistent_attrs_fn__)(void) = db_list_persistent_attrs;
+
 PRIVATE json_t * (*__global_command_parser_fn__)(
     hgobj gobj,
     const char *command,
@@ -57,6 +58,13 @@ PRIVATE json_t * (*__global_stats_parser_fn__)(
     json_t *kw,
     hgobj src
 ) = 0;
+PRIVATE json_t * (*__global_authz_parser_fn__)(
+    hgobj gobj,
+    const char *stats,
+    json_t *kw,
+    hgobj src
+) = 0;
+
 
 /***************************************************************************
  *      Structures
@@ -258,7 +266,7 @@ PRIVATE void daemon_catch_signals(void)
 }
 
 /***************************************************************************
- *  Set functions of gobj_start_up() function.
+ *  DEPRECATED Set functions of gobj_start_up() function.
  ***************************************************************************/
 PUBLIC int yuneta_set_gobj_startup_functions(
     int (*load_persistent_attrs)(hgobj gobj),
@@ -275,6 +283,26 @@ PUBLIC int yuneta_set_gobj_startup_functions(
     __global_list_persistent_attrs_fn__ = list_persistent_attrs;
     __global_command_parser_fn__ = global_command_parser;
     __global_stats_parser_fn__ = global_stats_parser;
+
+    return 0;
+}
+
+/***************************************************************************
+ *  New yuneta setup function.
+ ***************************************************************************/
+PUBLIC int yuneta_startup(
+    json_function_t global_command_parser,
+    json_function_t global_stats_parser,
+    json_function_t global_authz_parser
+)
+{
+    __global_load_persistent_attrs_fn__ = db_load_persistent_attrs;
+    __global_save_persistent_attrs_fn__ = db_save_persistent_attrs;
+    __global_remove_persistent_attrs_fn__ = db_remove_persistent_attrs;
+    __global_list_persistent_attrs_fn__ = db_list_persistent_attrs;
+    __global_command_parser_fn__ = global_command_parser;
+    __global_stats_parser_fn__ = global_stats_parser;
+    __global_authz_parser_fn__ = global_authz_parser;
 
     return 0;
 }
@@ -715,7 +743,8 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
         __global_remove_persistent_attrs_fn__,
         __global_list_persistent_attrs_fn__,
         __global_command_parser_fn__,
-        __global_stats_parser_fn__
+        __global_stats_parser_fn__,
+        __global_authz_parser_fn__
     );
     yuneta_register_c_core();
     if(register_yuno_and_more) {
