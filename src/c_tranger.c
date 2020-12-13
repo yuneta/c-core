@@ -476,7 +476,7 @@ PRIVATE int mt_subscription_added(
             "subscriber",   "%s", gobj_full_name(subscriber),
             NULL
         );
-        return 0;
+        return 0; // return -1 unsubscribe this subs
     }
 
     json_t *__global__ = sdata_read_json(subs, "__global__");
@@ -549,7 +549,7 @@ PRIVATE int mt_subscription_added(
 
     }
 
-    return 0;
+    return 0; // return -1 unsubscribe this subs
 }
 
 
