@@ -13,8 +13,6 @@
 /***************************************************************************
  *  Prototypes
  ***************************************************************************/
-PRIVATE char *multiple_dir(char *bf, int bflen, json_t *jn_l);
-
 
 /***************************************************************************
  *  Data
@@ -37,24 +35,10 @@ PUBLIC int register_yuneta_environment(
 {
     __xpermission__ = xpermission;
     __rpermission__ = rpermission;
-    if(work_dir) {
-        strncpy(
-            __work_dir__,
-            work_dir,
-            sizeof(__work_dir__)-1
-        );
-    } else {
-        memset(__work_dir__, 0, sizeof(__work_dir__));
-    }
-    if(domain_dir) {
-        strncpy(
-            __domain_dir__,
-            domain_dir,
-            sizeof(__domain_dir__)-1
-        );
-    } else {
-        memset(__domain_dir__, 0, sizeof(__domain_dir__));
-    }
+
+    snprintf(__work_dir__, sizeof(__work_dir__), "%s", work_dir?work_dir:"");
+    snprintf(__domain_dir__, sizeof(__domain_dir__), "%s", domain_dir?domain_dir:"");
+
     strtolower(__work_dir__);
     strtolower(__domain_dir__);
 
@@ -105,41 +89,24 @@ PUBLIC const char *yuneta_domain(void)
 }
 
 /***************************************************************************
- *  Convert json list of names into path
+ *
  ***************************************************************************/
-PRIVATE char *multiple_dir(char* bf, int bflen, json_t* jn_l)
+PUBLIC char *yuneta_realm_dir(
+    char *bf,
+    int bfsize,
+    const char *subdomain,
+    BOOL create
+)
 {
-    char *p = bf;
-    int ln;
+    build_path3(bf, bfsize, yuneta_work_dir(), yuneta_domain(), subdomain);
 
-    *bf = 0;
-
-    /*--------------------------------------------------------*
-     *  Add domain
-     *--------------------------------------------------------*/
-    if(jn_l) {
-        size_t index;
-        json_t *jn_s_domain_name;
-
-        if(!json_is_array(jn_l)) {
-            return 0;
-        }
-        json_array_foreach(jn_l, index, jn_s_domain_name) {
-            if(!json_is_string(jn_s_domain_name)) {
-                return 0;
-            }
-            if(index == 0) {
-                ln = snprintf(p, bflen, "%s", json_string_value(jn_s_domain_name));
-            } else {
-                ln = snprintf(p, bflen, "/%s", json_string_value(jn_s_domain_name));
-            }
-            if(ln<0) {
+    if(create) {
+        if(access(bf, 0)!=0) {
+            mkrdir(bf, 0, yuneta_xpermission());
+            if(access(bf, 0)!=0) {
                 *bf = 0;
                 return 0;
             }
-
-            p += ln;
-            bflen -= ln;
         }
     }
     return bf;
@@ -148,272 +115,63 @@ PRIVATE char *multiple_dir(char* bf, int bflen, json_t* jn_l)
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC char *yuneta_realm_dir(char *bf_, int bfsize, const char *subdomain, BOOL create)
+PUBLIC char *yuneta_realm_file(
+    char *bf,
+    int bfsize, const char *subdomain,
+    const char *filename,
+    BOOL create
+)
 {
-    char *bf = bf_;
+    char realm_path[PATH_MAX];
+    yuneta_realm_dir(realm_path, sizeof(realm_path), subdomain, create);
 
-    /*
-     *  Add work_dir
-     */
-    const char *work_dir = yuneta_work_dir();
-    if(empty_string(work_dir)) {
-        // Si no hay work_dir no se usa el system file
-        *bf_ = 0;
-        return 0;
-    }
-    int written = snprintf(bf, bfsize, "%s", work_dir);
-    if(written > 0) {
-        bf += written;
-        bfsize -= written;
-    }
+    build_path2(bf, bfsize, realm_path, filename);
 
-    /*
-     *  Add domain_dir
-     */
-    const char *domain_dir = __domain_dir__;
-    if(!empty_string(domain_dir)) {
-        written = snprintf(bf, bfsize, "%s%s", (*domain_dir=='/')?"":"/", domain_dir);
-        if(written > 0) {
-            bf += written;
-            bfsize -= written;
-        }
-    }
-
-    /*
-     *  Add subdomain
-     */
-    if(!empty_string(subdomain)) {
-        written = snprintf(bf, bfsize, "%s%s", (*subdomain=='/')?"":"/", subdomain);
-        if(written > 0) {
-            bf += written;
-            bfsize -= written;
-        }
-    }
-
-    if(create) {
-        if(access(bf_, 0)!=0) {
-            mkrdir(bf_, 0, yuneta_xpermission());
-            if(access(bf_, 0)!=0) {
-                *bf_ = 0;
-                return 0;
-            }
-        }
-    }
-    return bf_;
+    return bf;
 }
 
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC char *yuneta_realm_file(char *bf_, int bfsize, const char *subdomain, const char *filename, BOOL create)
+PUBLIC char *yuneta_store_dir(
+    char *bf,
+    int bfsize,
+    const char *dir,
+    const char *subdir,
+    BOOL create
+)
 {
-    char *pdir = yuneta_realm_dir(bf_, bfsize, subdomain, FALSE);
-    if(empty_string(pdir)) {
-        // Si no hay directorio no se usa el system file
-        *bf_ = 0;
-        return 0;
-    }
+    build_path4(bf, bfsize, yuneta_work_dir(), "store", dir, subdir);
 
     if(create) {
-        if(access(bf_, 0)!=0) {
-            mkrdir(bf_, 0, yuneta_xpermission());
-            if(access(bf_, 0)!=0) {
-                *bf_ = 0;
+        if(access(bf, 0)!=0) {
+            mkrdir(bf, 0, yuneta_xpermission());
+            if(access(bf, 0)!=0) {
+                *bf = 0;
                 return 0;
             }
         }
     }
-
-    if(!empty_string(filename)) {
-        int len = strlen(bf_);
-        snprintf(bf_ + len, bfsize - len, "%s%s", (*filename=='/')?"":"/", filename);
-    }
-
-    return bf_;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PUBLIC char *yuneta_store_dir(char *bf_, int bfsize, const char *dir, const char *subdir, BOOL create)
-{
-    char *bf = bf_;
-
-    /*
-     *  Add work_dir
-     */
-    const char *work_dir = yuneta_work_dir();
-    if(empty_string(work_dir)) {
-        // Si no hay work_dir no se usa el system file
-        *bf_ = 0;
-        return 0;
-    }
-    int written = snprintf(bf, bfsize, "%s/store", work_dir);
-    if(written > 0) {
-        bf += written;
-        bfsize -= written;
-    }
-
-    /*
-     *  Add dir
-     */
-    if(!empty_string(dir)) {
-        written = snprintf(bf, bfsize, "%s%s", (*dir=='/')?"":"/", dir);
-        if(written > 0) {
-            bf += written;
-            bfsize -= written;
-        }
-    }
-
-    /*
-     *  Add subdir
-     */
-    if(!empty_string(subdir)) {
-        written = snprintf(bf, bfsize, "%s%s", (*subdir=='/')?"":"/", subdir);
-        if(written > 0) {
-            bf += written;
-            bfsize -= written;
-        }
-    }
-
-    if(create) {
-        if(access(bf_, 0)!=0) {
-            mkrdir(bf_, 0, yuneta_xpermission());
-            if(access(bf_, 0)!=0) {
-                *bf_ = 0;
-                return 0;
-            }
-        }
-    }
-    return bf_;
+    return bf;
 }
 
 /***************************************************************************
  *
  ***************************************************************************/
 PUBLIC char *yuneta_store_file(
-    char *bf_,
+    char *bf,
     int bfsize,
     const char *dir,
     const char *subdir,
     const char *filename,
     BOOL create)    // from environment.global_store_dir json config
 {
-    const char *pdir = yuneta_store_dir(bf_, bfsize, dir, subdir, FALSE);
-    if(empty_string(pdir)) {
-        // Si no hay directorio no se usa el system file
-        *bf_ = 0;
-        return 0;
-    }
+    char store_path[PATH_MAX];
+    yuneta_store_dir(store_path, sizeof(store_path), dir, subdir, create);
 
-    if(create) {
-        if(access(bf_, 0)!=0) {
-            mkrdir(bf_, 0, yuneta_xpermission());
-            if(access(bf_, 0)!=0) {
-                *bf_ = 0;
-                return 0;
-            }
-        }
-    }
+    build_path2(bf, bfsize, store_path, filename);
 
-    if(!empty_string(filename)) {
-        int len = strlen(bf_);
-        snprintf(bf_ + len, bfsize - len, "%s%s", (*filename=='/')?"":"/", filename);
-    }
-
-    return bf_;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PUBLIC char *yuneta_public_dir(char *bf_, int bfsize, const char *dir, const char *subdir, BOOL create)
-{
-    char *bf = bf_;
-
-    /*
-     *  Add work_dir
-     */
-    const char *work_dir = yuneta_work_dir();
-    if(empty_string(work_dir)) {
-        // Si no hay work_dir no se usa el system file
-        *bf_ = 0;
-        return 0;
-    }
-    int written = snprintf(bf, bfsize, "%s/public", work_dir);
-    if(written > 0) {
-        bf += written;
-        bfsize -= written;
-    }
-
-    /*
-     *  Add dir
-     */
-    if(!empty_string(dir)) {
-        written = snprintf(bf, bfsize, "%s%s", (*dir=='/')?"":"/", dir);
-        if(written > 0) {
-            bf += written;
-            bfsize -= written;
-        }
-    }
-
-    /*
-     *  Add subdir
-     */
-    if(!empty_string(subdir)) {
-        written = snprintf(bf, bfsize, "%s%s", (*subdir=='/')?"":"/", subdir);
-        if(written > 0) {
-            bf += written;
-            bfsize -= written;
-        }
-    }
-
-    if(create) {
-        if(access(bf_, 0)!=0) {
-            mkrdir(bf_, 0, yuneta_xpermission());
-            if(access(bf_, 0)!=0) {
-                *bf_ = 0;
-                return 0;
-            }
-        }
-    }
-    return bf_;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PUBLIC char *yuneta_public_file(
-    char *bf_,
-    int bfsize,
-    const char *dir,
-    const char *subdir,
-    const char *filename,
-    BOOL create)    // from environment.global_store_dir json config
-{
-    const char *pdir = yuneta_public_dir(bf_, bfsize, dir, subdir, FALSE);
-    if(empty_string(pdir)) {
-        // Si no hay directorio no se usa el system file
-        *bf_ = 0;
-        return 0;
-    }
-
-    if(create) {
-        if(access(bf_, 0)!=0) {
-            mkrdir(bf_, 0, yuneta_xpermission());
-            if(access(bf_, 0)!=0) {
-                *bf_ = 0;
-                return 0;
-            }
-        }
-    }
-
-    if(!empty_string(filename)) {
-        int len = strlen(bf_);
-        snprintf(bf_ + len, bfsize - len, "%s%s", (*filename=='/')?"":"/", filename);
-    }
-
-    return bf_;
+    return bf;
 }
 
 /***************************************************************************
@@ -422,156 +180,22 @@ PUBLIC char *yuneta_public_file(
 PUBLIC char *yuneta_log_dir(char *bf, int bfsize, BOOL create)
 {
     return yuneta_realm_dir(bf, bfsize, "logs", create);
-
 }
 
 /***************************************************************************
  *
  ***************************************************************************/
 PUBLIC char *yuneta_log_file(
-    char *bf_,
+    char *bf,
     int bfsize,
     const char *filename,
     BOOL create)    // from environment.global_store_dir json config
 {
-    const char *pdir = yuneta_log_dir(bf_, bfsize, FALSE);
-    if(empty_string(pdir)) {
-        // Si no hay directorio no se usa el system file
-        *bf_ = 0;
-        return 0;
-    }
+    char log_path[PATH_MAX];
+    yuneta_log_dir(log_path, sizeof(log_path), create);
 
-    if(create) {
-        if(access(bf_, 0)!=0) {
-            mkrdir(bf_, 0, yuneta_xpermission());
-            if(access(bf_, 0)!=0) {
-                *bf_ = 0;
-                return 0;
-            }
-        }
-    }
+    build_path2(bf, bfsize, log_path, filename);
 
-    if(!empty_string(filename)) {
-        int len = strlen(bf_);
-        snprintf(bf_ + len, bfsize - len, "%s%s", (*filename=='/')?"":"/", filename);
-    }
-
-    return bf_;
+    return bf;
 }
 
-/***************************************************************************
- *
- ***************************************************************************/
-PUBLIC char *yuneta_repos_yuno_dir(
-    char *bf_,
-    int bfsize,
-    json_t *jn_classifiers,  // not owned
-    const char *yuno_role,
-    const char *yuno_version,
-    BOOL create)
-{
-    char *bf = bf_;
-
-    /*
-     *  Add work_dir
-     */
-    const char *work_dir = yuneta_work_dir();
-    if(empty_string(work_dir)) {
-        // Si no hay work_dir no se usa el system file
-        *bf_ = 0;
-        return 0;
-    }
-    int written = snprintf(bf, bfsize, "%s/repos", work_dir);
-    if(written > 0) {
-        bf += written;
-        bfsize -= written;
-    }
-
-    /*
-     *  Add classifiers
-     */
-    if(jn_classifiers) {
-        char temp[NAME_MAX];
-        char *p = multiple_dir(temp, sizeof(temp), jn_classifiers);
-        if(!empty_string(p)) {
-            written = snprintf(bf, bfsize, "/%s", p);
-            if(written > 0) {
-                bf += written;
-                bfsize -= written;
-            }
-        }
-    }
-
-    /*
-     *  Add role
-     */
-    written = snprintf(bf, bfsize, "/%s", yuno_role);
-    if(written > 0) {
-        bf += written;
-        bfsize -= written;
-    }
-
-    /*
-     *  Add version
-     */
-    if(!empty_string(yuno_version)) {
-        written = snprintf(bf, bfsize, "/%s", yuno_version);
-        if(written > 0) {
-            bf += written;
-            bfsize -= written;
-        }
-    }
-
-    if(create) {
-        if(access(bf_, 0)!=0) {
-            mkrdir(bf_, 0, yuneta_xpermission());
-            if(access(bf_, 0)!=0) {
-                *bf_ = 0;
-                return 0;
-            }
-        }
-    }
-    return bf_;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PUBLIC char *yuneta_repos_yuno_file(
-    char* bf_,
-    int bfsize,
-    json_t* jn_classifiers, // not owned
-    const char* yuno_role,
-    const char* yuno_version,
-    const char *filename,
-    BOOL create)
-{
-    const char *pdir = yuneta_repos_yuno_dir(bf_, bfsize,
-        jn_classifiers,
-        yuno_role,
-        yuno_version,
-        FALSE
-    );
-    if(empty_string(pdir)) {
-        // Si no hay directorio no se usa el system file
-        *bf_ = 0;
-        return 0;
-    }
-
-    if(create) {
-        if(access(bf_, 0)!=0) {
-            mkrdir(bf_, 0, yuneta_xpermission());
-            if(access(bf_, 0)!=0) {
-                *bf_ = 0;
-                return 0;
-            }
-        }
-    }
-
-    if(!empty_string(filename)) {
-        int len = strlen(bf_);
-        snprintf(bf_ + len, bfsize - len, "%s%s", (*filename=='/')?"":"/", filename);
-    }
-
-    return bf_;
-}

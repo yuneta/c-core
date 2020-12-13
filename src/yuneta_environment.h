@@ -64,16 +64,6 @@ PUBLIC char *yuneta_store_file(
     BOOL create
 );
 
-PUBLIC char *yuneta_public_dir(char *bf, int bfsize, const char *dir, const char *subdir, BOOL create);
-PUBLIC char *yuneta_public_file(
-    char *bf,
-    int bfsize,
-    const char *dir,
-    const char *subdir,
-    const char *filename,
-    BOOL create
-);
-
 PUBLIC char *yuneta_log_dir(char *bf, int bfsize, BOOL create);
 PUBLIC char *yuneta_log_file(
     char *bf,
@@ -82,23 +72,6 @@ PUBLIC char *yuneta_log_file(
     BOOL create
 );
 
-PUBLIC char *yuneta_repos_yuno_dir(
-    char* bf,
-    int bfsize,
-    json_t* jn_classifiers,  // not owned
-    const char* yuno_role,
-    const char* yuno_version,
-    BOOL create
-);
-PUBLIC char *yuneta_repos_yuno_file(
-    char* bf,
-    int bfsize,
-    json_t* jn_classifiers,  // not owned
-    const char* yuno_role,
-    const char* yuno_version,
-    const char *filename,
-    BOOL create
-);
 
 #ifdef __cplusplus
 }
