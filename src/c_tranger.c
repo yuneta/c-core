@@ -296,95 +296,6 @@ PRIVATE void mt_create(hgobj gobj)
 }
 
 /***************************************************************************
- *      Framework Method writing
- ***************************************************************************/
-PRIVATE void mt_writing(hgobj gobj, const char *path)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-
-    hsdata hs = gobj_hsdata2(gobj, path, FALSE);
-    if(hs) {
-        const sdata_desc_t *it = sdata_it_desc(sdata_schema(hs), path);
-        if(it->flag & SDF_AUTHZ_W) {
-            /*
-             *  AUTHZ Require "attrs" "write" authz
-             */
-            /*
-                if(gobj_has_authz(gobj, "attrs.write", path, src))
-            */
-        }
-    }
-
-    IF_EQ_SET_PRIV(timeout,         gobj_read_int32_attr)
-    END_EQ_SET_PRIV()
-}
-
-/***************************************************************************
- *      Framework Method reading
- ***************************************************************************/
-PRIVATE SData_Value_t mt_reading(hgobj gobj, const char *name, int type, SData_Value_t data)
-{
-    hsdata hs = gobj_hsdata2(gobj, name, FALSE);
-    if(hs) {
-        const sdata_desc_t *it = sdata_it_desc(sdata_schema(hs), name);
-        if(it->flag & SDF_AUTHZ_R) {
-            /*
-             *  AUTHZ Require "attrs" "read" authz
-             */
-            /*
-                if(gobj_has_authz(gobj, "attrs.write", path, src))
-            */
-        }
-    }
-
-    return data;
-}
-
-/***************************************************************************
- *      Framework Method destroy
- ***************************************************************************/
-PRIVATE json_t * mt_command_parser(
-    hgobj gobj,
-    const char *command,
-    json_t *kw, // Owned
-    hgobj src
-)
-{
-    const sdata_desc_t *cnf_cmd = gobj_get_command_desc(gobj, command);
-    if(cnf_cmd->flag & SDF_AUTHZ_X) {
-        /*
-         *  AUTHZ Require "commands" "execute" authz
-         */
-        /*
-            if(gobj_has_authz(gobj, "commands.execute", path, src))
-        */
-    }
-
-    return 0;
-}
-
-/***************************************************************************
- *      Framework Method inject_event
- ***************************************************************************/
-PRIVATE int mt_inject_event(hgobj gobj, const char *event, json_t *kw, hgobj src)
-{
-    const EVENT *ev_desc = gobj_input_event(gobj, event);
-    if(ev_desc) {
-        if(ev_desc->authz & EV_AUTHZ_INJECT) {
-            /*
-             *  AUTHZ Require "events" "inject" authz
-             */
-            /*
-                if(gobj_has_authz(gobj, "events.inject", path, src))
-            */
-        }
-    }
-
-    return 0;
-}
-
-/***************************************************************************
  *      Framework Method destroy
  ***************************************************************************/
 PRIVATE void mt_destroy(hgobj gobj)
@@ -447,26 +358,14 @@ PRIVATE int mt_subscription_added(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    const char *event = sdata_read_str(subs, "event");
-
-    const EVENT *ev_desc = gobj_output_event(gobj, event);
-    if(ev_desc) {
-        if(ev_desc->authz & EV_AUTHZ_INJECT) {
-            /*
-             *  AUTHZ Require "events" "subscribe" authz
-             */
-            /*
-                if(gobj_has_authz(gobj, "events.subscribe", path, src))
-            */
-        }
-    }
-
     json_t *__config__ = sdata_read_json(subs, "__config__");
     BOOL first_shot = kw_get_bool(__config__, "__first_shot__", FALSE, 0);
     if(!first_shot) {
         return 0;
     }
     hgobj subscriber = sdata_read_pointer(subs, "subscriber");
+    const char *event = sdata_read_str(subs, "event");
+
     if(empty_string(event)) {
         log_warning(0,
             "gobj",         "%s", gobj_full_name(gobj),
@@ -588,15 +487,6 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
 
     BOOL forbidden = FALSE;
 
-    forbidden |= !gobj_has_authz(
-        gobj,
-        "__execute_command__",
-        json_pack("{s:s, s:O}",
-            "command", cmd,
-            "kw", kw
-        ),
-        src
-    );
     forbidden |= !gobj_has_authz(
         gobj,
         "read",
@@ -1641,15 +1531,15 @@ PRIVATE GCLASS _gclass = {
         mt_stop,
         0, //mt_play,
         0, //mt_pause,
-        mt_writing,
-        mt_reading,
+        0, //mt_writing,
+        0, //mt_reading,
         mt_subscription_added,
         0, //mt_subscription_deleted,
         0, //mt_child_added,
         0, //mt_child_removed,
         0, //mt_stats
-        mt_command_parser,
-        mt_inject_event,
+        0, //mt_command_parser,
+        0, //mt_inject_event,
         0, //mt_create_resource,
         0, //mt_list_resource,
         0, //mt_update_resource,
