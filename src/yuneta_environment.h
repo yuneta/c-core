@@ -33,17 +33,8 @@ PUBLIC const char *yuneta_domain(void);
 
 /*
  *  Final user functions
- *  Return in `bf` the full path of file or directories of **realms**.
- *  The paths are       /work_dir/domain_dir/subdomain or
- *                      /work_dir/domain_dir/subdomain/filename
- *
  *  work_dir            from environment.work_dir json config
  *  domain_dir          from environment.domain_dir json config
-
- *  Schema examples for domain_dir:
- *      universe/galaxy/empire/realm
- *      domain/realm_role/realm_name
- *
  */
 PUBLIC char *yuneta_realm_dir(char *bf, int bfsize, const char *subdomain, BOOL create);
 PUBLIC char *yuneta_realm_file(
