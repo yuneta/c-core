@@ -943,17 +943,11 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
             if(gobj_event_in_input_event_list(gobj_service, iev_event, EVF_PUBLIC_EVENT)) {
                 gobj_send_event(gobj_service, iev_event, iev_kw, gobj);
             } else {
-                log_error(0,
-                    "gobj",         "%s", gobj_full_name(gobj),
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                    "msg",          "%s", "event ignored, not in input_event_list or not PUBLIC event",
-                    "service",      "%s", iev_dst_service,
-                    "gobj_service", "%s", gobj_short_name(gobj_service),
-                    "event",        "%s", iev_event,
-                    NULL
+                gobj_publish_event( /* NOTE original behaviour */
+                    gobj,
+                    iev_event,
+                    iev_kw
                 );
-                KW_DECREF(iev_kw);
             }
         } else {
             gobj_publish_event( /* NOTE original behaviour */
