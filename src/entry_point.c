@@ -19,6 +19,7 @@
  *      Data
  ***************************************************************************/
 PRIVATE hgobj __yuno_gobj__ = 0;
+PRIVATE char __realm_domain__[180] = {0};
 PRIVATE char __realm_name__[180] = {0};
 PRIVATE char __yuno_role__[180] = {0};
 PRIVATE char __yuno_name__[180] = {0};
@@ -58,13 +59,10 @@ PRIVATE json_t * (*__global_stats_parser_fn__)(
     json_t *kw,
     hgobj src
 ) = 0;
-PRIVATE json_t * (*__global_authz_parser_fn__)(
-    hgobj gobj,
-    const char *stats,
-    json_t *kw,
-    hgobj src
-) = 0;
 
+PRIVATE authz_checker_fn __global_authz_checker_fn__ = 0;
+PRIVATE authz_allow_fn __global_authz_allow_fn__ = 0;
+PRIVATE authz_deny_fn __global_authz_deny_fn__ = 0;
 
 /***************************************************************************
  *      Structures
@@ -297,7 +295,9 @@ PUBLIC int yuneta_setup(
     json_t * (*list_persistent_attrs)(void),
     json_function_t global_command_parser,
     json_function_t global_stats_parser,
-    json_function_t global_authz_parser
+    authz_checker_fn global_authz_checker,
+    authz_allow_fn global_authz_allow,
+    authz_deny_fn global_authz_deny
 )
 {
     __global_load_persistent_attrs_fn__ = load_persistent_attrs;
@@ -306,7 +306,9 @@ PUBLIC int yuneta_setup(
     __global_list_persistent_attrs_fn__ = list_persistent_attrs;
     __global_command_parser_fn__ = global_command_parser;
     __global_stats_parser_fn__ = global_stats_parser;
-    __global_authz_parser_fn__ = global_authz_parser;
+    __global_authz_checker_fn__ = global_authz_checker;
+    __global_authz_allow_fn__ = global_authz_allow;
+    __global_authz_deny_fn__ = global_authz_deny;
 
     return 0;
 }
@@ -611,8 +613,10 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
     /*------------------------------------------------*
      *      Re-read
      *------------------------------------------------*/
-    work_dir = kw_get_str(__jn_config__, "environment`work_dir", 0, 0);
-    domain_dir = kw_get_str(__jn_config__, "environment`domain_dir", 0, 0);
+    work_dir = kw_get_str(__jn_config__, "environment`work_dir", "", 0);
+    domain_dir = kw_get_str(__jn_config__, "environment`domain_dir", "", 0);
+    const char *realm_domain  = kw_get_str(__jn_config__, "environment`realm_domain", "", 0);
+
     register_yuneta_environment(
         work_dir,
         domain_dir,
@@ -633,7 +637,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
         );
     }
     const char *realm_name  = kw_get_str(jn_yuno, "realm_name", "", 0);
-    const char *yuno_role  = kw_get_str(jn_yuno, "yuno_role", 0, 0);
+    const char *yuno_role  = kw_get_str(jn_yuno, "yuno_role", "", 0);
     const char *yuno_name  = kw_get_str(jn_yuno, "yuno_name", "", 0);
     const char *yuno_alias  = kw_get_str(jn_yuno, "yuno_alias", "", 0);
     if(empty_string(yuno_role)) {
@@ -652,6 +656,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
             APP_NAME
         );
     }
+    snprintf(__realm_domain__, sizeof(__realm_domain__), "%s", realm_domain);
     snprintf(__realm_name__, sizeof(__realm_name__), "%s", realm_name);
     snprintf(__yuno_role__, sizeof(__yuno_role__), "%s", yuno_role);
     snprintf(__yuno_name__, sizeof(__yuno_name__), "%s", yuno_name);
@@ -748,7 +753,9 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
         __global_list_persistent_attrs_fn__,
         __global_command_parser_fn__,
         __global_stats_parser_fn__,
-        __global_authz_parser_fn__
+        __global_authz_checker_fn__,
+        __global_authz_allow_fn__,
+        __global_authz_deny_fn__
     );
     yuneta_register_c_core();
     if(register_yuno_and_more) {
@@ -840,6 +847,7 @@ PRIVATE void process(const char *process_name, const char *work_dir, const char 
     );
     json_incref(jn_yuno);
     hgobj gobj = __yuno_gobj__ = gobj_yuno_factory(
+        __realm_domain__,
         __realm_name__,
         __yuno_name__,
         __yuno_alias__,

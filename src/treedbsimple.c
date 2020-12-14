@@ -21,17 +21,22 @@
 /***************************************************************
  *              Prototypes
  ***************************************************************/
-PRIVATE char *get_persistent_sdata_full_filename(
-    hgobj gobj,
-    char *bf,
-    int bflen,
-    const char *label,
-    BOOL create_directories
-);
 
 /***************************************************************
  *              Data
  ***************************************************************/
+PRIVATE BOOL initialized = FALSE;
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int setup_simpletreedb(void)
+{
+    char realm_path[PATH_MAX];
+    yuneta_realm_dir(realm_path, sizeof(realm_path), "attrs", TRUE);
+
+    return 0;
+}
 
 /***************************************************************************
  *
@@ -58,6 +63,10 @@ PRIVATE char *get_persistent_sdata_full_filename(
  ***************************************************************************/
 PUBLIC int treedb_load_persistent_attrs(hgobj gobj)
 {
+    if(!initialized) {
+        setup_simpletreedb();
+    }
+
     char path[PATH_MAX];
     get_persistent_sdata_full_filename(gobj, path, sizeof(path), "persistent-attrs", FALSE);
     if(empty_string(path) || access(path, 0)!=0) {
@@ -83,6 +92,10 @@ PUBLIC int treedb_load_persistent_attrs(hgobj gobj)
  ***************************************************************************/
 PUBLIC int treedb_save_persistent_attrs(hgobj gobj)
 {
+    if(!initialized) {
+        setup_simpletreedb();
+    }
+
     char path[PATH_MAX];
     get_persistent_sdata_full_filename(gobj, path, sizeof(path), "persistent-attrs", TRUE);
     if(empty_string(path)) {
@@ -104,6 +117,10 @@ PUBLIC int treedb_save_persistent_attrs(hgobj gobj)
  ***************************************************************************/
 PUBLIC int treedb_remove_persistent_attrs(hgobj gobj)
 {
+    if(!initialized) {
+        setup_simpletreedb();
+    }
+
     char path[PATH_MAX];
     get_persistent_sdata_full_filename(gobj, path, sizeof(path), "persistent-attrs", FALSE);
     if(empty_string(path)) {
@@ -163,6 +180,10 @@ PRIVATE BOOL read_json_cb(
 
 PUBLIC json_t * treedb_list_persistent_attrs(void)
 {
+    if(!initialized) {
+        setup_simpletreedb();
+    }
+
     char path[PATH_MAX];
     yuneta_realm_dir(path, sizeof(path), "data", TRUE);
     json_t *jn_dict = json_object();
@@ -177,4 +198,3 @@ PUBLIC json_t * treedb_list_persistent_attrs(void)
 
     return jn_dict;
 }
-

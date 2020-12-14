@@ -26,7 +26,8 @@ extern "C"{
  *  Prototypes
  *********************************************************************/
 /*
- *  DEPRECATED Set functions of gobj_start_up() function.
+ *  Set functions of gobj_start_up() function.
+ *  DEPRECATED use yuneta_setup()
  */
 PUBLIC int yuneta_set_gobj_startup_functions(
     int (*load_persistent_attrs)(hgobj gobj),
@@ -47,7 +48,9 @@ PUBLIC int yuneta_setup(
     json_t * (*list_persistent_attrs)(void),
     json_function_t global_command_parser,
     json_function_t global_stats_parser,
-    json_function_t global_authz_parser
+    authz_checker_fn global_authz_checker,
+    authz_allow_fn global_authz_allow,
+    authz_deny_fn global_authz_deny
 );
 
 PUBLIC int yuneta_entry_point(int argc, char *argv[],

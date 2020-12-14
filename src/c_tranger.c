@@ -487,7 +487,7 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
 
     BOOL forbidden = FALSE;
 
-    forbidden |= !gobj_has_authz(
+    forbidden |= !gobj_user_has_authz(
         gobj,
         "read",
         kw,
@@ -553,7 +553,7 @@ PRIVATE json_t *cmd_create_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
+    forbidden |= !gobj_user_has_authz(
         gobj,
         "create",
         kw,
@@ -616,7 +616,7 @@ PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
+    forbidden |= !gobj_user_has_authz(
         gobj,
         "delete",
         kw,
@@ -690,7 +690,7 @@ PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
+    forbidden |= !gobj_user_has_authz(
         gobj,
         "read",
         kw,
@@ -734,7 +734,7 @@ PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
+    forbidden |= !gobj_user_has_authz(
         gobj,
         "read",
         kw,
@@ -792,7 +792,7 @@ PRIVATE json_t *cmd_open_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
+    forbidden |= !gobj_user_has_authz(
         gobj,
         "read",
         kw,
@@ -982,7 +982,7 @@ PRIVATE json_t *cmd_close_list(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
+    forbidden |= !gobj_user_has_authz(
         gobj,
         "read",
         kw,
@@ -1043,7 +1043,7 @@ PRIVATE json_t *cmd_add_record(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
+    forbidden |= !gobj_user_has_authz(
         gobj,
         "write",
         kw,
@@ -1143,7 +1143,7 @@ PRIVATE json_t *cmd_get_list_data(hgobj gobj, const char *cmd, json_t *kw, hgobj
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
+    forbidden |= !gobj_user_has_authz(
         gobj,
         "read",
         kw,
@@ -1304,7 +1304,7 @@ PRIVATE int ac_tranger_add_record(hgobj gobj, const char *event, json_t *kw, hgo
     priv->rxMsgsec++;
 
     BOOL forbidden = FALSE;
-    forbidden |= !gobj_has_authz(
+    forbidden |= !gobj_user_has_authz(
         gobj,
         "read",
         kw,
@@ -1355,7 +1355,7 @@ PRIVATE int ac_tranger_add_record(hgobj gobj, const char *event, json_t *kw, hgo
 //         }
 
         BOOL forbidden = FALSE;
-        forbidden |= !gobj_has_authz(
+        forbidden |= !gobj_user_has_authz(
             gobj,
             "write",
             json_pack("{s:s}",
@@ -1363,7 +1363,7 @@ PRIVATE int ac_tranger_add_record(hgobj gobj, const char *event, json_t *kw, hgo
             ),
             src
         );
-        forbidden |= !gobj_has_authz(
+        forbidden |= !gobj_user_has_authz(
             gobj,
             "execute",
             json_pack("{s:s}",

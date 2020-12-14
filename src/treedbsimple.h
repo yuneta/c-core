@@ -37,6 +37,7 @@ PUBLIC int treedb_remove_persistent_attrs(hgobj gobj);
 **rst**/
 PUBLIC json_t * treedb_list_persistent_attrs(void);
 
+
 #ifdef __cplusplus
 }
 #endif

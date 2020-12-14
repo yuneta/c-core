@@ -83,7 +83,7 @@ PUBLIC const char *yuneta_work_dir(void)
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC const char *yuneta_domain(void)
+PUBLIC const char *yuneta_domain_dir(void)
 {
     return __domain_dir__;
 }
@@ -98,7 +98,7 @@ PUBLIC char *yuneta_realm_dir(
     BOOL create
 )
 {
-    build_path3(bf, bfsize, yuneta_work_dir(), yuneta_domain(), subdomain);
+    build_path3(bf, bfsize, yuneta_work_dir(), yuneta_domain_dir(), subdomain);
 
     if(create) {
         if(access(bf, 0)!=0) {

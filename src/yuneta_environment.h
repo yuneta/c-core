@@ -29,7 +29,7 @@ PUBLIC int yuneta_xpermission(void);    // permission for directories and execut
 PUBLIC int yuneta_rpermission(void);    // permission for regular files
 
 PUBLIC const char *yuneta_work_dir(void); // from environment.work_dir json config
-PUBLIC const char *yuneta_domain(void);
+PUBLIC const char *yuneta_domain_dir(void);
 
 /*
  *  Final user functions
