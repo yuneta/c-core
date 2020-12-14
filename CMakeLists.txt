@@ -44,6 +44,7 @@ set (SRCS
     src/yuneta_environment.c
     src/yuneta_register.c
     src/dbsimple.c
+    src/treedbsimple.c
 
     # Daemon/CLI builders
     src/entry_point.c
@@ -103,6 +104,7 @@ set (HDRS
     src/yuneta_register.h
     src/msglog_yuneta.h
     src/dbsimple.h
+    src/treedbsimple.h
 
     # Daemon/CLI builders
     src/entry_point.h

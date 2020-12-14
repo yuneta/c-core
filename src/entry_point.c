@@ -290,16 +290,20 @@ PUBLIC int yuneta_set_gobj_startup_functions(
 /***************************************************************************
  *  New yuneta setup function.
  ***************************************************************************/
-PUBLIC int yuneta_startup(
+PUBLIC int yuneta_setup(
+    int (*load_persistent_attrs)(hgobj gobj),
+    int (*save_persistent_attrs)(hgobj gobj),
+    int (*remove_persistent_attrs)(hgobj gobj),
+    json_t * (*list_persistent_attrs)(void),
     json_function_t global_command_parser,
     json_function_t global_stats_parser,
     json_function_t global_authz_parser
 )
 {
-    __global_load_persistent_attrs_fn__ = db_load_persistent_attrs;
-    __global_save_persistent_attrs_fn__ = db_save_persistent_attrs;
-    __global_remove_persistent_attrs_fn__ = db_remove_persistent_attrs;
-    __global_list_persistent_attrs_fn__ = db_list_persistent_attrs;
+    __global_load_persistent_attrs_fn__ = load_persistent_attrs;
+    __global_save_persistent_attrs_fn__ = save_persistent_attrs;
+    __global_remove_persistent_attrs_fn__ = remove_persistent_attrs;
+    __global_list_persistent_attrs_fn__ = list_persistent_attrs;
     __global_command_parser_fn__ = global_command_parser;
     __global_stats_parser_fn__ = global_stats_parser;
     __global_authz_parser_fn__ = global_authz_parser;

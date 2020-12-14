@@ -25,6 +25,7 @@ extern "C"{
 #include "msglog_yuneta.h"
 #include "c_yuno.h"         // the grandmother
 #include "dbsimple.h"
+#include "treedbsimple.h"
 
 /*
  *  Services

@@ -15,6 +15,7 @@
 #include "yuneta_register.h"
 #include "yuneta_environment.h"
 #include "dbsimple.h"
+#include "treedbsimple.h"
 #include "c_yuno.h"         // the grandmother
 
 #ifdef __cplusplus
@@ -39,7 +40,11 @@ PUBLIC int yuneta_set_gobj_startup_functions(
 /*
  *  New yuneta setup function.
  */
-PUBLIC int yuneta_startup(
+PUBLIC int yuneta_setup(
+    int (*load_persistent_attrs)(hgobj gobj),
+    int (*save_persistent_attrs)(hgobj gobj),
+    int (*remove_persistent_attrs)(hgobj gobj),
+    json_t * (*list_persistent_attrs)(void),
     json_function_t global_command_parser,
     json_function_t global_stats_parser,
     json_function_t global_authz_parser
