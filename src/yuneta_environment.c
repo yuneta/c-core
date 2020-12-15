@@ -98,6 +98,11 @@ PUBLIC char *yuneta_realm_dir(
     BOOL create
 )
 {
+    if(empty_string(yuneta_work_dir()) || empty_string(yuneta_domain_dir())) {
+        *bf = 0;
+        return 0;
+    }
+
     build_path3(bf, bfsize, yuneta_work_dir(), yuneta_domain_dir(), subdomain);
 
     if(create) {
@@ -123,7 +128,10 @@ PUBLIC char *yuneta_realm_file(
 )
 {
     char realm_path[PATH_MAX];
-    yuneta_realm_dir(realm_path, sizeof(realm_path), subdomain, create);
+    if(!yuneta_realm_dir(realm_path, sizeof(realm_path), subdomain, create)) {
+        *bf = 0;
+        return 0;
+    }
 
     build_path2(bf, bfsize, realm_path, filename);
 
@@ -141,6 +149,11 @@ PUBLIC char *yuneta_store_dir(
     BOOL create
 )
 {
+    if(empty_string(yuneta_work_dir())) {
+        *bf = 0;
+        return 0;
+    }
+
     build_path4(bf, bfsize, yuneta_work_dir(), "store", dir, subdir);
 
     if(create) {
@@ -167,7 +180,10 @@ PUBLIC char *yuneta_store_file(
     BOOL create)    // from environment.global_store_dir json config
 {
     char store_path[PATH_MAX];
-    yuneta_store_dir(store_path, sizeof(store_path), dir, subdir, create);
+    if(!yuneta_store_dir(store_path, sizeof(store_path), dir, subdir, create)) {
+        *bf = 0;
+        return 0;
+    }
 
     build_path2(bf, bfsize, store_path, filename);
 
@@ -192,7 +208,10 @@ PUBLIC char *yuneta_log_file(
     BOOL create)    // from environment.global_store_dir json config
 {
     char log_path[PATH_MAX];
-    yuneta_log_dir(log_path, sizeof(log_path), create);
+    if(!yuneta_log_dir(log_path, sizeof(log_path), create)) {
+        *bf = 0;
+        return 0;
+    }
 
     build_path2(bf, bfsize, log_path, filename);
 

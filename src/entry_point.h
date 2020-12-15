@@ -42,6 +42,8 @@ PUBLIC int yuneta_set_gobj_startup_functions(
  *  New yuneta setup function.
  */
 PUBLIC int yuneta_setup(
+    int (*startup_persistent_attrs)(void),
+    void (*end_persistent_attrs)(void),
     int (*load_persistent_attrs)(hgobj gobj),
     int (*save_persistent_attrs)(hgobj gobj),
     int (*remove_persistent_attrs)(hgobj gobj),

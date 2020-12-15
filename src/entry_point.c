@@ -19,17 +19,18 @@
  *      Data
  ***************************************************************************/
 PRIVATE hgobj __yuno_gobj__ = 0;
-PRIVATE char __realm_domain__[180] = {0};
-PRIVATE char __realm_name__[180] = {0};
-PRIVATE char __yuno_role__[180] = {0};
-PRIVATE char __yuno_name__[180] = {0};
-PRIVATE char __yuno_alias__[180] = {0};
+PRIVATE char __realm_domain__[NAME_MAX] = {0};
+PRIVATE char __realm_role__[NAME_MAX] = {0};
+PRIVATE char __realm_name__[NAME_MAX] = {0};
+PRIVATE char __yuno_role__[NAME_MAX] = {0};
+PRIVATE char __yuno_name__[NAME_MAX] = {0};
+PRIVATE char __yuno_alias__[NAME_MAX] = {0};
 
-PRIVATE char __app_name__[80] = {0};
-PRIVATE char __yuno_version__[256] = {0};
-PRIVATE char __argp_program_version__[256] = {0};
-PRIVATE char __app_doc__[256] = {0};
-PRIVATE char __app_datetime__[80] = {0};
+PRIVATE char __app_name__[NAME_MAX] = {0};
+PRIVATE char __yuno_version__[NAME_MAX] = {0};
+PRIVATE char __argp_program_version__[NAME_MAX] = {0};
+PRIVATE char __app_doc__[NAME_MAX] = {0};
+PRIVATE char __app_datetime__[NAME_MAX] = {0};
 
 
 PRIVATE json_t *__jn_config__ = 0;
@@ -42,6 +43,8 @@ PRIVATE BOOL __ordered_death__ = 1;  // WARNING Vamos a probar otra vez las muer
 
 PRIVATE int __print__ = 0;
 
+PRIVATE int (*__global_startup_persistent_attrs_fn__)(void) = 0;
+PRIVATE void (*__global_end_persistent_attrs_fn__)(void) = 0;
 PRIVATE int (*__global_load_persistent_attrs_fn__)(hgobj gobj) = 0;
 PRIVATE int (*__global_save_persistent_attrs_fn__)(hgobj gobj) = 0;
 PRIVATE int (*__global_remove_persistent_attrs_fn__)(hgobj gobj) = 0;
@@ -52,13 +55,13 @@ PRIVATE json_t * (*__global_command_parser_fn__)(
     const char *command,
     json_t *kw,
     hgobj src
-) = 0;
+) = command_parser;
 PRIVATE json_t * (*__global_stats_parser_fn__)(
     hgobj gobj,
     const char *stats,
     json_t *kw,
     hgobj src
-) = 0;
+) = stats_parser;
 
 PRIVATE authz_checker_fn __global_authz_checker_fn__ = 0;
 PRIVATE authz_allow_fn __global_authz_allow_fn__ = 0;
@@ -289,6 +292,8 @@ PUBLIC int yuneta_set_gobj_startup_functions(
  *  New yuneta setup function.
  ***************************************************************************/
 PUBLIC int yuneta_setup(
+    int (*startup_persistent_attrs)(void),
+    void (*end_persistent_attrs)(void),
     int (*load_persistent_attrs)(hgobj gobj),
     int (*save_persistent_attrs)(hgobj gobj),
     int (*remove_persistent_attrs)(hgobj gobj),
@@ -300,12 +305,18 @@ PUBLIC int yuneta_setup(
     authz_deny_fn global_authz_deny
 )
 {
+    __global_startup_persistent_attrs_fn__ = startup_persistent_attrs;
+    __global_end_persistent_attrs_fn__ = end_persistent_attrs;
     __global_load_persistent_attrs_fn__ = load_persistent_attrs;
     __global_save_persistent_attrs_fn__ = save_persistent_attrs;
     __global_remove_persistent_attrs_fn__ = remove_persistent_attrs;
     __global_list_persistent_attrs_fn__ = list_persistent_attrs;
-    __global_command_parser_fn__ = global_command_parser;
-    __global_stats_parser_fn__ = global_stats_parser;
+    if(global_command_parser) {
+        __global_command_parser_fn__ = global_command_parser;
+    }
+    if(global_stats_parser) {
+        __global_stats_parser_fn__ = global_stats_parser;
+    }
     __global_authz_checker_fn__ = global_authz_checker;
     __global_authz_allow_fn__ = global_authz_allow;
     __global_authz_deny_fn__ = global_authz_deny;
@@ -616,6 +627,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
     work_dir = kw_get_str(__jn_config__, "environment`work_dir", "", 0);
     domain_dir = kw_get_str(__jn_config__, "environment`domain_dir", "", 0);
     const char *realm_domain  = kw_get_str(__jn_config__, "environment`realm_domain", "", 0);
+    const char *realm_role  = kw_get_str(__jn_config__, "environment`realm_role", "", 0);
 
     register_yuneta_environment(
         work_dir,
@@ -657,6 +669,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
         );
     }
     snprintf(__realm_domain__, sizeof(__realm_domain__), "%s", realm_domain);
+    snprintf(__realm_role__, sizeof(__realm_role__), "%s", realm_role);
     snprintf(__realm_name__, sizeof(__realm_name__), "%s", realm_name);
     snprintf(__yuno_role__, sizeof(__yuno_role__), "%s", yuno_role);
     snprintf(__yuno_name__, sizeof(__yuno_name__), "%s", yuno_name);
@@ -747,6 +760,8 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
     json_t *jn_global = kw_get_dict(__jn_config__, "global", 0, 0);
     gobj_start_up(
         jn_global,
+        __global_startup_persistent_attrs_fn__,
+        __global_end_persistent_attrs_fn__,
         __global_load_persistent_attrs_fn__,
         __global_save_persistent_attrs_fn__,
         __global_remove_persistent_attrs_fn__,
@@ -848,6 +863,7 @@ PRIVATE void process(const char *process_name, const char *work_dir, const char 
     json_incref(jn_yuno);
     hgobj gobj = __yuno_gobj__ = gobj_yuno_factory(
         __realm_domain__,
+        __realm_role__,
         __realm_name__,
         __yuno_name__,
         __yuno_alias__,
