@@ -125,7 +125,7 @@ PUBLIC int dbattrs_load_persistent(hgobj gobj)
     }
 
     const char *id = gobj_full_name(gobj);
-    json_t *jn_attrs = trmsg_get_message(persistent_attrs_list, id);
+    json_t *jn_attrs = trmsg_get_active_message(persistent_attrs_list, id);
     if(jn_attrs) {
         return json2sdata(gobj_hsdata(gobj), jn_attrs, SDF_PERSIST, 0, 0);
     } else {
