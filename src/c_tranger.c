@@ -1487,7 +1487,7 @@ PRIVATE const EVENT input_events[] = {
     {NULL, 0, 0, 0}
 };
 PRIVATE const EVENT output_events[] = {
-    {"EV_TRANGER_RECORD_ADDED",     EVF_PUBLIC_EVENT,   EV_AUTHZ_SUBSCRIBE, 0},
+    {"EV_TRANGER_RECORD_ADDED",     EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,   EV_AUTHZ_SUBSCRIBE, 0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const char *state_names[] = {
