@@ -1479,6 +1479,18 @@ PRIVATE int process_http(hgobj gobj, GBUFFER *gbuf, GHTTP_PARSER *parser)
         int n = ghttp_parser_received(parser, bf, ln);
         if (n == -1) {
             // Some error in parsing
+            const char *peername = gobj_read_str_attr(gobj, "peername");
+            const char *sockname = gobj_read_str_attr(gobj, "sockname");
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
+                "msg",          "%s", "http parser failed",
+                "peername",     "%s", peername?peername:"",
+                "sockname",     "%s", sockname?sockname:"",
+                NULL
+            );
+
             ghttp_parser_reset(parser);
             return -1;
         } else if (n > 0) {
