@@ -66,6 +66,7 @@ PRIVATE json_t * (*__global_stats_parser_fn__)(
 PRIVATE authz_checker_fn __global_authz_checker_fn__ = 0;
 PRIVATE authz_allow_fn __global_authz_allow_fn__ = 0;
 PRIVATE authz_deny_fn __global_authz_deny_fn__ = 0;
+PRIVATE json_function_t __global_authz_parser_fn__ = authz_parser;
 
 /***************************************************************************
  *      Structures
@@ -302,7 +303,8 @@ PUBLIC int yuneta_setup(
     json_function_t global_stats_parser,
     authz_checker_fn global_authz_checker,
     authz_allow_fn global_authz_allow,
-    authz_deny_fn global_authz_deny
+    authz_deny_fn global_authz_deny,
+    json_function_t global_authz_parser
 )
 {
     __global_startup_persistent_attrs_fn__ = startup_persistent_attrs;
@@ -320,6 +322,9 @@ PUBLIC int yuneta_setup(
     __global_authz_checker_fn__ = global_authz_checker;
     __global_authz_allow_fn__ = global_authz_allow;
     __global_authz_deny_fn__ = global_authz_deny;
+    if(global_authz_parser) {
+        __global_authz_parser_fn__ = global_authz_parser;
+    }
 
     return 0;
 }
@@ -770,7 +775,8 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
         __global_stats_parser_fn__,
         __global_authz_checker_fn__,
         __global_authz_allow_fn__,
-        __global_authz_deny_fn__
+        __global_authz_deny_fn__,
+        __global_authz_parser_fn__
     );
     yuneta_register_c_core();
     if(register_yuno_and_more) {
