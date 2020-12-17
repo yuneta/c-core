@@ -224,47 +224,6 @@ PRIVATE json_t *mt_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src)
 }
 
 /***************************************************************************
- *      Framework Method authzs
- ***************************************************************************/
-PRIVATE json_t *mt_authzs(hgobj gobj, const char *level, json_t *kw, hgobj src)
-{
-    if(!gobj_in_this_state(gobj, "ST_SESSION")) {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "Not in session",
-            "level",        "%s", level?level:"",
-            NULL
-        );
-        KW_DECREF(kw);
-        return 0;
-    }
-
-    if(!kw) {
-        kw = json_object();
-    }
-
-    /*
-     *      __REQUEST__ __MESSAGE__
-     */
-    json_t *jn_ievent_id = build_ievent_request(
-        gobj,
-        gobj_name(src)
-    );
-    msg_iev_push_stack(
-        kw,         // not owned
-        IEVENT_MESSAGE_AREA_ID,
-        jn_ievent_id   // owned
-    );
-
-    json_object_set_new(kw, "__authz__", json_string(level?level:""));
-
-    send_static_iev(gobj, "EV_MT_AUTHZS", kw, src);
-    return 0;   // return 0 on asychronous response.
-}
-
-/***************************************************************************
  *      Framework Method command
  ***************************************************************************/
 PRIVATE json_t *mt_command(hgobj gobj, const char *command, json_t *kw, hgobj src)
@@ -913,78 +872,6 @@ PRIVATE int ac_mt_stats(hgobj gobj, const char *event, json_t *kw, hgobj src)
 }
 
 /***************************************************************************
- *  remote ask for stats
- ***************************************************************************/
-PRIVATE int ac_mt_authzs(hgobj gobj, const char *event, json_t *kw, hgobj src)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    if(!gobj_read_bool_attr(gobj, "authenticated")) {
-        return send_static_iev(gobj,
-            "EV_MT_AUTHZS_ANSWER",
-            msg_iev_build_webix(
-                gobj,
-                -1,
-                json_local_sprintf("Only authenticated users can request authzs"),
-                0,
-                0,
-                kw
-            ),
-            src
-        );
-    }
-
-    const char *authzs = kw_get_str(kw, "__authz__", 0, 0);
-    const char *service = kw_get_str(kw, "service", "", 0);
-
-    hgobj service_gobj;
-    if(empty_string(service)) {
-        service_gobj = priv->gobj_service;
-    } else {
-        service_gobj = gobj_find_service(service, FALSE);
-        if(!service_gobj) {
-            return send_static_iev(gobj,
-                "EV_MT_AUTHZS_ANSWER",
-                msg_iev_build_webix(
-                    gobj,
-                    -1,
-                    json_local_sprintf("Service '%s' not found.", service),
-                    0,
-                    0,
-                    kw
-                ),
-                src
-            );
-        }
-    }
-    KW_INCREF(kw);
-    json_t *webix = gobj_authzs(
-        service_gobj,
-        authzs,
-        kw,
-        src
-    );
-    if(!webix) {
-        // Asynchronous response
-    } else {
-        json_t *kw2 = msg_iev_answer(
-            gobj,
-            kw,
-            webix,
-            0
-        );
-        return send_static_iev(gobj,
-            "EV_MT_AUTHZS_ANSWER",
-            kw2,
-            src
-        );
-    }
-
-    KW_DECREF(kw);
-    return 0;
-}
-
-/***************************************************************************
  *  remote ask for command
  ***************************************************************************/
 PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
@@ -1379,7 +1266,6 @@ PRIVATE const EVENT input_events[] = {
     {"EV_IDENTITY_CARD",    EVF_PUBLIC_EVENT,   0,  0},
     {"EV_GOODBYE",          EVF_PUBLIC_EVENT,   0,  0},
     {"EV_MT_STATS",         EVF_PUBLIC_EVENT,   0,  0},
-    {"EV_MT_AUTHZS",        EVF_PUBLIC_EVENT,  0,  0},
     {"EV_MT_COMMAND",       EVF_PUBLIC_EVENT,   0,  0},
     {NULL, 0, 0, 0}
 };
@@ -1412,7 +1298,6 @@ PRIVATE EV_ACTION ST_WAIT_IDENTITY_CARD[] = {
 PRIVATE EV_ACTION ST_SESSION[] = {
     {"EV_ON_MESSAGE",           ac_on_message,          0},
     {"EV_MT_STATS",             ac_mt_stats,            0},
-    {"EV_MT_AUTHZS",            ac_mt_authzs,           0},
     {"EV_MT_COMMAND",           ac_mt_command,          0},
     {"EV_IDENTITY_CARD",        ac_identity_card,       0},
     {"EV_GOODBYE",              ac_goodbye,             0},
@@ -1492,7 +1377,7 @@ PRIVATE GCLASS _gclass = {
         0, //mt_publication_pre_filter,
         0, //mt_publication_filter,
         0, //mt_future38,
-        mt_authzs,
+        0, //mt_authzs,
         0, //mt_create_node,
         0, //mt_update_node,
         0, //mt_delete_node,
