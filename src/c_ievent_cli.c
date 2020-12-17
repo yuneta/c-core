@@ -203,6 +203,49 @@ PRIVATE json_t *mt_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src)
 }
 
 /***************************************************************************
+ *      Framework Method stats
+ ***************************************************************************/
+PRIVATE json_t *mt_authzs(hgobj gobj, const char *level, json_t *kw, hgobj src)
+{
+    if(!gobj_in_this_state(gobj, "ST_SESSION")) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "Not in session",
+            "level",        "%s", level?level:"",
+            NULL
+        );
+        KW_DECREF(kw);
+        return 0;
+    }
+
+    if(!kw) {
+        kw = json_object();
+    }
+
+    /*
+     *      __REQUEST__ __MESSAGE__
+     */
+    json_t *jn_ievent_id = build_ievent_request(
+        gobj,
+        gobj_name(src),
+        kw_get_str(kw, "service", 0, 0)
+    );
+    msg_iev_push_stack(
+        kw,         // not owned
+        IEVENT_MESSAGE_AREA_ID,
+        jn_ievent_id   // owned
+    );
+
+    json_object_set_new(kw, "__authzs__", json_string(level?level:""));
+
+    send_static_iev(gobj, "EV_MT_AUTHZS", kw, src);
+
+    return 0;   // return 0 on asychronous response.
+}
+
+/***************************************************************************
  *      Framework Method command
  ***************************************************************************/
 PRIVATE json_t *mt_command(hgobj gobj, const char *command, json_t *kw, hgobj src)
@@ -1020,7 +1063,7 @@ PRIVATE int ac_mt_stats(hgobj gobj, const char *event, json_t *kw, hgobj src)
         service_gobj = gobj_find_service(service, FALSE);
         if(!service_gobj) {
             return send_static_iev(gobj,
-                "EV_MT_COMMAND_ANSWER",
+                "EV_MT_STATS_ANSWER",
                 msg_iev_build_webix(
                     gobj,
                     -100,
@@ -1046,6 +1089,61 @@ PRIVATE int ac_mt_stats(hgobj gobj, const char *event, json_t *kw, hgobj src)
         json_t * kw2 = msg_iev_answer(gobj, kw, webix, 0);
         return send_static_iev(gobj,
             "EV_MT_STATS_ANSWER",
+            kw2,
+            src
+        );
+    }
+
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ *  remote ask for authzs
+ ***************************************************************************/
+PRIVATE int ac_mt_authzs(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    /*
+     *      __MESSAGE__
+     */
+    //json_t *jn_request = msg_iev_get_stack(kw, IEVENT_MESSAGE_AREA_ID);
+
+    const char *authzs = kw_get_str(kw, "__authzs__", 0, 0);
+    const char *service = kw_get_str(kw, "service", "", 0);
+
+    hgobj service_gobj;
+    if(empty_string(service)) {
+        service_gobj = gobj_default_service();
+    } else {
+        service_gobj = gobj_find_service(service, FALSE);
+        if(!service_gobj) {
+            return send_static_iev(gobj,
+                "EV_MT_AUTHZS_ANSWER",
+                msg_iev_build_webix(
+                    gobj,
+                    -100,
+                    json_local_sprintf("Service '%s' not found.", service),
+                    0,
+                    0,
+                    kw
+                ),
+                src
+            );
+        }
+    }
+    KW_INCREF(kw);
+    json_t *webix = gobj_authzs(
+        service_gobj,
+        authzs,
+        kw,
+        src
+    );
+    if(!webix) {
+       // Asynchronous response
+    } else {
+        json_t * kw2 = msg_iev_answer(gobj, kw, webix, 0);
+        return send_static_iev(gobj,
+            "EV_MT_AUTHZS_ANSWER",
             kw2,
             src
         );
@@ -1151,6 +1249,7 @@ PRIVATE const EVENT input_events[] = {
     {"EV_PLAY_YUNO",                EVF_PUBLIC_EVENT,  0,  0},  // Extra events to let agent
     {"EV_PAUSE_YUNO",               EVF_PUBLIC_EVENT,  0,  0},  // request clients
     {"EV_MT_STATS",                 EVF_PUBLIC_EVENT,  0,  0},
+    {"EV_MT_AUTHZS",                EVF_PUBLIC_EVENT,  0,  0},
     {"EV_MT_COMMAND",               EVF_PUBLIC_EVENT,  0,  0},
     {"EV_SEND_COMMAND_ANSWER",      EVF_PUBLIC_EVENT,  0,  0},
     // internal
@@ -1185,6 +1284,7 @@ PRIVATE EV_ACTION ST_WAIT_IDENTITY_CARD_ACK[] = {
 PRIVATE EV_ACTION ST_SESSION[] = {
     {"EV_ON_MESSAGE",           ac_on_message,          0},
     {"EV_MT_STATS",             ac_mt_stats,            0},
+    {"EV_MT_AUTHZS",            ac_mt_authzs,           0},
     {"EV_MT_COMMAND",           ac_mt_command,          0},
     {"EV_SEND_COMMAND_ANSWER",  ac_send_command_answer, 0},
     {"EV_PLAY_YUNO",            ac_play_yuno,           0},
@@ -1265,7 +1365,7 @@ PRIVATE GCLASS _gclass = {
         0, //mt_publication_pre_filter,
         0, //mt_publication_filter,
         0, //mt_future38,
-        0, //mt_future39,
+        mt_authzs,
         0, //mt_create_node,
         0, //mt_update_node,
         0, //mt_delete_node,
