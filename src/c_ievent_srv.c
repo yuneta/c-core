@@ -258,7 +258,7 @@ PRIVATE json_t *mt_authzs(hgobj gobj, const char *level, json_t *kw, hgobj src)
         jn_ievent_id   // owned
     );
 
-    json_object_set_new(kw, "__authzs__", json_string(level?level:""));
+    json_object_set_new(kw, "__authz__", json_string(level?level:""));
 
     send_static_iev(gobj, "EV_MT_AUTHZS", kw, src);
     return 0;   // return 0 on asychronous response.
@@ -934,7 +934,7 @@ PRIVATE int ac_mt_authzs(hgobj gobj, const char *event, json_t *kw, hgobj src)
         );
     }
 
-    const char *authzs = kw_get_str(kw, "__authzs__", 0, 0);
+    const char *authzs = kw_get_str(kw, "__authz__", 0, 0);
     const char *service = kw_get_str(kw, "service", "", 0);
 
     hgobj service_gobj;

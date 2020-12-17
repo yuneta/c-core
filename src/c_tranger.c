@@ -216,23 +216,23 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
  *      GClass authz levels
  *---------------------------------------------*/
 PRIVATE sdata_desc_t pm_authz_create[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+/*-PM-----type--------------name----------------flag------------description---------- */
+SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,              "Topic name"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_authz_read[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+/*-PM-----type--------------name----------------flag------------description---------- */
+SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,              "Topic name"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_authz_write[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+/*-PM-----type--------------name----------------flag------------description---------- */
+SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,              "Topic name"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_authz_delete[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+/*-PM-----type--------------name----------------flag------------description---------- */
+SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,              "Topic name"),
 SDATA_END()
 };
 
