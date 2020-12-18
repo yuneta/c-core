@@ -60,6 +60,7 @@ PRIVATE void inform_cb(int priority, uint32_t count, void *user_data);
  *          Data: config, public data, private data
  ***************************************************************************/
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_view_config(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_view_mem(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_view_mem2(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -139,6 +140,12 @@ SDATAPM (ASN_OCTET_STR, "cmd",          0,              0,          "command abo
 SDATAPM (ASN_UNSIGNED,  "level",        0,              0,          "command search level in childs"),
 SDATA_END()
 };
+PRIVATE sdata_desc_t pm_authzs[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "authz",        0,              0,          "authz about you want help"),
+SDATA_END()
+};
+
 PRIVATE sdata_desc_t pm_gclass_name[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "gclass_name",  0,              0,          "gclass-name"),
@@ -279,6 +286,7 @@ PRIVATE const char *a_sys_schema[] = {"topic-cols-schema", 0};
 PRIVATE sdata_desc_t command_table[] = {
 /*-CMD---type-----------name------------------------alias---items-----------json_fn----------------------description---------- */
 SDATACM (ASN_SCHEMA,    "help",                     a_help, pm_help,        cmd_help,                   "Command's help"),
+SDATACM (ASN_SCHEMA,    "authzs",                   0,      pm_authzs,      cmd_authzs,     "Authorization's help"),
 SDATACM (ASN_SCHEMA,    "view-config",              0,      0,              cmd_view_config,            "View final json configuration"),
 SDATACM (ASN_SCHEMA,    "view-mem",                 0,      0,              cmd_view_mem,               "View yuno memory"),
 SDATACM (ASN_SCHEMA,    "view-mem2",                0,      0,              cmd_view_mem2,              "View yuno memory with segmented free blocks"),
@@ -820,7 +828,7 @@ PRIVATE BOOL mt_publication_pre_filter(
 
 
 /***************************************************************************
- *  CLI command
+ *
  ***************************************************************************/
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
@@ -834,6 +842,14 @@ PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         0,
         kw  // owned
     );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    return gobj_build_authzs_doc(gobj, cmd, kw, src);
 }
 
 /***************************************************************************
