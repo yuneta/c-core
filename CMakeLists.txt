@@ -58,6 +58,7 @@ set (SRCS
     src/c_node.c
     src/c_ievent_srv.c
     src/c_ievent_cli.c
+    src/c_authz.c
 #     src/c_store.c
 #     src/c_snmp.c
 #     src/c_dynagent.c
@@ -118,6 +119,8 @@ set (HDRS
     src/c_resource.h
     src/c_ievent_srv.h
     src/c_ievent_cli.h
+    src/c_authz.h
+
 #     src/c_store.h
 #     src/c_snmp.h
 #     src/c_dynagent.h

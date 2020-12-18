@@ -30,6 +30,8 @@ PUBLIC int yuneta_register_c_core(void)
     gobj_register_gclass(GCLASS_RESOURCE);
     gobj_register_gclass(GCLASS_IEVENT_SRV);
     gobj_register_gclass(GCLASS_IEVENT_CLI);
+    gobj_register_gclass(GCLASS_AUTHZ);
+
 //     gobj_register_gclass(GCLASS_STORE);
 //     gobj_register_gclass(GCLASS_SNMP);
     //gobj_register_gclass(GCLASS_DYNAGENT);

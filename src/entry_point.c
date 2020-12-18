@@ -633,6 +633,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
     domain_dir = kw_get_str(__jn_config__, "environment`domain_dir", "", 0);
     const char *realm_domain  = kw_get_str(__jn_config__, "environment`realm_domain", "", 0);
     const char *realm_role  = kw_get_str(__jn_config__, "environment`realm_role", "", 0);
+    const char *realm_name  = kw_get_str(__jn_config__, "environment`realm_name", "", 0);
 
     register_yuneta_environment(
         work_dir,
@@ -653,7 +654,6 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
             "'yuno' dict NOT FOUND in json config"
         );
     }
-    const char *realm_name  = kw_get_str(jn_yuno, "realm_name", "", 0);
     const char *yuno_role  = kw_get_str(jn_yuno, "yuno_role", "", 0);
     const char *yuno_name  = kw_get_str(jn_yuno, "yuno_name", "", 0);
     const char *yuno_alias  = kw_get_str(jn_yuno, "yuno_alias", "", 0);
@@ -846,9 +846,12 @@ PRIVATE void process(const char *process_name, const char *work_dir, const char 
         "msg",          "%s", "Starting yuno",
         "work_dir",     "%s", work_dir,
         "domain_dir",   "%s", domain_dir,
-        "role",         "%s", __yuno_role__,
-        "name",         "%s", __yuno_name__,
-        "alias",        "%s", __yuno_alias__,
+        "realm_domain", "%s", __realm_domain__,
+        "realm_role",   "%s", __realm_role__,
+        "realm_name",   "%s", __realm_name__,
+        "yuno_role",    "%s", __yuno_role__,
+        "yuno_name",    "%s", __yuno_name__,
+        "yuno_alias",   "%s", __yuno_alias__,
         "version",      "%s", __yuno_version__,
         "date",         "%s", __app_datetime__,
         "pid",          "%d", getpid(),
