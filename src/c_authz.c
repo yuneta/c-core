@@ -59,15 +59,14 @@ PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag----------------default---------description---------- */
 SDATA (ASN_JSON,        "initial_load",     SDF_RD,             0,          "Initial data for treedb"),
 
-SDATA (ASN_COUNTER64,   "txMsgs",           SDF_RD|SDF_PSTATS,  0,          "Messages transmitted"),
-SDATA (ASN_COUNTER64,   "rxMsgs",           SDF_RD|SDF_RSTATS,  0,          "Messages receiveds"),
+SDATA (ASN_INTEGER,     "timeout",          SDF_RD,             1*1000,         "Timeout"),
+SDATA (ASN_COUNTER64,   "txMsgs",           SDF_RD|SDF_PSTATS,  0,              "Messages transmitted"),
+SDATA (ASN_COUNTER64,   "rxMsgs",           SDF_RD|SDF_RSTATS,  0,              "Messages receiveds"),
 
-SDATA (ASN_COUNTER64,   "txMsgsec",         SDF_RD|SDF_RSTATS,  0,          "Messages by second"),
-SDATA (ASN_COUNTER64,   "rxMsgsec",         SDF_RD|SDF_RSTATS,  0,          "Messages by second"),
-SDATA (ASN_COUNTER64,   "maxtxMsgsec",      SDF_WR|SDF_RSTATS,  0,          "Max Tx Messages by second"),
-SDATA (ASN_COUNTER64,   "maxrxMsgsec",      SDF_WR|SDF_RSTATS,  0,          "Max Rx Messages by second"),
-
-SDATA (ASN_INTEGER,     "timeout",          SDF_RD,             1*1000,     "Timeout"),
+SDATA (ASN_COUNTER64,   "txMsgsec",         SDF_RD|SDF_RSTATS,  0,              "Messages by second"),
+SDATA (ASN_COUNTER64,   "rxMsgsec",         SDF_RD|SDF_RSTATS,  0,              "Messages by second"),
+SDATA (ASN_COUNTER64,   "maxtxMsgsec",      SDF_WR|SDF_RSTATS|SDF_AUTHZ_W, 0,   "Max Tx Messages by second"),
+SDATA (ASN_COUNTER64,   "maxrxMsgsec",      SDF_WR|SDF_RSTATS|SDF_AUTHZ_W, 0,   "Max Rx Messages by second"),
 SDATA (ASN_POINTER,     "user_data",        0,                  0,          "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                  0,          "more user data"),
 SDATA (ASN_POINTER,     "subscriber",       0,                  0,          "subscriber of output-events. Not a child gobj."),
@@ -107,18 +106,17 @@ SDATA_END()
  *              Private data
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
-    hgobj timer;
     int32_t timeout;
-
-    hgobj gobj_tranger;
-    hgobj treedb_authz;
-    json_t *tranger;
-    json_t *users_accesses;
-
+    hgobj timer;
     uint64_t *ptxMsgs;
     uint64_t *prxMsgs;
     uint64_t txMsgsec;
     uint64_t rxMsgsec;
+
+    hgobj gobj_tranger;
+    hgobj gobj_treedb;
+    json_t *tranger;
+
 } PRIVATE_DATA;
 
 
@@ -143,13 +141,12 @@ PRIVATE void mt_create(hgobj gobj)
     /*
      *  Chequea schema fichador, exit si falla.
      */
-    json_t *jn_treedb_schema_authzs;
-    jn_treedb_schema_authzs = legalstring2json(treedb_schema_authzs, TRUE);
-    if(!jn_treedb_schema_authzs) {
+    json_t *jn_treedb_schema = legalstring2json(treedb_schema_authzs, TRUE);
+    if(!jn_treedb_schema) {
         exit(-1);
     }
 
-    //priv->timer = gobj_create(gobj_name(gobj), GCLASS_TIMER, 0, gobj);
+    priv->timer = gobj_create(gobj_name(gobj), GCLASS_TIMER, 0, gobj);
     priv->ptxMsgs = gobj_danger_attr_ptr(gobj, "txMsgs");
     priv->prxMsgs = gobj_danger_attr_ptr(gobj, "rxMsgs");
 
@@ -180,18 +177,19 @@ PRIVATE void mt_create(hgobj gobj)
      *  Create Treedb
      *----------------------*/
     const char *treedb_name = kw_get_str(
-        jn_treedb_schema_authzs,
+        jn_treedb_schema,
         "id",
         "authzs",
         KW_REQUIRED
     );
-    json_t *kw_resource = json_pack("{s:s, s:o, s:i}",
+    json_t *kw_resource = json_pack("{s:I, s:s, s:o, s:i}",
+        "tranger", (json_int_t)(size_t)priv->tranger,
         "treedb_name", treedb_name,
-        "treedb_schema", jn_treedb_schema_authzs,
+        "treedb_schema", jn_treedb_schema,
         "exit_on_error", LOG_OPT_EXIT_ZERO
     );
 
-    priv->treedb_authz = gobj_create_service(
+    priv->gobj_treedb = gobj_create_service(
         treedb_name,
         GCLASS_NODE,
         kw_resource,
@@ -236,10 +234,20 @@ PRIVATE void mt_destroy(hgobj gobj)
  ***************************************************************************/
 PRIVATE int mt_start(hgobj gobj)
 {
-    //PRIVATE_DATA *priv = gobj_priv_data(gobj);
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    //gobj_start(priv->timer);
-    //set_timeout_periodic(priv->timer, priv->timeout);
+    gobj_start(priv->gobj_tranger);
+    priv->tranger = gobj_read_pointer_attr(priv->gobj_tranger, "tranger");
+
+    gobj_write_pointer_attr(priv->gobj_treedb, "tranger", priv->tranger);
+    gobj_start(priv->gobj_treedb);
+
+    /*
+     *  Periodic timer for tasks
+     */
+    gobj_start(priv->timer);
+    set_timeout_periodic(priv->timer, priv->timeout); // La verdadera
+
     return 0;
 }
 
@@ -250,8 +258,14 @@ PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    //clear_timeout(priv->timer);
-    //gobj_stop(priv->timer);
+    clear_timeout(priv->timer);
+    gobj_stop(priv->timer);
+
+    gobj_stop(priv->gobj_treedb);
+    gobj_stop(priv->gobj_tranger);
+
+    priv->tranger = 0;
+
     return 0;
 }
 

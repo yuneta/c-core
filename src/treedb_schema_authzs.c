@@ -3,44 +3,47 @@
 /*
  *
     ()  str hook    (1 child)
-    {}  dict hook   (n unique childs)
+    {}  dict hook   (N unique childs)
     []  list hook   (n not-unique childs)
     (↖) 1 fkey      (1 parent)
     [↖] n fkeys     (n parents)
-    {↖} n fkeys     (n parents) TODO existe?
+    {↖} n fkeys     (N parents) TODO existe?
 
 
 
                         roles
             ┌───────────────────────────┐
             │                           │
-            │                'roles' {} │ ◀─┐
+            │                  roles {} │ ◀─┐N
             │                           │   │
-            │      'parent_role_id' (↖) │ ──┘
+            │        parent_role_id (↖) │ ──┘ 1
+            │                           │
+            │ description               │
+            │ disabled                  │
             │                           │
             │                           │
-            │                'users' {} │ ◀─────┐
-            │                           │       │
-            │                           │       │
-            │       'authorizations' {} │ ◀─┐   │
-            │                           │   │   │
-            └───────────────────────────┘   │   │
-                                            │   │
-                                            │   │
-                    authorizations          │   │
-            ┌───────────────────────────┐   │   │
-            │                           │   │   │
-            │             'role_id' [↖] │ ──┘   │
-            │                           │       │
-            └───────────────────────────┘       │
-                                                │
-                                                │
-                        users                   │
-            ┌───────────────────────────┐       │
-            │                           │       │
-            │             'role_id' [↖] │ ──────┘
+            │         authorizations {} │ ◀─────────┐N
+            │                           │           │
+            │                  users {} │ ◀─┐N      │
+            │                           │   │       │
+            └───────────────────────────┘   │       │
+                                            │       │
+                                            │       │
+                        users               │       │
+            ┌───────────────────────────┐   │       │
+            │                           │   │       │
+            │               role_id [↖] │ ──┘n      │
+            │                           │           │
+            └───────────────────────────┘           │
+                                                    │
+                                                    │
+                    authorizations                  │
+            ┌───────────────────────────┐           │
+            │                           │           │
+            │               role_id [↖] │ ──────────┘ n
             │                           │
             └───────────────────────────┘
+
 
 
 
@@ -67,6 +70,23 @@ static char treedb_schema_authzs[]= "\
                         'required'                                  \n\
                     ]                                               \n\
                 },                                                  \n\
+                'roles': {                                          \n\
+                    'header': 'Roles',                              \n\
+                    'fillspace': 10,                                \n\
+                    'type': 'dict',                                 \n\
+                    'flag': ['hook'],                               \n\
+                    'hook': {                                       \n\
+                        'roles': 'parent_role_id'                   \n\
+                    }                                               \n\
+                },                                                  \n\
+                'parent_role_id': {                                 \n\
+                    'header': 'Role Parent',                        \n\
+                    'fillspace': 10,                                \n\
+                    'type': 'string',                               \n\
+                    'flag': [                                       \n\
+                        'fkey'                                      \n\
+                    ]                                               \n\
+                },                                                  \n\
                 'description': {                                    \n\
                     'header': 'Description',                        \n\
                     'fillspace': 10,                                \n\
@@ -91,7 +111,7 @@ static char treedb_schema_authzs[]= "\
                     'type': 'dict',                                 \n\
                     'flag': ['hook'],                               \n\
                     'hook': {                                       \n\
-                        'authorizations': 'id'                      \n\
+                        'authorizations': 'role_id'                 \n\
                     }                                               \n\
                 },                                                  \n\
                 'users': {                                          \n\
@@ -100,24 +120,41 @@ static char treedb_schema_authzs[]= "\
                     'type': 'dict',                                 \n\
                     'flag': ['hook'],                               \n\
                     'hook': {                                       \n\
-                        'users': 'id'                               \n\
+                        'users': 'role_id'                          \n\
                     }                                               \n\
-                },                                                  \n\
-                'roles': {                                          \n\
-                    'header': 'Roles',                              \n\
-                    'fillspace': 10,                                \n\
-                    'type': 'dict',                                 \n\
-                    'flag': ['hook'],                               \n\
-                    'hook': {                                       \n\
-                        'roles': 'parent_role_id'                   \n\
-                    }                                               \n\
-                },                                                  \n\
-                'parent_role_id': {                                 \n\
-                    'header': 'Role Parent',                        \n\
+                }                                                   \n\
+            }                                                       \n\
+        },                                                          \n\
+        {                                                           \n\
+            'topic_name': 'users',                                  \n\
+            'pkey': 'id',                                           \n\
+            'system_flag': 'sf_string_key',                         \n\
+            'topic_version': '1',                                   \n\
+            'cols': {                                               \n\
+                'id': {                                             \n\
+                    'header': 'User',                               \n\
                     'fillspace': 10,                                \n\
                     'type': 'string',                               \n\
                     'flag': [                                       \n\
+                        'persistent',                               \n\
+                        'required'                                  \n\
+                    ]                                               \n\
+                },                                                  \n\
+                'role_id': {                                        \n\
+                    'header': 'Role',                               \n\
+                    'fillspace': 10,                                \n\
+                    'type': 'array',                                \n\
+                    'flag': [                                       \n\
                         'fkey'                                      \n\
+                    ]                                               \n\
+                },                                                  \n\
+                'system_user': {                                    \n\
+                    'header': 'System User',                        \n\
+                    'fillspace': 7,                                 \n\
+                    'type': 'boolean',                              \n\
+                    'flag': [                                       \n\
+                        'persistent',                               \n\
+                        'required'                                  \n\
                     ]                                               \n\
                 }                                                   \n\
             }                                                       \n\
@@ -137,45 +174,18 @@ static char treedb_schema_authzs[]= "\
                         'required'                                  \n\
                     ]                                               \n\
                 },                                                  \n\
-                'description': {                                    \n\
-                    'header': 'Description',                        \n\
+                'role_id': {                                        \n\
+                    'header': 'Role',                               \n\
                     'fillspace': 10,                                \n\
-                    'type': 'string',                               \n\
+                    'type': 'array',                                \n\
                     'flag': [                                       \n\
-                        'persistent',                               \n\
-                        'required'                                  \n\
-                    ]                                               \n\
-                }                                                   \n\
-            }                                                       \n\
-        },                                                          \n\
-        {                                                           \n\
-            'topic_name': 'users',                                  \n\
-            'pkey': 'id',                                           \n\
-            'system_flag': 'sf_string_key',                         \n\
-            'topic_version': '1',                                   \n\
-            'cols': {                                               \n\
-                'id': {                                             \n\
-                    'header': 'User',                               \n\
-                    'fillspace': 10,                                \n\
-                    'type': 'string',                               \n\
-                    'flag': [                                       \n\
-                        'persistent',                               \n\
-                        'required'                                  \n\
+                        'fkey'                                      \n\
                     ]                                               \n\
                 },                                                  \n\
                 'description': {                                    \n\
                     'header': 'Description',                        \n\
                     'fillspace': 10,                                \n\
                     'type': 'string',                               \n\
-                    'flag': [                                       \n\
-                        'persistent',                               \n\
-                        'required'                                  \n\
-                    ]                                               \n\
-                },                                                  \n\
-                'system_user': {                                    \n\
-                    'header': 'System User',                        \n\
-                    'fillspace': 7,                                 \n\
-                    'type': 'boolean',                              \n\
                     'flag': [                                       \n\
                         'persistent',                               \n\
                         'required'                                  \n\
