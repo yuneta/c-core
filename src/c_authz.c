@@ -148,7 +148,6 @@ PRIVATE void mt_create(hgobj gobj)
     if(!jn_treedb_schema_authzs) {
         exit(-1);
     }
-    json_decref(jn_treedb_schema_authzs);
 
     //priv->timer = gobj_create(gobj_name(gobj), GCLASS_TIMER, 0, gobj);
     priv->ptxMsgs = gobj_danger_attr_ptr(gobj, "txMsgs");
@@ -165,11 +164,10 @@ PRIVATE void mt_create(hgobj gobj)
     );
     char path[PATH_MAX];
     yuneta_store_dir(path, sizeof(path), "authzs", subpath, TRUE);
-    json_t *kw_tranger = json_pack("{s:s, s:s, s:b, s:i}",
+    json_t *kw_tranger = json_pack("{s:s, s:s, s:b}",
         "path", path,
         "filename_mask", "%Y",
-        "master", 1,
-        "on_critical_error", (int)(LOG_OPT_EXIT_ZERO)
+        "master", 1
     );
     priv->gobj_tranger = gobj_create_service(
         "tranger_authz",
@@ -181,24 +179,24 @@ PRIVATE void mt_create(hgobj gobj)
     /*----------------------*
      *  Create Treedb
      *----------------------*/
-//     const char *treedb_name = kw_get_str(
-//         jn_schema_gest_controlcenter,
-//         "id",
-//         "gest_controlcenter",
-//         KW_REQUIRED
-//     );
-//     json_t *kw_resource = json_pack("{s:s, s:o, s:i}",
-//         "treedb_name", treedb_name,
-//         "treedb_schema", jn_schema_gest_controlcenter,
-//         "exit_on_error", LOG_OPT_EXIT_ZERO
-//     );
-//
-//     priv->treedb_gest = gobj_create_service(
-//         treedb_name,
-//         GCLASS_NODE,
-//         kw_resource,
-//         gobj
-//     );
+    const char *treedb_name = kw_get_str(
+        jn_treedb_schema_authzs,
+        "id",
+        "authzs",
+        KW_REQUIRED
+    );
+    json_t *kw_resource = json_pack("{s:s, s:o, s:i}",
+        "treedb_name", treedb_name,
+        "treedb_schema", jn_treedb_schema_authzs,
+        "exit_on_error", LOG_OPT_EXIT_ZERO
+    );
+
+    priv->treedb_authz = gobj_create_service(
+        treedb_name,
+        GCLASS_NODE,
+        kw_resource,
+        gobj
+    );
 
     /*
      *  SERVICE subscription model
