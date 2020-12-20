@@ -51,8 +51,6 @@ PUBLIC int yuneta_setup(
     json_function_t global_command_parser,
     json_function_t global_stats_parser,
     authz_checker_fn global_authz_checker,
-    authz_allow_fn global_authz_allow,
-    authz_deny_fn global_authz_deny,
     authzs_fn global_authzs_list
 );
 

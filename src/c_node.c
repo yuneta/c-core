@@ -483,6 +483,19 @@ PRIVATE int mt_save_node(
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
+PRIVATE size_t mt_topic_size(
+    hgobj gobj,
+    const char *topic_name
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return treedb_topic_size(priv->tranger, priv->treedb_name, topic_name);
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
 PRIVATE json_t *mt_update_node( // Return is NOT YOURS
     hgobj gobj,
     const char *topic_name,
@@ -2324,8 +2337,8 @@ PRIVATE GCLASS _gclass = {
         0, //mt_subscription_deleted,
         0, //mt_child_added,
         0, //mt_child_removed,
-        0,
-        0, //mt_command,
+        0, //mt_stats
+        0, //mt_command_parser,
         0, //mt_inject_event,
         0, //mt_create_resource,
         0, //mt_list_resource,
@@ -2343,8 +2356,8 @@ PRIVATE GCLASS _gclass = {
         mt_trace_on,
         mt_trace_off,
         0, //mt_gobj_created,
-        0, //mt_authz_allow,
-        0, //mt_authz_deny,
+        0, //mt_future33,
+        0, //mt_future34,
         0, //mt_publish_event,
         0, //mt_publication_pre_filter,
         0, //mt_publication_filter,
@@ -2371,7 +2384,7 @@ PRIVATE GCLASS _gclass = {
         mt_node_childs,
         mt_node_instances,
         mt_save_node,
-        0, //mt_future61,
+        mt_topic_size,
         0, //mt_future62,
         0, //mt_future63,
         0, //mt_future64

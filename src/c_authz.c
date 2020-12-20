@@ -57,8 +57,7 @@ SDATA_END()
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag----------------default---------description---------- */
-SDATA (ASN_JSON,        "initial_load",     SDF_RD,             0,          "Initial data for treedb"),
-
+SDATA (ASN_JSON,        "initial_load",     SDF_RD,             0,              "Initial data for treedb"),
 SDATA (ASN_INTEGER,     "timeout",          SDF_RD,             1*1000,         "Timeout"),
 SDATA (ASN_COUNTER64,   "txMsgs",           SDF_RD|SDF_PSTATS,  0,              "Messages transmitted"),
 SDATA (ASN_COUNTER64,   "rxMsgs",           SDF_RD|SDF_RSTATS,  0,              "Messages receiveds"),
@@ -241,6 +240,16 @@ PRIVATE int mt_start(hgobj gobj)
 
     gobj_write_pointer_attr(priv->gobj_treedb, "tranger", priv->tranger);
     gobj_start(priv->gobj_treedb);
+
+    if(gobj_topic_size(priv->gobj_treedb, "roles")==0 &&
+        gobj_topic_size(priv->gobj_treedb, "users")==0 &&
+        gobj_topic_size(priv->gobj_treedb, "authorizations")==0
+    ) {
+        /*------------------------------------*
+         *  Empty treedb? initialize treedb
+         *-----------------------------------*/
+//         json_t *kw_user = json_pack(
+    }
 
     /*
      *  Periodic timer for tasks
@@ -433,8 +442,8 @@ PRIVATE GCLASS _gclass = {
         0, //mt_trace_on,
         0, //mt_trace_off,
         0, //mt_gobj_created,
-        0, //mt_authz_allow,
-        0, //mt_authz_deny,
+        0, //mt_future33,
+        0, //mt_future34,
         0, //mt_publish_event,
         0, //mt_publication_pre_filter,
         0, //mt_publication_filter,
@@ -461,7 +470,7 @@ PRIVATE GCLASS _gclass = {
         0, //mt_node_childs,
         0, //mt_node_instances,
         0, //mt_save_node,
-        0, //mt_future61,
+        0, //mt_topic_size,
         0, //mt_future62,
         0, //mt_future63,
         0, //mt_future64
@@ -486,26 +495,9 @@ PUBLIC GCLASS *gclass_authz(void)
 /***************************************************************************
    Check user authz
  ***************************************************************************/
-PUBLIC BOOL authz_checker(hgobj gobj, const char *level, json_t *kw, hgobj src)
+PUBLIC BOOL authz_checker(hgobj gobj, const char *authz, json_t *kw, hgobj src)
 {
     // TODO
     return TRUE;
 }
 
-/***************************************************************************
-   Set user authz allow
- ***************************************************************************/
-PUBLIC int authz_allow(hgobj gobj, const char *user, const char *level, json_t *kw)
-{
-    // TODO
-    return 0;
-}
-
-/***************************************************************************
-   Set user authz deny
- ***************************************************************************/
-PUBLIC int authz_deny(hgobj gobj, const char *user, const char *level, json_t *kw)
-{
-    // TODO
-    return 0;
-}

@@ -459,6 +459,23 @@ PRIVATE int mt_subscription_added(
     return 0; // return -1 unsubscribe this subs
 }
 
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE size_t mt_topic_size(
+    hgobj gobj,
+    const char *topic_name
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    json_t *topic = tranger_topic( // WARNING returned json IS NOT YOURS
+        priv->tranger,
+        topic_name
+    );
+    return tranger_topic_size(topic);
+}
+
 
 
 
@@ -1600,7 +1617,7 @@ PRIVATE GCLASS _gclass = {
         0, //mt_node_childs,
         0, //mt_node_instances,
         0, //mt_save_node,
-        0, //mt_future61,
+        mt_topic_size,
         0, //mt_future62,
         0, //mt_future63,
         0, //mt_future64

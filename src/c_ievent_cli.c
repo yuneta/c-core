@@ -1251,7 +1251,7 @@ PRIVATE GCLASS _gclass = {
         0, //mt_delete_child_resource_link
         0, //mt_get_resource
         0, //mt_authorization_parser,
-        0, //mt_authz_allow,
+        0, //mt_future33,
         0, //mt_list_childs,
         0, //mt_stats_updated,
         0, //mt_disable,
@@ -1259,8 +1259,8 @@ PRIVATE GCLASS _gclass = {
         0, //mt_trace_on,
         0, //mt_trace_off,
         0, //mt_gobj_created,
-        0, //mt_authz_allow,
-        0, //mt_authz_deny,
+        0, //mt_future33,
+        0, //mt_future34,
         0, //mt_publish_event,
         0, //mt_publication_pre_filter,
         0, //mt_publication_filter,
@@ -1287,7 +1287,7 @@ PRIVATE GCLASS _gclass = {
         0, //mt_node_childs,
         0, //mt_node_instances,
         0, //mt_save_node,
-        0, //mt_future61,
+        0, //mt_topic_size,
         0, //mt_future62,
         0, //mt_future63,
         0, //mt_future64

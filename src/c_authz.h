@@ -9,7 +9,9 @@
  ****************************************************************************/
 #pragma once
 
-#include <yuneta.h>
+#include <ginsfsm.h>
+#include "c_tranger.h"
+#include "c_node.h"
 
 #ifdef __cplusplus
 extern "C"{
@@ -26,9 +28,7 @@ extern "C"{
  ***************************************************************/
 PUBLIC GCLASS *gclass_authz(void);
 
-PUBLIC BOOL authz_checker(hgobj gobj, const char *level, json_t *kw, hgobj src);
-PUBLIC int authz_allow(hgobj gobj, const char *user, const char *level, json_t *kw);
-PUBLIC int authz_deny(hgobj gobj, const char *user, const char *level, json_t *kw);
+PUBLIC BOOL authz_checker(hgobj gobj, const char *authz, json_t *kw, hgobj src);
 
 
 #ifdef __cplusplus

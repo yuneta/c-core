@@ -170,6 +170,7 @@ static char treedb_schema_authzs[]= "\
                     'fillspace': 10,                                \n\
                     'type': 'string',                               \n\
                     'flag': [                                       \n\
+                        'uuid',                                     \n\
                         'persistent',                               \n\
                         'required'                                  \n\
                     ]                                               \n\
@@ -182,13 +183,37 @@ static char treedb_schema_authzs[]= "\
                         'fkey'                                      \n\
                     ]                                               \n\
                 },                                                  \n\
-                'description': {                                    \n\
-                    'header': 'Description',                        \n\
+                'context': {                                        \n\
+                    'header': 'Context',                            \n\
                     'fillspace': 10,                                \n\
                     'type': 'string',                               \n\
                     'flag': [                                       \n\
                         'persistent',                               \n\
                         'required'                                  \n\
+                    ]                                               \n\
+                },                                                  \n\
+                'allow': {                                          \n\
+                    'header': 'Allow',                              \n\
+                    'fillspace': 4,                                 \n\
+                    'type': 'boolean',                              \n\
+                    'flag': [                                       \n\
+                        'persistent'                                \n\
+                    ]                                               \n\
+                },                                                  \n\
+                'deny': {                                           \n\
+                    'header': 'Deny',                               \n\
+                    'fillspace': 4,                                 \n\
+                    'type': 'boolean',                              \n\
+                    'flag': [                                       \n\
+                        'persistent'                                \n\
+                    ]                                               \n\
+                },                                                  \n\
+                'constraints': {                                    \n\
+                    'header': 'Constraints',                        \n\
+                    'fillspace': 10,                                \n\
+                    'type': 'json',                                 \n\
+                    'flag': [                                       \n\
+                        'persistent'                                \n\
                     ]                                               \n\
                 }                                                   \n\
             }                                                       \n\
