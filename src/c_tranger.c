@@ -1333,8 +1333,13 @@ PRIVATE int ac_tranger_add_record(hgobj gobj, const char *event, json_t *kw, hgo
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    (*priv->prxMsgs)++;
-    priv->rxMsgsec++;
+    /*
+     *  Get parameters
+     */
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    uint64_t __t__ = kw_get_int(kw, "__t__", 0, 0);
+    uint32_t user_flag = kw_get_int(kw, "user_flag", 0, 0);
+    json_t *record = kw_get_dict(kw, "record", 0, 0);
 
     BOOL forbidden = FALSE;
     forbidden |= !gobj_user_has_authz(
@@ -1409,14 +1414,6 @@ PRIVATE int ac_tranger_add_record(hgobj gobj, const char *event, json_t *kw, hgo
            result = -403;
            break;
         }
-
-        /*
-         *  Get parameters
-         */
-        const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-        uint64_t __t__ = kw_get_int(kw, "__t__", 0, 0);
-        uint32_t user_flag = kw_get_int(kw, "user_flag", 0, 0);
-        json_t *record = kw_get_dict(kw, "record", 0, 0);
 
         /*
          *  Check parameters
@@ -1512,14 +1509,14 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
-    {"EV_TRANGER_ADD_RECORD",       EVF_PUBLIC_EVENT,   EV_AUTHZ_INJECT,    0},
+    {"EV_TRANGER_ADD_RECORD",   EVF_PUBLIC_EVENT,   EV_AUTHZ_INJECT,    0},
     // bottom input
     {"EV_TIMEOUT",  0,  0,  0},
     {"EV_STOPPED",  0,  0,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const EVENT output_events[] = {
-    {"EV_TRANGER_RECORD_ADDED",     EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,   EV_AUTHZ_SUBSCRIBE, 0},
+    {"EV_TRANGER_RECORD_ADDED", EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,  EV_AUTHZ_SUBSCRIBE, 0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const char *state_names[] = {

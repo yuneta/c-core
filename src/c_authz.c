@@ -248,7 +248,26 @@ PRIVATE int mt_start(hgobj gobj)
         /*------------------------------------*
          *  Empty treedb? initialize treedb
          *-----------------------------------*/
-//         json_t *kw_user = json_pack(
+        json_t *initial_load = gobj_read_json_attr(gobj, "initial_load");
+        const char *topic_name;
+        json_t *topic_records;
+        json_object_foreach(initial_load, topic_name, topic_records) {
+            int idx; json_t *record;
+            json_array_foreach(topic_records, idx, record) {
+                json_t *kw_update_node = json_pack("{s:s, s:O, s:{s:b}}",
+                    "topic_name", topic_name,
+                    "record", record,
+                    "options",
+                        "create", 1
+                );
+                gobj_send_event(
+                    priv->gobj_treedb,
+                    "EV_TREEDB_UPDATE_NODE",
+                    kw_update_node,
+                    gobj
+                );
+            }
+        }
     }
 
     /*
@@ -498,6 +517,7 @@ PUBLIC GCLASS *gclass_authz(void)
 PUBLIC BOOL authz_checker(hgobj gobj, const char *authz, json_t *kw, hgobj src)
 {
     // TODO
+    KW_DECREF(kw);
     return TRUE;
 }
 

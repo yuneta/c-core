@@ -89,7 +89,7 @@ SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"
 SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Node content in base64"),
 SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Node content in string"),
 SDATAPM (ASN_JSON,      "record",       0,              0,          "Node content in json"),
-SDATAPM (ASN_OCTET_STR, "options",      0,              0,          "Options: \"create\", \"clean\""),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: \"create\", \"clean\""),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_delete_node[] = {
@@ -207,32 +207,32 @@ PRIVATE sdata_desc_t command_table[] = {
 SDATACM (ASN_SCHEMA,    "help",             a_help,     pm_help,    cmd_help,       "Command's help"),
 SDATACM (ASN_SCHEMA,    "authzs",           0,          pm_authzs,  cmd_authzs,     "Authorization's help"),
 
-/*-CMD---type-----------name------------al--items-----------json_fn-------------description--*/
-SDATACM (ASN_SCHEMA,    "treedbs",      0,  0,              cmd_treedbs,        "List treedb's"),
-SDATACM (ASN_SCHEMA,    "topics",       0,  pm_topics,      cmd_topics,         "List topics"),
-SDATACM (ASN_SCHEMA,    "create-node",  a_create, pm_create_node, cmd_create_node, "Create node"),
-SDATACM (ASN_SCHEMA,    "update-node",  a_update, pm_update_node, cmd_update_node, "Update node"),
-SDATACM (ASN_SCHEMA,    "delete-node",  a_delete, pm_delete_node, cmd_delete_node, "Delete node"),
-SDATACM (ASN_SCHEMA,    "nodes",        a_nodes, pm_list_nodes, cmd_list_nodes,  "List nodes"),
-SDATACM (ASN_SCHEMA,    "node",         a_node, pm_get_node, cmd_get_node,       "Get node by id"),
-SDATACM (ASN_SCHEMA,    "instances",    0,  pm_node_instances,cmd_node_instances,"List node's instances"),
-SDATACM (ASN_SCHEMA,    "link-nodes",   0,  pm_link_nodes,  cmd_link_nodes,     "Link nodes"),
-SDATACM (ASN_SCHEMA,    "unlink-nodes", 0,  pm_link_nodes,  cmd_unlink_nodes,   "Unlink nodes"),
-SDATACM (ASN_SCHEMA,    "hooks",        0,  pm_hooks,       cmd_hooks,          "Hooks of node"),
-SDATACM (ASN_SCHEMA,    "links",        0,  pm_links,       cmd_links,          "Links of node"),
-SDATACM (ASN_SCHEMA,    "parents",      0,  pm_parents,     cmd_parents,        "Parents of node"),
-SDATACM (ASN_SCHEMA,    "childs",       0,  pm_childs,      cmd_childs,         "Childs of node"),
-SDATACM (ASN_SCHEMA,    "touch-instance",0, pm_node_instances,cmd_touch_instance,"Touch (save) instance to force to be the last instance"),
-SDATACM (ASN_SCHEMA,    "snaps",        0,  0,              cmd_list_snaps,     "List snaps"),
-SDATACM (ASN_SCHEMA,    "snap-content", 0,  pm_snap_content,cmd_snap_content,   "Show snap content"),
-SDATACM (ASN_SCHEMA,    "shoot-snap",   0,  pm_shoot_snap,  cmd_shoot_snap,     "Shoot snap"),
-SDATACM (ASN_SCHEMA,    "activate-snap",0,  pm_activate_snap,cmd_activate_snap, "Activate snap"),
-SDATACM (ASN_SCHEMA,    "deactivate-snap",0,0,              cmd_deactivate_snap,"De-Activate snap"),
-SDATACM (ASN_SCHEMA,    "pkey2s",       0,  pm_node_pkey2s, cmd_node_pkey2s,    "List node's pkey2"),
-SDATACM (ASN_SCHEMA,    "desc",         a_schema, pm_desc,  cmd_desc,           "Schema of topic"),
-SDATACM (ASN_SCHEMA,    "descs",        a_schemas, 0,       cmd_desc,           "Schema of topics"),
-SDATACM (ASN_SCHEMA,    "print-tranger",0,  pm_print_tranger, cmd_print_tranger,  "Print tranger"),
-SDATACM (ASN_SCHEMA,    "trace",        0,  pm_trace,       cmd_trace,          "Set trace"),
+/*-CMD2---type-----------name------------flag-----------ali-items-----------json_fn-------------description--*/
+SDATACM2 (ASN_SCHEMA,    "treedbs",      SDF_AUTHZ_X,   0,  0,              cmd_treedbs,        "List treedb's"),
+SDATACM2 (ASN_SCHEMA,    "topics",       SDF_AUTHZ_X,   0,  pm_topics,      cmd_topics,         "List topics"),
+SDATACM2 (ASN_SCHEMA,    "create-node",  SDF_AUTHZ_X,   a_create, pm_create_node, cmd_create_node, "Create node"),
+SDATACM2 (ASN_SCHEMA,    "update-node",  SDF_AUTHZ_X,   a_update, pm_update_node, cmd_update_node, "Update node"),
+SDATACM2 (ASN_SCHEMA,    "delete-node",  SDF_AUTHZ_X,   a_delete, pm_delete_node, cmd_delete_node, "Delete node"),
+SDATACM2 (ASN_SCHEMA,    "nodes",        SDF_AUTHZ_X,   a_nodes, pm_list_nodes, cmd_list_nodes,  "List nodes"),
+SDATACM2 (ASN_SCHEMA,    "node",         SDF_AUTHZ_X,   a_node, pm_get_node, cmd_get_node,       "Get node by id"),
+SDATACM2 (ASN_SCHEMA,    "instances",    SDF_AUTHZ_X,   0,  pm_node_instances,cmd_node_instances,"List node's instances"),
+SDATACM2 (ASN_SCHEMA,    "link-nodes",   SDF_AUTHZ_X,   0,  pm_link_nodes,  cmd_link_nodes,     "Link nodes"),
+SDATACM2 (ASN_SCHEMA,    "unlink-nodes", SDF_AUTHZ_X,   0,  pm_link_nodes,  cmd_unlink_nodes,   "Unlink nodes"),
+SDATACM2 (ASN_SCHEMA,    "hooks",        SDF_AUTHZ_X,   0,  pm_hooks,       cmd_hooks,          "Hooks of node"),
+SDATACM2 (ASN_SCHEMA,    "links",        SDF_AUTHZ_X,   0,  pm_links,       cmd_links,          "Links of node"),
+SDATACM2 (ASN_SCHEMA,    "parents",      SDF_AUTHZ_X,   0,  pm_parents,     cmd_parents,        "Parents of node"),
+SDATACM2 (ASN_SCHEMA,    "childs",       SDF_AUTHZ_X,   0,  pm_childs,      cmd_childs,         "Childs of node"),
+SDATACM2 (ASN_SCHEMA,    "touch-instance",SDF_AUTHZ_X,  0,  pm_node_instances,cmd_touch_instance,"Touch (save) instance to force to be the last instance"),
+SDATACM2 (ASN_SCHEMA,    "snaps",        SDF_AUTHZ_X,   0,  0,              cmd_list_snaps,     "List snaps"),
+SDATACM2 (ASN_SCHEMA,    "snap-content", SDF_AUTHZ_X,   0,  pm_snap_content,cmd_snap_content,   "Show snap content"),
+SDATACM2 (ASN_SCHEMA,    "shoot-snap",   SDF_AUTHZ_X,   0,  pm_shoot_snap,  cmd_shoot_snap,     "Shoot snap"),
+SDATACM2 (ASN_SCHEMA,    "activate-snap",SDF_AUTHZ_X,   0,  pm_activate_snap,cmd_activate_snap, "Activate snap"),
+SDATACM2 (ASN_SCHEMA,    "deactivate-snap",SDF_AUTHZ_X, 0,  0,              cmd_deactivate_snap,"De-Activate snap"),
+SDATACM2 (ASN_SCHEMA,    "pkey2s",       SDF_AUTHZ_X,   0,  pm_node_pkey2s, cmd_node_pkey2s,    "List node's pkey2"),
+SDATACM2 (ASN_SCHEMA,    "desc",         SDF_AUTHZ_X,   a_schema, pm_desc,  cmd_desc,           "Schema of topic"),
+SDATACM2 (ASN_SCHEMA,    "descs",        SDF_AUTHZ_X,   a_schemas, 0,       cmd_desc,           "Schema of topics"),
+SDATACM2 (ASN_SCHEMA,    "print-tranger",SDF_AUTHZ_X,   0,  pm_print_tranger, cmd_print_tranger,  "Print tranger"),
+SDATACM2 (ASN_SCHEMA,    "trace",        SDF_AUTHZ_X,   0,  pm_trace,       cmd_trace,          "Set trace"),
 SDATA_END()
 };
 
@@ -500,7 +500,7 @@ PRIVATE json_t *mt_update_node( // Return is NOT YOURS
     hgobj gobj,
     const char *topic_name,
     json_t *kw,    // owned
-    json_t *jn_options, // "create" ["permissive"], "clean"
+    json_t *jn_options, // owned "create" ["permissive"], "clean"
     hgobj src
 )
 {
@@ -2250,6 +2250,32 @@ PRIVATE int treedb_callback(
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE int ac_treedb_update_node(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    /*
+     *  Get parameters
+     */
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    json_t *record = kw_get_dict(kw, "record", 0, 0);
+    json_t *jn_options = kw_get_dict(kw, "options", 0, 0); // "create" ["permissive"], "clean"
+
+    treedb_update_node( // Return is NOT YOURS
+        priv->tranger,
+        priv->treedb_name,
+        topic_name,
+        json_incref(record),
+        json_incref(jn_options)
+    );
+
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -2273,21 +2299,19 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
     return 0;
 }
 
-
-
-
 /***************************************************************************
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
+    {"EV_TREEDB_UPDATE_NODE",   EVF_PUBLIC_EVENT,   EV_AUTHZ_INJECT,    0},
     // bottom input
     {"EV_TIMEOUT",              0,  0,  0},
     {"EV_STOPPED",              0,  0,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const EVENT output_events[] = {
-    {"EV_TREEDB_NODE_UPDATED",  EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,   0,  0},
-    {"EV_TREEDB_NODE_DELETED",  EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,   0,  0},
+    {"EV_TREEDB_NODE_UPDATED",  EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,  EV_AUTHZ_SUBSCRIBE,  0},
+    {"EV_TREEDB_NODE_DELETED",  EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,  EV_AUTHZ_SUBSCRIBE,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const char *state_names[] = {
@@ -2296,8 +2320,9 @@ PRIVATE const char *state_names[] = {
 };
 
 PRIVATE EV_ACTION ST_IDLE[] = {
-    {"EV_TIMEOUT",                  ac_timeout,                 0},
-    {"EV_STOPPED",                  0,                          0},
+    {"EV_TREEDB_UPDATE_NODE",   ac_treedb_update_node,      0},
+    {"EV_TIMEOUT",              ac_timeout,                 0},
+    {"EV_STOPPED",              0,                          0},
     {0,0,0}
 };
 

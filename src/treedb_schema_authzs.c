@@ -7,7 +7,6 @@
     []  list hook   (n not-unique childs)
     (↖) 1 fkey      (1 parent)
     [↖] n fkeys     (n parents)
-    {↖} n fkeys     (N parents) TODO existe?
 
 
 
@@ -211,7 +210,7 @@ static char treedb_schema_authzs[]= "\
                 'constraints': {                                    \n\
                     'header': 'Constraints',                        \n\
                     'fillspace': 10,                                \n\
-                    'type': 'json',                                 \n\
+                    'type': 'blob',                                 \n\
                     'flag': [                                       \n\
                         'persistent'                                \n\
                     ]                                               \n\
