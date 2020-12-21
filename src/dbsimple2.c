@@ -38,12 +38,13 @@ PRIVATE json_t *tranger = 0;
 PRIVATE json_t *persistent_attrs_list = 0;
 
 /***************************************************************************
- *
+   Setup simple db for persistent attrs
+   HACK Idempotent, return local-db tranger;
  ***************************************************************************/
-PUBLIC int dbattrs_startup(void)
+PUBLIC void *dbattrs_startup(void)
 {
     if(initialized) {
-        return 0;
+        return tranger;
     }
 
     /*------------------------------*
@@ -51,7 +52,7 @@ PUBLIC int dbattrs_startup(void)
      *------------------------------*/
     char path[PATH_MAX];
     if(!yuneta_realm_dir(path, sizeof(path), "local-db", TRUE)) {
-        return -1;
+        return 0;
     }
 
     json_t *jn_tranger = json_pack("{s:s, s:s, s:b, s:i}",
@@ -91,7 +92,7 @@ PUBLIC int dbattrs_startup(void)
         initialized = TRUE;
     }
 
-    return 0;
+    return tranger;
 }
 
 /***************************************************************************

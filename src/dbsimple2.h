@@ -19,8 +19,9 @@ extern "C"{
  **************************************************/
 /**rst**
    Setup simple db for persistent attrs
+   HACK Idempotent, return local-db tranger;
 **rst**/
-PUBLIC int dbattrs_startup(void);
+PUBLIC void *dbattrs_startup(void);
 PUBLIC void dbattrs_end(void);
 
 /**rst**
