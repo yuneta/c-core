@@ -2386,7 +2386,7 @@ PRIVATE GCLASS _gclass = {
         0, //mt_publish_event,
         0, //mt_publication_pre_filter,
         0, //mt_publication_filter,
-        0, //mt_future38,
+        0, //mt_authz_checker,
         0, //mt_authzs,
         mt_create_node,
         mt_update_node,
