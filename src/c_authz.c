@@ -7,6 +7,9 @@
  *          Copyright (c) 2020 Niyamaka.
  *          All Rights Reserved.
  ***********************************************************************/
+#include <unistd.h>
+#include <sys/types.h>
+#include <grp.h>
 #include <string.h>
 #include <stdio.h>
 #include "c_authz.h"
@@ -24,6 +27,12 @@
 /***************************************************************************
  *              Prototypes
  ***************************************************************************/
+PRIVATE json_t *identify_system_user(
+    hgobj gobj,
+    const char *username,
+    BOOL include_groups,
+    BOOL verbose
+);
 
 /***************************************************************************
  *          Data: config, public data, private data
@@ -276,6 +285,14 @@ PRIVATE int mt_start(hgobj gobj)
     gobj_start(priv->timer);
     set_timeout_periodic(priv->timer, priv->timeout); // La verdadera
 
+
+    struct passwd *pw = getpwuid(getuid()); // TODO get curr id
+    if(pw) {
+        json_t *user = identify_system_user(gobj, pw->pw_name, TRUE, FALSE);
+        log_debug_json(0, user, "FOUND %s?", pw->pw_name);
+    }
+
+
     return 0;
 }
 
@@ -338,6 +355,58 @@ PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
             /***************************
              *      Local Methods
              ***************************/
+
+
+
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *identify_system_user(
+    hgobj gobj,
+    const char *username,
+    BOOL include_groups,
+    BOOL verbose
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    json_t *user = gobj_get_node(priv->gobj_treedb, "users", username, 0, gobj);
+    if(user) {
+        return user;
+    }
+
+    if(include_groups) {
+        /*-------------------------------*
+         *  HACK user's group is valid
+         *-------------------------------*/
+        gid_t groups[10];
+        int ngroups = sizeof(groups)/sizeof(groups[0]);
+
+        getgrouplist(username, 0, groups, &ngroups);
+        for(int i=0; i<ngroups; i++) {
+            struct group *gr = getgrgid(groups[i]);
+            if(gr) {
+                user = gobj_get_node(priv->gobj_treedb, "users", gr->gr_name, 0, gobj);
+                if(user) {
+                    return user;
+                }
+            }
+        }
+    }
+
+    if(verbose) {
+        log_warning(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INFO,
+            "msg",          "%s", "username not found in system",
+            "username",     "%s", username,
+            NULL
+        );
+    }
+    return 0; // username as user or group not found
+}
 
 
 
@@ -514,9 +583,22 @@ PUBLIC GCLASS *gclass_authz(void)
 /***************************************************************************
    Check user authz
  ***************************************************************************/
-PUBLIC BOOL authz_checker(hgobj gobj, const char *authz, json_t *kw, hgobj src)
+PUBLIC BOOL authz_checker(hgobj gobj_to_check, const char *authz, json_t *kw, hgobj src)
 {
+    hgobj gobj = gobj_find_gclass_service(GCLASS_AUTHZ_NAME, TRUE);
+    if(!gobj) {
+        /*
+         *  HACK if this function is called is because the authz system is configured in setup.
+         *  If the service is not found deny all.
+         */
+        return FALSE;
+    }
+
+    json_t *authzs_list = gobj_authzs(gobj_to_check, authz);
     // TODO
+print_json2("=====================>", authzs_list);
+
+    JSON_DECREF(authzs_list);
     KW_DECREF(kw);
     return TRUE;
 }

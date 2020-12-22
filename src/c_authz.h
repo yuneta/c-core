@@ -28,7 +28,7 @@ extern "C"{
  ***************************************************************/
 PUBLIC GCLASS *gclass_authz(void);
 
-PUBLIC BOOL authz_checker(hgobj gobj, const char *authz, json_t *kw, hgobj src);
+PUBLIC BOOL authz_checker(hgobj gobj_to_check, const char *authz, json_t *kw, hgobj src);
 
 
 #ifdef __cplusplus
