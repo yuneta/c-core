@@ -35,7 +35,6 @@ extern "C"{
 #include "c_resource.h"
 #include "c_ievent_srv.h"
 #include "c_ievent_cli.h"
-#include "c_authz.h"
 
 // #include "c_store.h"
 // #include "c_snmp.h"

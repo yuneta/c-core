@@ -48,9 +48,11 @@ SDATA (ASN_OCTET_STR,   "client_yuno_name",     SDF_RD, 0, "yuno name of connect
 SDATA (ASN_OCTET_STR,   "client_yuno_service",  SDF_RD, 0, "yuno service of connected client"),
 
 SDATA (ASN_OCTET_STR,   "this_service",         SDF_RD, 0, "simulated server service (Gate)"),
-SDATA (ASN_POINTER,     "gobj_service",         0, 0, "gate to real server service"),
+SDATA (ASN_POINTER,     "gobj_service",         0,      0, "gate to real server service"),
 
 SDATA (ASN_BOOLEAN,     "authenticated",        SDF_RD, 0, "True if entry was authenticated"),
+SDATA (ASN_JSON,        "jwt_payload",          SDF_RD, 0, "JWT payload"),
+SDATA (ASN_OCTET_STR,   "__username__",         SDF_RD, 0, "Username"),
 
 // TODO available_services for this gate
 // TODO available_services in this gate
@@ -470,8 +472,6 @@ PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
      *  Route (channel) open.
      *  Wait Identity card
      */
-    gobj_write_bool_attr(gobj, "authenticated", FALSE);
-
     set_timeout(priv->timer, gobj_read_uint32_attr(gobj, "timeout_idgot"));
 
     KW_DECREF(kw);
@@ -489,8 +489,6 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
      *  Clear timeout
      *---------------------------------------*/
     clear_timeout(priv->timer);
-
-    gobj_write_bool_attr(gobj, "authenticated", FALSE);
 
     /*
      *  Delete external subscriptions
@@ -510,13 +508,26 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
      */
     if(priv->inform_on_close) {
         priv->inform_on_close = FALSE;
-        json_t *kw_on_close = json_pack("{s:s, s:s}",
+        json_t *kw_on_close = json_pack("{s:s, s:s, s:s, s:s}",
             "client_yuno_name", gobj_read_str_attr(gobj, "client_yuno_name"),
-            "client_yuno_role", gobj_read_str_attr(gobj, "client_yuno_role")
+            "client_yuno_role", gobj_read_str_attr(gobj, "client_yuno_role"),
+            "client_yuno_service", gobj_read_str_attr(gobj, "client_yuno_service"),
+            "__username__", gobj_read_str_attr(gobj, "__username__")
         );
         json_object_update_missing(kw_on_close, kw);
         gobj_publish_event(gobj, "EV_ON_CLOSE", kw_on_close);
     }
+
+    /*----------------------------*
+     *      Reset "client data"
+     *----------------------------*/
+    gobj_write_bool_attr(gobj, "authenticated", FALSE);
+    gobj_write_str_attr(gobj, "client_yuno_role", "");
+    gobj_write_str_attr(gobj, "client_yuno_service", "");
+    gobj_write_str_attr(gobj, "client_yuno_name", "");
+    gobj_write_str_attr(gobj, "this_service", "");
+    gobj_write_pointer_attr(gobj, "gobj_service", 0);
+    gobj_write_str_attr(gobj, "__username__", "");
 
     KW_DECREF(kw);
     return 0;
@@ -534,6 +545,7 @@ PRIVATE int ac_timeout_wait_idGot(hgobj gobj, const char *event, json_t *kw, hgo
 }
 
 /***************************************************************************
+ *  remote ask
  *  Somebody wants our services.
  ***************************************************************************/
 PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj src)
@@ -666,54 +678,50 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
     /*-------------------------*
      *  Do authentication
      *-------------------------*/
-    gobj_write_bool_attr(gobj, "authenticated", FALSE);
-
-    // WARNING TODO if not a localhost connection the authentication must be required!
-    // See mt_authenticate of c_agent.c
+    // WARNING if not a localhost connection the authentication must be required!
+    // See mt_authenticate of c_authz.c
 
     KW_INCREF(kw);
-    json_t *webix_resp = gobj_authenticate(named_gobj, iev_dst_service, kw, gobj);
-    if(webix_resp) {
-        if(kw_get_int(webix_resp, "result", -1, 0)==0) {
-            gobj_write_bool_attr(gobj, "authenticated", TRUE);
-        } else {
-            log_error(0,
-                "gobj",         "%s", gobj_full_name(gobj),
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
-                "msg",          "%s", "Authentication rejected",
-                NULL
-            );
+    json_t *jn_resp = gobj_authenticate(named_gobj, kw, gobj);
+    if(kw_get_int(jn_resp, "result", -1, KW_REQUIRED)<0) {
+        log_warning(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
+            "msg",          "%s", "Authentication rejected",
+            NULL
+        );
 
-            /*
-             *      __ANSWER__ __MESSAGE__
-             */
-            JSON_INCREF(kw);
-            json_t *kw_answer = msg_iev_answer(
-                gobj,
-                kw,
-                webix_resp,
-                0
-            );
+        /*
+         *      __ANSWER__ __MESSAGE__
+         */
+        JSON_INCREF(kw);
+        json_t *kw_answer = msg_iev_answer(
+            gobj,
+            kw,
+            jn_resp,
+            0
+        );
 
-            send_static_iev(
-                gobj,
-                "EV_IDENTITY_CARD_ACK",
-                kw_answer,      // own
-                src
-            );
+        send_static_iev(
+            gobj,
+            "EV_IDENTITY_CARD_ACK",
+            kw_answer,      // own
+            src
+        );
 
-            KW_DECREF(kw);
-            return 0; // Don't return -1, don't drop connection, let send negative ack. Drop by timeout.
-        }
+        KW_DECREF(kw);
+        return 0; // Don't return -1, don't drop connection, let send negative ack. Drop by timeout.
     }
 
-    /*---------------------*
-     *  Gate authorized.
-     *---------------------*/
-    /*-----------------------------------------------------------*
-     *  Save client data. Set connection name if name is empty
-     *-----------------------------------------------------------*/
+    /*------------------------*
+     *  Gate authenticated
+     *------------------------*/
+    /*----------------------------------------------*
+     *      Save "client data"
+     *      Set connection name if name is empty
+     *----------------------------------------------*/
+    gobj_write_bool_attr(gobj, "authenticated", TRUE);
     gobj_write_str_attr(gobj, "client_yuno_role", iev_src_role);
     gobj_write_str_attr(gobj, "client_yuno_service", iev_src_service);
     if(empty_string(iev_src_yuno)) {
@@ -729,6 +737,7 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
 
     gobj_write_str_attr(gobj, "this_service", iev_dst_service);
     gobj_write_pointer_attr(gobj, "gobj_service", named_gobj);
+    gobj_write_str_attr(gobj, "__username__", kw_get_str(jn_resp, "username", "", 0));
 
     /*----------------------------------------------*
      *  Change to state SESSION,
@@ -743,7 +752,7 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
     json_t *kw_answer = msg_iev_answer(
         gobj,
         kw,
-        webix_resp,
+        jn_resp,
         0
     );
 
@@ -759,10 +768,12 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
      *-----------------------------------------------------------*/
     if(!priv->inform_on_close) {
         priv->inform_on_close = TRUE;
-        json_t *kw_on_open = json_pack("{s:s, s:s, s:O}",
+        json_t *kw_on_open = json_pack("{s:s, s:s, s:s, s:s, s:O}",
             "client_yuno_name", gobj_read_str_attr(gobj, "client_yuno_name"),
             "client_yuno_role", gobj_read_str_attr(gobj, "client_yuno_role"),
-            "identity_card", kw
+            "client_yuno_service", gobj_read_str_attr(gobj, "client_yuno_service"),
+            "__username__", gobj_read_str_attr(gobj, "__username__"),
+            "identity_card", kw // REQUIRED for agent!!
         );
         gobj_publish_event(gobj, "EV_ON_OPEN", kw_on_open);
     }
@@ -772,13 +783,12 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
 }
 
 /***************************************************************************
+ *  remote ask
  *  Somebody wants exit
  ***************************************************************************/
 PRIVATE int ac_goodbye(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     const char *cause = kw_get_str(kw, "cause", "", 0);
-
-    gobj_write_bool_attr(gobj, "authenticated", FALSE);
 
     uint32_t trace_level = gobj_trace_level(gobj);
     if((trace_level & TRACE_IDENTITY_CARD)) {
@@ -844,6 +854,13 @@ PRIVATE int ac_mt_stats(hgobj gobj, const char *event, json_t *kw, hgobj src)
             );
         }
     }
+
+    kw_set_subdict_value(
+        kw,
+        "__local__", "__username__",
+        json_string(gobj_read_str_attr(gobj, "__username__"))
+    );
+
     KW_INCREF(kw);
     json_t *webix = gobj_stats(
         service_gobj,
@@ -901,23 +918,26 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
     } else {
         service_gobj = gobj_find_service(service, FALSE);
         if(!service_gobj) {
-            service_gobj = gobj_find_gobj(service); // WARNING TODO agujero seguridad?
-            if(!service_gobj) {
-                return send_static_iev(gobj,
-                    "EV_MT_COMMAND_ANSWER",
-                    msg_iev_build_webix(
-                        gobj,
-                        -1,
-                        json_local_sprintf("Service '%s' not found.", service),
-                        0,
-                        0,
-                        kw
-                    ),
-                    src
-                );
-            }
+            return send_static_iev(gobj,
+                "EV_MT_COMMAND_ANSWER",
+                msg_iev_build_webix(
+                    gobj,
+                    -1,
+                    json_local_sprintf("Service '%s' not found.", service),
+                    0,
+                    0,
+                    kw
+                ),
+                src
+            );
         }
     }
+
+    kw_set_subdict_value(
+        kw,
+        "__local__", "__username__",
+        json_string(gobj_read_str_attr(gobj, "__username__"))
+    );
 
     KW_INCREF(kw);
     json_t *webix = gobj_command(
@@ -1124,6 +1144,48 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
         /*-----------------------------------*
          *  It's a external subscription
          *-----------------------------------*/
+
+        /*-------------------------------------------------*
+         *  Check AUTHZ
+         *-------------------------------------------------*/
+//         const EVENT *output_event_list = gobj_output_event_list(publisher);
+//         while(output_event_list->event) {
+//             if(output_event_list->authz & EV_AUTHZ_INJECT) {
+//                 const char *event = output_event_list->event?output_event_list->event:"";
+//                 /*
+//                 *  AUTHZ Required
+//                 */
+//                 json_t *kw_authz = json_pack("{s:s}",
+//                     "event", event
+//                 );
+//                 if(kw) {
+//                     json_object_set(kw_authz, "kw", kw);
+//                 } else {
+//                     json_object_set_new(kw_authz, "kw", json_object());
+//                 }
+//                 if(!gobj_user_has_authz(
+//                     publisher_,
+//                     "__subscribe_event__",
+//                     kw_authz,
+//                     subscriber_
+//                 )) {
+//                     log_error(0,
+//                         "gobj",         "%s", gobj_full_name(publisher_),
+//                         "function",     "%s", __FUNCTION__,
+//                         "msgset",       "%s", MSGSET_OAUTH_ERROR,
+//                         "msg",          "%s", "No permission to subscribe event",
+//                         //"user",         "%s", gobj_get_user(subscriber_),
+//                         "gclass",       "%s", gobj_gclass_name(publisher_),
+//                         "event",        "%s", event?event:"",
+//                         NULL
+//                     );
+//                     KW_DECREF(kw);
+//                     return 0;
+//                 }
+//             }
+//             output_event_list++;
+//         }
+
         /*
          *   Protect: only public events
          */
@@ -1172,6 +1234,11 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
         /*-----------------------------------*
          *  It's a external unsubscription
          *-----------------------------------*/
+        /*-------------------------------------------------*
+         *  Check AUTHZ
+         *-------------------------------------------------*/
+        // TODO
+
         /*
          *   Protect: only public events
          */
@@ -1195,11 +1262,45 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
     } else {
         /*----------------------*
-         *      Send event
+         *      Inject event
          *----------------------*/
         /*-------------------------------------------------------*
          *  Filter public events of this gobj
          *-------------------------------------------------------*/
+
+        /*----------------------------------*
+         *  Check AUTHZ
+         *----------------------------------*/
+//         if(ev_desc->authz & EV_AUTHZ_INJECT) {
+//             /*
+//             *  AUTHZ Required
+//             */
+//             json_t *kw_authz = json_pack("{s:s}",
+//                 "event", event
+//             );
+//             if(kw) {
+//                 json_object_set(kw_authz, "kw", kw);
+//             } else {
+//                 json_object_set_new(kw_authz, "kw", json_object());
+//             }
+//             if(!gobj_user_has_authz(
+//                     dst, "__inject_event__", kw_authz, src)
+//             ) {
+//                 log_error(0,
+//                     "gobj",         "%s", gobj_full_name(dst),
+//                     "function",     "%s", __FUNCTION__,
+//                     "msgset",       "%s", MSGSET_OAUTH_ERROR,
+//                     "msg",          "%s", "No permission to inject event",
+//                     //"user",         "%s", gobj_get_user(src),
+//                     "gclass",       "%s", gobj_gclass_name(dst),
+//                     "event",        "%s", event?event:"",
+//                     NULL
+//                 );
+//                 KW_DECREF(kw);
+//                 return -403;
+//             }
+//         }
+
         if(gobj_event_in_input_event_list(gobj, iev_event, EVF_PUBLIC_EVENT)) {
             /*
             *  It's mine (I manage inter-command and inter-stats)
@@ -1217,9 +1318,17 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
         /*
          *   Send inter-event to subscriber
          */
+        kw_set_subdict_value(
+            iev_kw,
+            "__local__", "__username__",
+            json_string(gobj_read_str_attr(gobj, "__username__"))
+        );
+
         json_t *jn_iev = json_object();
         json_object_set_new(jn_iev, "event", json_string(iev_event));
         json_object_set_new(jn_iev, "kw", iev_kw);
+
+        // Obligatoriamente el padre tiene que ser un IOGate!!! ???
         gobj_send_event(priv->subscriber, "EV_IEV_MESSAGE", jn_iev, gobj);
     }
 
@@ -1260,13 +1369,14 @@ PRIVATE const EVENT input_events[] = {
     {"EV_ON_OPEN",          0,  0,  0},
     {"EV_ON_CLOSE",         0,  0,  0},
     {"EV_DROP",             0,  0,  0},
-    {"EV_TIMEOUT",          0,  0,  0},
-    {"EV_STOPPED",          0,  0,  0},
-    // internal
+    // public
     {"EV_IDENTITY_CARD",    EVF_PUBLIC_EVENT,   0,  0},
     {"EV_GOODBYE",          EVF_PUBLIC_EVENT,   0,  0},
     {"EV_MT_STATS",         EVF_PUBLIC_EVENT,   0,  0},
     {"EV_MT_COMMAND",       EVF_PUBLIC_EVENT,   0,  0},
+    // internal
+    {"EV_TIMEOUT",          0,  0,  0},
+    {"EV_STOPPED",          0,  0,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const EVENT output_events[] = {
@@ -1377,7 +1487,7 @@ PRIVATE GCLASS _gclass = {
         0, //mt_publication_pre_filter,
         0, //mt_publication_filter,
         0, //mt_authz_checker,
-        0, //mt_authzs,
+        0, //mt_future39,
         0, //mt_create_node,
         0, //mt_update_node,
         0, //mt_delete_node,

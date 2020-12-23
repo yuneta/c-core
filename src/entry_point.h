@@ -51,7 +51,7 @@ PUBLIC int yuneta_setup(
     json_function_t global_command_parser,
     json_function_t global_stats_parser,
     authz_checker_fn global_authz_checker,
-    authzs_fn global_authzs_list
+    authenticate_parser_fn global_authenticate_parser
 );
 
 PUBLIC int yuneta_entry_point(int argc, char *argv[],
