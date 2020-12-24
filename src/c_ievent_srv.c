@@ -47,8 +47,8 @@ SDATA (ASN_OCTET_STR,   "client_yuno_role",     SDF_RD, 0, "yuno role of connect
 SDATA (ASN_OCTET_STR,   "client_yuno_name",     SDF_RD, 0, "yuno name of connected client"),
 SDATA (ASN_OCTET_STR,   "client_yuno_service",  SDF_RD, 0, "yuno service of connected client"),
 
-SDATA (ASN_OCTET_STR,   "this_service",         SDF_RD, 0, "simulated server service (Gate)"),
-SDATA (ASN_POINTER,     "gobj_service",         0,      0, "gate to real server service"),
+SDATA (ASN_OCTET_STR,   "this_service",         SDF_RD, 0, "dst_service at identity_card"),
+SDATA (ASN_POINTER,     "gobj_service",         0,      0, "gobj of identity_card dst_service"),
 
 SDATA (ASN_BOOLEAN,     "authenticated",        SDF_RD, 0, "True if entry was authenticated"),
 SDATA (ASN_JSON,        "jwt_payload",          SDF_RD, 0, "JWT payload"),
@@ -660,8 +660,8 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
     /*-----------------------------------*
      *  Find wanted service. Required.
      *-----------------------------------*/
-    hgobj named_gobj = gobj_find_service(iev_dst_service, FALSE);
-    if (!named_gobj) {
+    hgobj gobj_service = gobj_find_service(iev_dst_service, FALSE);
+    if (!gobj_service) {
         log_error(0,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
@@ -682,7 +682,7 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
     // See mt_authenticate of c_authz.c
 
     KW_INCREF(kw);
-    json_t *jn_resp = gobj_authenticate(named_gobj, kw, gobj);
+    json_t *jn_resp = gobj_authenticate(gobj_service, kw, gobj);
     if(kw_get_int(jn_resp, "result", -1, KW_REQUIRED)<0) {
         log_warning(0,
             "gobj",         "%s", gobj_full_name(gobj),
@@ -736,7 +736,7 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
     }
 
     gobj_write_str_attr(gobj, "this_service", iev_dst_service);
-    gobj_write_pointer_attr(gobj, "gobj_service", named_gobj);
+    gobj_write_pointer_attr(gobj, "gobj_service", gobj_service);
     gobj_write_str_attr(gobj, "__username__", kw_get_str(jn_resp, "username", "", 0));
 
     /*----------------------------------------------*
@@ -1328,8 +1328,19 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
         json_object_set_new(jn_iev, "event", json_string(iev_event));
         json_object_set_new(jn_iev, "kw", iev_kw);
 
-        // Obligatoriamente el padre tiene que ser un IOGate!!! ???
-        gobj_send_event(priv->subscriber, "EV_IEV_MESSAGE", jn_iev, gobj);
+        /*
+         *  TODO Obligatoriamente el destinatario tiene que ser un IOGate!!! ???
+         *  Todos los mensajes (comandos,stats,subscribe/unsubscribe) van
+         *  al dst_service del mensaje en curso,
+         *  y si éste no existe van dst_service del identity_card,
+         *  pero el mensaje directo va al subscriber directamente? porqué?
+         */
+        gobj_send_event(
+            priv->subscriber,
+            "EV_IEV_MESSAGE",
+            jn_iev,
+            gobj
+        );
     }
 
     KW_DECREF(kw);
