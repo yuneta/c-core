@@ -1334,6 +1334,12 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
          *  al dst_service del mensaje en curso,
          *  y si éste no existe van dst_service del identity_card,
          *  pero el mensaje directo va al subscriber directamente? porqué?
+         *  porque el IOGate es quien lo publica, como gobj unico que engloba a todos sus canales.
+         *
+         *  En el agente se responde al src directamente porque los mensajes vienen de commando!
+         *  Por eso en los que no vienen de comando tienen que usar el __temp__`channel_gobj!
+         *
+         *  WARNING efectos colaterales si lo cambio? seguro que muchos
          */
         gobj_send_event(
             priv->subscriber,
