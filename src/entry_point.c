@@ -706,7 +706,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
      *  Print basic infom
      *------------------------------------------------*/
     if(arguments.print_role) {
-        json_t *jn_classifiers = kw_get_dict_value(jn_yuno, "classifiers", 0, 0);
+        json_t *jn_tags = kw_get_dict_value(jn_yuno, "tags", 0, 0);
         json_t *jn_required_services = kw_get_dict_value(jn_yuno, "required_services", 0, 0);
         json_t *jn_public_services = kw_get_dict_value(jn_yuno, "public_services", 0, 0);
         json_t *jn_service_descriptor = kw_get_dict_value(jn_yuno, "service_descriptor", 0, 0);
@@ -722,10 +722,10 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
         );
         if(jn_basic_info) {
             size_t flags = JSON_INDENT(4);
-            if(jn_classifiers) {
-                json_object_set(jn_basic_info, "classifiers", jn_classifiers);
+            if(jn_tags) {
+                json_object_set(jn_basic_info, "tags", jn_tags);
             } else {
-                json_object_set_new(jn_basic_info, "classifiers", json_array());
+                json_object_set_new(jn_basic_info, "tags", json_array());
             }
             if(jn_required_services) {
                 json_object_set(jn_basic_info, "required_services", jn_required_services);
