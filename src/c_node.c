@@ -245,7 +245,6 @@ SDATA (ASN_POINTER,     "tranger",          SDF_RD|SDF_REQUIRED,0,              
 SDATA (ASN_OCTET_STR,   "treedb_name",      SDF_RD|SDF_REQUIRED,"",             "Treedb name"),
 SDATA (ASN_JSON,        "treedb_schema",    SDF_RD|SDF_REQUIRED,0,              "Treedb schema"),
 SDATA (ASN_INTEGER,     "exit_on_error",    0,                  LOG_OPT_EXIT_ZERO,"exit on error"),
-SDATA (ASN_POINTER,     "kw_match",         0,                  kw_match_simple,"kw_match default function"),
 SDATA (ASN_INTEGER,     "timeout",          SDF_RD,             1*1000,         "Timeout"),
 SDATA (ASN_COUNTER64,   "txMsgs",           SDF_RD|SDF_PSTATS,  0,              "Messages transmitted"),
 SDATA (ASN_COUNTER64,   "rxMsgs",           SDF_RD|SDF_RSTATS,  0,              "Messages receiveds"),
@@ -280,7 +279,6 @@ typedef struct _PRIVATE_DATA {
     const char *treedb_name;
     json_t *treedb_schema;
     int32_t exit_on_error;
-    kw_match_fn kw_match;
 
     //int32_t timeout;
     //hgobj timer;
@@ -327,7 +325,6 @@ PRIVATE void mt_create(hgobj gobj)
     SET_PRIV(treedb_name,               gobj_read_str_attr)
     SET_PRIV(treedb_schema,             gobj_read_json_attr)
     SET_PRIV(exit_on_error,             gobj_read_int32_attr)
-    SET_PRIV(kw_match,                  gobj_read_pointer_attr)
 }
 
 /***************************************************************************
@@ -673,7 +670,7 @@ PRIVATE json_t *mt_list_nodes(
         topic_name,
         jn_filter,
         jn_options,
-        gobj_read_pointer_attr(gobj, "kw_match")
+        0
     );
 }
 
@@ -698,7 +695,7 @@ PRIVATE json_t *mt_node_instances(
         pkey2,
         jn_filter,  // owned
         jn_options, // owned, "collapsed"
-        gobj_read_pointer_attr(gobj, "kw_match")
+        0
     );
 }
 
