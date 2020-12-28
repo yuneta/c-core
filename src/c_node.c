@@ -562,29 +562,6 @@ PRIVATE int mt_link_nodes(
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE int mt_link_nodes2(
-    hgobj gobj,
-    const char *parent_ref,
-    const char *child_ref,
-    json_t *kw,
-    hgobj src
-)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    KW_DECREF(kw);
-
-    return treedb_link_nodes2(
-        priv->tranger,
-        priv->treedb_name,
-        parent_ref,
-        child_ref
-    );
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
 PRIVATE int mt_unlink_nodes(
     hgobj gobj,
     const char *hook,
@@ -603,29 +580,6 @@ PRIVATE int mt_unlink_nodes(
         hook,
         parent_node,
         child_node
-    );
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE int mt_unlink_nodes2(
-    hgobj gobj,
-    const char *parent_ref,     // parent_topic_name^parent_id^hook_name
-    const char *child_ref,      // child_topic_name^child_id
-    json_t *kw,
-    hgobj src
-)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    KW_DECREF(kw);
-
-    return treedb_unlink_nodes2(
-        priv->tranger,
-        priv->treedb_name,
-        parent_ref,
-        child_ref
     );
 }
 
@@ -1443,13 +1397,14 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         );
     }
 
-    int result = gobj_link_nodes2(
-        gobj,
-        parent,
-        child,
-        0,
-        src
-    );
+    int result = -1;
+//     gobj_link_nodes2( TODO
+//         gobj,
+//         parent,
+//         child,
+//         0,
+//         src
+//     );
 
     return msg_iev_build_webix(gobj,
         result,
@@ -1489,13 +1444,14 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         );
     }
 
-    int result = gobj_unlink_nodes2(
-        gobj,
-        parent,
-        child,
-        0,
-        src
-    );
+    int result = -1;
+// TODO    int result = gobj_unlink_nodes2(
+//         gobj,
+//         parent,
+//         child,
+//         0,
+//         src
+//     );
 
     return msg_iev_build_webix(gobj,
         result,
@@ -2389,9 +2345,9 @@ PRIVATE GCLASS _gclass = {
         mt_update_node,
         mt_delete_node,
         mt_link_nodes,
-        mt_link_nodes2,
+        0, //mt_future44,
         mt_unlink_nodes,
-        mt_unlink_nodes2,
+        0, //mt_future46,
         mt_get_node,
         mt_list_nodes,
         mt_shoot_snap,
