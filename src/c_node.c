@@ -618,6 +618,10 @@ PRIVATE json_t *mt_list_nodes(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    // TODO "collapsed" WARNING HARDCODE to TRUE
+
+    // TODO Filtra la lista con los nodos con permiso para leer
+
     return treedb_list_nodes(
         priv->tranger,
         priv->treedb_name,
@@ -641,6 +645,9 @@ PRIVATE json_t *mt_node_instances(
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    // TODO "collapsed" WARNING HARDCODE to TRUE
+    // TODO Filtra la lista con los nodos con permiso para leer
 
     return treedb_node_instances( // Return MUST be decref
         priv->tranger,
