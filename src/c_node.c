@@ -2202,7 +2202,7 @@ PRIVATE int treedb_callback(
 
 
 /***************************************************************************
- *
+ *  HACK bypass authz control, only internal use
  ***************************************************************************/
 PRIVATE int ac_treedb_update_node(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
@@ -2213,15 +2213,24 @@ PRIVATE int ac_treedb_update_node(hgobj gobj, const char *event, json_t *kw, hgo
      */
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     json_t *record = kw_get_dict(kw, "record", 0, 0);
-    json_t *jn_options = kw_get_dict(kw, "options", 0, 0); // "create", "clean"
+    json_t *jn_options = kw_get_dict(kw, "options", 0, 0); // "create", "auto-link"
 
-    treedb_update_node( // Return is NOT YOURS
+    json_t *node = treedb_update_node( // Return is NOT YOURS
         priv->tranger,
         priv->treedb_name,
         topic_name,
         json_incref(record),
         json_incref(jn_options)
     );
+    if(!node) {
+        KW_DECREF(kw);
+        return -1;
+    }
+
+    if(kw_get_bool(jn_options, "auto-link", 0, 0)) {
+        treedb_clean_node(priv->tranger, node);  // remove current links
+        treedb_auto_link(priv->tranger, node, kw_incref(kw));
+    }
 
     KW_DECREF(kw);
     return 0;
