@@ -2228,8 +2228,9 @@ PRIVATE int ac_treedb_update_node(hgobj gobj, const char *event, json_t *kw, hgo
     }
 
     if(kw_get_bool(jn_options, "auto-link", 0, 0)) {
-        treedb_clean_node(priv->tranger, node);  // remove current links
-        treedb_auto_link(priv->tranger, node, kw_incref(kw));
+        treedb_clean_node(priv->tranger, node, FALSE);  // remove current links
+        treedb_auto_link(priv->tranger, node, json_incref(record), FALSE);
+        treedb_save_node(priv->tranger, node);
     }
 
     KW_DECREF(kw);
