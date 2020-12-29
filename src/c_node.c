@@ -725,7 +725,13 @@ PRIVATE json_t *mt_get_node(
     /*
      *  "collapsed" WARNING HARDCODE to TRUE
      */
-    json_object_set_new(jn_options, "collapsed", json_true());
+    //json_object_set_new(jn_options, "collapsed", json_true());
+
+PUBLIC json_t *node_collapsed_view( // Return MUST be decref
+    json_t *tranger, // not owned
+    json_t *node, // not owned
+    json_t *jn_options // owned
+)
 
     return treedb_get_node(
         priv->tranger,
