@@ -1451,13 +1451,13 @@ PRIVATE int ac_tranger_add_record(hgobj gobj, const char *event, json_t *kw, hgo
 /***************************************************************************
  *                          FSM
  ***************************************************************************/
-PRIVATE const EVENT input_events[] = {
-    {"EV_TRANGER_ADD_RECORD",   EVF_PUBLIC_EVENT,   0,    0},
+PRIVATE const EVENT input_events[] = { // HACK System gclass, not public events
+    {"EV_TRANGER_ADD_RECORD",   0,   0,    0},
     // bottom input
     {NULL, 0, 0, 0}
 };
-PRIVATE const EVENT output_events[] = {
-    {"EV_TRANGER_RECORD_ADDED", EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,  0, 0},
+PRIVATE const EVENT output_events[] = { // HACK System gclass, not public events
+    {"EV_TRANGER_RECORD_ADDED", EVF_NO_WARN_SUBS,  0, 0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const char *state_names[] = {
