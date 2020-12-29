@@ -596,6 +596,9 @@ PRIVATE json_t *mt_get_node(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+// TODO    "collapsed" WARNING HARDCODE to TRUE
+
+
     return treedb_get_node(
         priv->tranger,
         priv->treedb_name,
