@@ -191,14 +191,6 @@ SDATA (ASN_INTEGER,     "xpermission",      SDF_RD,             02770,          
 SDATA (ASN_INTEGER,     "rpermission",      SDF_RD,             0660,           "Use in creation, default 0660"),
 SDATA (ASN_INTEGER,     "on_critical_error",SDF_RD,             LOG_OPT_EXIT_ZERO,"exit on error (Zero to avoid restart)"),
 SDATA (ASN_BOOLEAN,     "master",           SDF_RD,             FALSE,          "the master is the only that can write"),
-SDATA (ASN_INTEGER,     "timeout",          SDF_RD,             1*1000,         "Timeout"),
-SDATA (ASN_COUNTER64,   "txMsgs",           SDF_RD|SDF_PSTATS,  0,              "Messages transmitted"),
-SDATA (ASN_COUNTER64,   "rxMsgs",           SDF_RD|SDF_RSTATS,  0,              "Messages receiveds"),
-
-SDATA (ASN_COUNTER64,   "txMsgsec",         SDF_RD|SDF_RSTATS,  0,              "Messages by second"),
-SDATA (ASN_COUNTER64,   "rxMsgsec",         SDF_RD|SDF_RSTATS,  0,              "Messages by second"),
-SDATA (ASN_COUNTER64,   "maxtxMsgsec",      SDF_WR|SDF_RSTATS|SDF_AUTHZ_W, 0,   "Max Tx Messages by second"),
-SDATA (ASN_COUNTER64,   "maxrxMsgsec",      SDF_WR|SDF_RSTATS|SDF_AUTHZ_W, 0,   "Max Rx Messages by second"),
 SDATA (ASN_POINTER,     "user_data",        0,                  0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                  0,              "more user data"),
 SDATA (ASN_POINTER,     "subscriber",       0,                  0,              "subscriber of output-events. Not a child gobj."),
@@ -258,12 +250,6 @@ SDATA_END()
 typedef struct _PRIVATE_DATA {
     json_t *tranger;
 
-    int32_t timeout;
-    hgobj timer;
-    uint64_t *ptxMsgs;
-    uint64_t *prxMsgs;
-    uint64_t txMsgsec;
-    uint64_t rxMsgsec;
 } PRIVATE_DATA;
 
 
@@ -281,13 +267,6 @@ typedef struct _PRIVATE_DATA {
  ***************************************************************************/
 PRIVATE void mt_create(hgobj gobj)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    // TODO cannot have timer with libuv, because EV_STOPPED
-    //priv->timer = gobj_create(gobj_name(gobj), GCLASS_TIMER, 0, gobj);
-    priv->ptxMsgs = gobj_danger_attr_ptr(gobj, "txMsgs");
-    priv->prxMsgs = gobj_danger_attr_ptr(gobj, "rxMsgs");
-
     /*
      *  SERVICE subscription model
      */
@@ -300,7 +279,6 @@ PRIVATE void mt_create(hgobj gobj)
      *  Do copy of heavy used parameters, for quick access.
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
-    SET_PRIV(timeout,               gobj_read_int32_attr)
 }
 
 /***************************************************************************
@@ -332,12 +310,6 @@ PRIVATE int mt_start(hgobj gobj)
     );
     gobj_write_pointer_attr(gobj, "tranger", priv->tranger);
 
-    /*
-     *  Periodic timer for tasks
-     */
-    //gobj_start(priv->timer);
-    //set_timeout_periodic(priv->timer, priv->timeout); // La verdadera
-
     return 0;
 }
 
@@ -347,9 +319,6 @@ PRIVATE int mt_start(hgobj gobj)
 PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    //clear_timeout(priv->timer);
-    //gobj_stop(priv->timer);
 
     EXEC_AND_RESET(tranger_shutdown, priv->tranger);
     gobj_write_pointer_attr(gobj, "tranger", 0);
@@ -1478,32 +1447,6 @@ PRIVATE int ac_tranger_add_record(hgobj gobj, const char *event, json_t *kw, hgo
     );
 }
 
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    uint64_t maxtxMsgsec = gobj_read_uint64_attr(gobj, "maxtxMsgsec");
-    uint64_t maxrxMsgsec = gobj_read_uint64_attr(gobj, "maxrxMsgsec");
-    if(priv->txMsgsec > maxtxMsgsec) {
-        gobj_write_uint64_attr(gobj, "maxtxMsgsec", priv->txMsgsec);
-    }
-    if(priv->rxMsgsec > maxrxMsgsec) {
-        gobj_write_uint64_attr(gobj, "maxrxMsgsec", priv->rxMsgsec);
-    }
-
-    gobj_write_uint64_attr(gobj, "txMsgsec", priv->txMsgsec);
-    gobj_write_uint64_attr(gobj, "rxMsgsec", priv->rxMsgsec);
-
-    priv->rxMsgsec = 0;
-    priv->txMsgsec = 0;
-
-    KW_DECREF(kw);
-    return 0;
-}
-
 
 /***************************************************************************
  *                          FSM
@@ -1511,8 +1454,6 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
 PRIVATE const EVENT input_events[] = {
     {"EV_TRANGER_ADD_RECORD",   EVF_PUBLIC_EVENT,   0,    0},
     // bottom input
-    {"EV_TIMEOUT",  0,  0,  0},
-    {"EV_STOPPED",  0,  0,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const EVENT output_events[] = {
@@ -1526,8 +1467,6 @@ PRIVATE const char *state_names[] = {
 
 PRIVATE EV_ACTION ST_IDLE[] = {
     {"EV_TRANGER_ADD_RECORD",       ac_tranger_add_record,      0},
-    {"EV_TIMEOUT",                  ac_timeout,                 0},
-    {"EV_STOPPED",                  0,                          0},
     {0,0,0}
 };
 
