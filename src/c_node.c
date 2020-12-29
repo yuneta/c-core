@@ -443,307 +443,6 @@ PRIVATE int mt_trace_off(hgobj gobj, const char *level, json_t *kw)
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE json_t *mt_create_node( // Return is NOT YOURS
-    hgobj gobj,
-    const char *topic_name,
-    json_t *kw, // owned
-    json_t *jn_options, // bool "permissive"
-    hgobj src
-)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    json_t *record = treedb_create_node( // Return is NOT YOURS
-        priv->tranger,
-        priv->treedb_name,
-        topic_name,
-        kw, // owned
-        jn_options
-    );
-    return record;
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE int mt_save_node(
-    hgobj gobj,
-    json_t *node, // NOT owned
-    hgobj src
-)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    return treedb_save_node(priv->tranger, node);
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE size_t mt_topic_size(
-    hgobj gobj,
-    const char *topic_name
-)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    return treedb_topic_size(priv->tranger, priv->treedb_name, topic_name);
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE json_t *mt_update_node( // Return is NOT YOURS
-    hgobj gobj,
-    const char *topic_name,
-    json_t *kw,    // owned
-    json_t *jn_options, // owned "create" ["permissive"], "clean"
-    hgobj src
-)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    json_t *record = treedb_update_node( // Return is NOT YOURS
-        priv->tranger,
-        priv->treedb_name,
-        topic_name,
-        kw, // owned
-        jn_options
-    );
-    return record;
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE int mt_delete_node(
-    hgobj gobj,
-    const char *topic_name,
-    json_t *kw,    // owned
-    json_t *jn_options, // "force"
-    hgobj src
-)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    return treedb_delete_node(
-        priv->tranger,
-        priv->treedb_name,
-        topic_name,
-        kw, // owned
-        jn_options
-    );
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE int mt_link_nodes(
-    hgobj gobj,
-    const char *hook,
-    json_t *parent_node,    // NOT owned
-    json_t *child_node,     // NOT owned
-    json_t *kw,
-    hgobj src
-)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    KW_DECREF(kw);
-
-    return treedb_link_nodes(
-        priv->tranger,
-        hook,
-        parent_node,
-        child_node
-    );
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE int mt_unlink_nodes(
-    hgobj gobj,
-    const char *hook,
-    json_t *parent_node,    // NOT owned
-    json_t *child_node,     // NOT owned
-    json_t *kw,
-    hgobj src
-)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    KW_DECREF(kw);
-
-    return treedb_unlink_nodes(
-        priv->tranger,
-        hook,
-        parent_node,
-        child_node
-    );
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE json_t *mt_get_node(
-    hgobj gobj,
-    const char *topic_name,
-    const char *id,
-    json_t *jn_options, // "collapsed"
-    hgobj src
-)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    if(!jn_options) {
-        jn_options = json_object();
-    }
-    /*
-     *  "collapsed" WARNING HARDCODE to TRUE
-     */
-    json_object_set_new(jn_options, "collapsed", json_true());
-
-    return treedb_get_node(
-        priv->tranger,
-        priv->treedb_name,
-        topic_name,
-        id,
-        jn_options
-    );
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE json_t *mt_list_nodes(
-    hgobj gobj,
-    const char *topic_name,
-    json_t *jn_filter,
-    json_t *jn_options, // "collapsed"
-    hgobj src
-)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    if(!jn_options) {
-        jn_options = json_object();
-    }
-    /*
-     *  "collapsed" WARNING HARDCODE to TRUE
-     */
-    json_object_set_new(jn_options, "collapsed", json_true());
-
-    // TODO Filtra la lista con los nodos con permiso para leer
-
-    return treedb_list_nodes(
-        priv->tranger,
-        priv->treedb_name,
-        topic_name,
-        jn_filter,
-        jn_options,
-        0
-    );
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE json_t *mt_node_instances(
-    hgobj gobj,
-    const char *topic_name,
-    const char *pkey2,
-    json_t *jn_filter,
-    json_t *jn_options, // "collapsed"
-    hgobj src
-)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    if(!jn_options) {
-        jn_options = json_object();
-    }
-    /*
-     *  "collapsed" WARNING HARDCODE to TRUE
-     */
-    json_object_set_new(jn_options, "collapsed", json_true());
-
-    // TODO Filtra la lista con los nodos con permiso para leer
-
-    return treedb_node_instances( // Return MUST be decref
-        priv->tranger,
-        priv->treedb_name,
-        topic_name,
-        pkey2,
-        jn_filter,  // owned
-        jn_options, // owned, "collapsed"
-        0
-    );
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE int mt_shoot_snap(
-    hgobj gobj,
-    const char *tag,
-    json_t *kw,
-    hgobj src
-)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    KW_DECREF(kw);
-
-    return treedb_shoot_snap(
-        priv->tranger,
-        priv->treedb_name,
-        tag
-    );
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE int mt_activate_snap(
-    hgobj gobj,
-    const char *tag,
-    json_t *kw,
-    hgobj src
-)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    KW_DECREF(kw);
-
-    return treedb_activate_snap(
-        priv->tranger,
-        priv->treedb_name,
-        tag
-    );
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
-PRIVATE json_t *mt_list_snaps(
-    hgobj gobj,
-    json_t *filter,
-    hgobj src
-)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    return treedb_list_snaps(
-        priv->tranger,
-        priv->treedb_name,
-        filter
-    );
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
 PRIVATE json_t *mt_treedbs(
     hgobj gobj,
     json_t *kw,
@@ -894,6 +593,247 @@ PRIVATE json_t *mt_topic_hooks(
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
+PRIVATE json_t *mt_create_node( // Return is NOT YOURS
+    hgobj gobj,
+    const char *topic_name,
+    json_t *kw, // owned
+    json_t *jn_options, // bool "permissive"
+    hgobj src
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    json_t *record = treedb_create_node( // Return is NOT YOURS
+        priv->tranger,
+        priv->treedb_name,
+        topic_name,
+        kw, // owned
+        jn_options
+    );
+    return record;
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE int mt_save_node(
+    hgobj gobj,
+    json_t *node, // NOT owned
+    hgobj src
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return treedb_save_node(priv->tranger, node);
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE size_t mt_topic_size(
+    hgobj gobj,
+    const char *topic_name
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return treedb_topic_size(priv->tranger, priv->treedb_name, topic_name);
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE json_t *mt_update_node( // Return is NOT YOURS
+    hgobj gobj,
+    const char *topic_name,
+    json_t *kw,    // owned
+    json_t *jn_options, // owned "create" ["permissive"], "clean"
+    hgobj src
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    json_t *record = treedb_update_node( // Return is NOT YOURS
+        priv->tranger,
+        priv->treedb_name,
+        topic_name,
+        kw, // owned
+        jn_options
+    );
+    return record;
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE int mt_delete_node(
+    hgobj gobj,
+    const char *topic_name,
+    json_t *kw,    // owned
+    json_t *jn_options, // "force"
+    hgobj src
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return treedb_delete_node(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name,
+        kw, // owned
+        jn_options
+    );
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE int mt_link_nodes(
+    hgobj gobj,
+    const char *hook,
+    json_t *parent_node,    // NOT owned
+    json_t *child_node,     // NOT owned
+    json_t *kw,
+    hgobj src
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    KW_DECREF(kw);
+
+    return treedb_link_nodes(
+        priv->tranger,
+        hook,
+        parent_node,
+        child_node
+    );
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE int mt_unlink_nodes(
+    hgobj gobj,
+    const char *hook,
+    json_t *parent_node,    // NOT owned
+    json_t *child_node,     // NOT owned
+    json_t *kw,
+    hgobj src
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    KW_DECREF(kw);
+
+    return treedb_unlink_nodes(
+        priv->tranger,
+        hook,
+        parent_node,
+        child_node
+    );
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE json_t *mt_get_node(
+    hgobj gobj,
+    const char *topic_name,
+    const char *id,
+    json_t *jn_options, // owned "fkey-ref-*", "hook-ref-*"
+    hgobj src
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if(!jn_options) {
+        jn_options = json_object();
+    }
+    /*
+     *  "collapsed" WARNING HARDCODE to TRUE
+     */
+    json_object_set_new(jn_options, "collapsed", json_true());
+
+    return treedb_get_node(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name,
+        id,
+        jn_options
+    );
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE json_t *mt_list_nodes(
+    hgobj gobj,
+    const char *topic_name,
+    json_t *jn_filter,
+    json_t *jn_options, // owned "fkey-ref-*", "hook-ref-*"
+    hgobj src
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if(!jn_options) {
+        jn_options = json_object();
+    }
+    /*
+     *  "collapsed" WARNING HARDCODE to TRUE
+     */
+    json_object_set_new(jn_options, "collapsed", json_true());
+
+    // TODO Filtra la lista con los nodos con permiso para leer
+
+    return treedb_list_nodes(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name,
+        jn_filter,
+        jn_options,
+        0
+    );
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE json_t *mt_node_instances(
+    hgobj gobj,
+    const char *topic_name,
+    const char *pkey2,
+    json_t *jn_filter,
+    json_t *jn_options, // owned, "fkey-ref-*", "hook-ref-*"
+    hgobj src
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if(!jn_options) {
+        jn_options = json_object();
+    }
+    /*
+     *  "collapsed" WARNING HARDCODE to TRUE
+     */
+    json_object_set_new(jn_options, "collapsed", json_true());
+
+    // TODO Filtra la lista con los nodos con permiso para leer
+
+    return treedb_node_instances( // Return MUST be decref
+        priv->tranger,
+        priv->treedb_name,
+        topic_name,
+        pkey2,
+        jn_filter,  // owned
+        jn_options, // owned, "collapsed"
+        0
+    );
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
 PRIVATE json_t *mt_node_parents(
     hgobj gobj,
     const char *topic_name,
@@ -985,7 +925,7 @@ PRIVATE json_t *mt_node_childs(
     if(!empty_string(hook)) {
         return treedb_list_childs( // Return MUST be decref
             priv->tranger,
-            hook, // must be a fkey field
+            hook, // must be a hook field
             node, // not owned
             jn_options
         );
@@ -1000,7 +940,7 @@ PRIVATE json_t *mt_node_childs(
     json_array_foreach(hooks, idx, jn_hook) {
         json_t *childs_ = treedb_list_childs( // Return MUST be decref
             priv->tranger,
-            json_string_value(jn_hook), // must be a fkey field
+            json_string_value(jn_hook), // must be a hook field
             node, // not owned
             json_incref(jn_options)
         );
@@ -1011,6 +951,66 @@ PRIVATE json_t *mt_node_childs(
     JSON_DECREF(jn_options);
 
     return childs;
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE int mt_shoot_snap(
+    hgobj gobj,
+    const char *tag,
+    json_t *kw,
+    hgobj src
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    KW_DECREF(kw);
+
+    return treedb_shoot_snap(
+        priv->tranger,
+        priv->treedb_name,
+        tag
+    );
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE int mt_activate_snap(
+    hgobj gobj,
+    const char *tag,
+    json_t *kw,
+    hgobj src
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    KW_DECREF(kw);
+
+    return treedb_activate_snap(
+        priv->tranger,
+        priv->treedb_name,
+        tag
+    );
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE json_t *mt_list_snaps(
+    hgobj gobj,
+    json_t *filter,
+    hgobj src
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return treedb_list_snaps(
+        priv->tranger,
+        priv->treedb_name,
+        filter
+    );
 }
 
 
