@@ -131,27 +131,27 @@ PRIVATE sdata_desc_t pm_parents[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_OCTET_STR, "link",         0,              0,          "Link port to parents"),
-SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Parent nodes expanded"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: fkey-ref-only-id, fkey-ref-list-dict, fkey-ref-size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_childs[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_OCTET_STR, "hook",         0,              0,          "Hook port to childs"),
-SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Child nodes expanded"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: hook-ref-only-id, hook-ref-list-dict, hook-ref-size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_list_nodes[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
-SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Tree expanded"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: fkey-ref-only-id, fkey-ref-list-dict, fkey-ref-size, hook-ref-only-id, hook-ref-list-dict, hook-ref-size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_get_node[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
-SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Tree expanded"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: fkey-ref-only-id, fkey-ref-list-dict, fkey-ref-size, hook-ref-only-id, hook-ref-list-dict, hook-ref-size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_node_instances[] = {
@@ -160,7 +160,7 @@ SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"
 SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_OCTET_STR, "pkey2",        0,              0,          "PKey2 field"),
 SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
-SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "Tree expanded"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: fkey-ref-only-id, fkey-ref-list-dict, fkey-ref-size, hook-ref-only-id, hook-ref-list-dict, hook-ref-size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_node_pkey2s[] = {
@@ -825,8 +825,8 @@ PRIVATE json_t *mt_node_instances(
         priv->treedb_name,
         topic_name,
         pkey2,
-        jn_filter,  // owned
-        jn_options, // owned, "collapsed"
+        jn_filter,
+        jn_options,
         0
     );
 }
@@ -839,7 +839,7 @@ PRIVATE json_t *mt_node_parents(
     const char *topic_name,
     const char *id,
     const char *link,   // fkey
-    json_t *jn_options, // "collapsed"
+    json_t *jn_options, // owned , "fkey-ref-*"
     hgobj src
 )
 {
@@ -900,7 +900,7 @@ PRIVATE json_t *mt_node_childs(
     const char *topic_name,
     const char *id,
     const char *hook,
-    json_t *jn_options,  // "collapsed"
+    json_t *jn_options,  // owned "hook-ref-*"
     hgobj src
 )
 {
@@ -1621,7 +1621,7 @@ PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *node_id = kw_get_str(kw, "node_id", "", 0);
     const char *link = kw_get_str(kw, "link", "", 0);
-    BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
+    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -1649,7 +1649,7 @@ PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         topic_name,
         node_id,
         link,
-        json_pack("{s:b}", "collapsed", collapsed),  // jn_options, owned "collapsed"
+        jn_options,
         src
     );
 
@@ -1671,7 +1671,7 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *node_id = kw_get_str(kw, "node_id", "", 0);
     const char *hook = kw_get_str(kw, "hook", "", 0);
-    BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
+    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -1699,7 +1699,7 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         topic_name,
         node_id,
         hook,
-        json_pack("{s:b}", "collapsed", collapsed),  // jn_options, owned "collapsed"
+        jn_options,
         src
     );
 
@@ -1722,7 +1722,7 @@ PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *filter = kw_get_str(kw, "filter", "", 0);
-    BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
+    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -1754,7 +1754,7 @@ PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         gobj,
         topic_name,
         jn_filter,  // owned
-        json_pack("{s:b}", "collapsed", collapsed),  // jn_options, owned "collapsed"
+        jn_options,
         src
     );
 
@@ -1779,7 +1779,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *node_id = kw_get_str(kw, "node_id", "", 0);
-    BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
+    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -1806,7 +1806,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         gobj,
         topic_name,
         node_id,
-        json_pack("{s:b}", "collapsed", collapsed),  // jn_options, owned "collapsed"
+        jn_options,
         src
     );
 
@@ -1830,7 +1830,7 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
     const char *node_id = kw_get_str(kw, "node_id", "", 0);
     const char *pkey2 = kw_get_str(kw, "pkey2", "", 0);
     const char *filter = kw_get_str(kw, "filter", "", 0);
-    BOOL collapsed = !kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
+    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -1869,7 +1869,7 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
         topic_name,
         pkey2,
         jn_filter,  // owned
-        json_pack("{s:b}", "collapsed", collapsed),  // jn_options, owned "collapsed"
+        jn_options,
         src
     );
 
