@@ -596,8 +596,13 @@ PRIVATE json_t *mt_get_node(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-// TODO    "collapsed" WARNING HARDCODE to TRUE
-
+    if(!jn_options) {
+        jn_options = json_object();
+    }
+    /*
+     *  "collapsed" WARNING HARDCODE to TRUE
+     */
+    json_object_set_new(jn_options, "collapsed", json_true());
 
     return treedb_get_node(
         priv->tranger,
@@ -621,7 +626,13 @@ PRIVATE json_t *mt_list_nodes(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    // TODO "collapsed" WARNING HARDCODE to TRUE
+    if(!jn_options) {
+        jn_options = json_object();
+    }
+    /*
+     *  "collapsed" WARNING HARDCODE to TRUE
+     */
+    json_object_set_new(jn_options, "collapsed", json_true());
 
     // TODO Filtra la lista con los nodos con permiso para leer
 
@@ -649,7 +660,14 @@ PRIVATE json_t *mt_node_instances(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    // TODO "collapsed" WARNING HARDCODE to TRUE
+    if(!jn_options) {
+        jn_options = json_object();
+    }
+    /*
+     *  "collapsed" WARNING HARDCODE to TRUE
+     */
+    json_object_set_new(jn_options, "collapsed", json_true());
+
     // TODO Filtra la lista con los nodos con permiso para leer
 
     return treedb_node_instances( // Return MUST be decref
