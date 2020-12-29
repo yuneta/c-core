@@ -2284,15 +2284,15 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
-    {"EV_TREEDB_UPDATE_NODE",   EVF_PUBLIC_EVENT,   EV_AUTHZ_INJECT,    0},
+    {"EV_TREEDB_UPDATE_NODE",   EVF_PUBLIC_EVENT,   0,    0},
     // bottom input
     {"EV_TIMEOUT",              0,  0,  0},
     {"EV_STOPPED",              0,  0,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const EVENT output_events[] = {
-    {"EV_TREEDB_NODE_UPDATED",  EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,  EV_AUTHZ_SUBSCRIBE,  0},
-    {"EV_TREEDB_NODE_DELETED",  EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,  EV_AUTHZ_SUBSCRIBE,  0},
+    {"EV_TREEDB_NODE_UPDATED",  EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,  0,  0},
+    {"EV_TREEDB_NODE_DELETED",  EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,  0,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const char *state_names[] = {
