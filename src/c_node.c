@@ -588,20 +588,6 @@ PRIVATE json_t *mt_create_node( // Return is NOT YOURS
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE int mt_future60(
-    hgobj gobj,
-    json_t *node, // NOT owned
-    hgobj src
-)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    return treedb_save_node(priv->tranger, node);
-}
-
-/***************************************************************************
- *      Framework Method
- ***************************************************************************/
 PRIVATE size_t mt_topic_size(
     hgobj gobj,
     const char *topic_name
@@ -732,8 +718,7 @@ PRIVATE json_t *mt_get_node(
         priv->tranger,
         priv->treedb_name,
         topic_name,
-        id,
-        0
+        id
     );
 
     return node_collapsed_view( // Return MUST be decref
@@ -829,8 +814,7 @@ PRIVATE json_t *mt_node_parents(
         priv->tranger,
         priv->treedb_name,
         topic_name,
-        id,
-        0  // jn_options, must be NOT "collapsed"
+        id
     );
     if(!node) {
         // silence
@@ -890,8 +874,7 @@ PRIVATE json_t *mt_node_childs(
         priv->tranger,
         priv->treedb_name,
         topic_name,
-        id,
-        0  // jn_options, must be NOT "collapsed"
+        id
     );
     if(!node) {
         // silence
@@ -1933,7 +1916,7 @@ PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgob
     }
     int idx; json_t *instance;
     json_array_foreach(instances, idx, instance) {
-        gobj_save_node(gobj, instance, src);
+        // TODO ??? gobj_save_node(gobj, instance, src);
     }
 
     return msg_iev_build_webix(
@@ -2350,7 +2333,7 @@ PRIVATE GCLASS _gclass = {
         mt_node_parents,
         mt_node_childs,
         mt_node_instances,
-        mt_future60,
+        0, //mt_future60,
         mt_topic_size,
         0, //mt_future62,
         0, //mt_future63,
