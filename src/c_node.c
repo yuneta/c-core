@@ -661,21 +661,18 @@ PRIVATE int mt_delete_node(
 PRIVATE int mt_link_nodes(
     hgobj gobj,
     const char *hook,
-    json_t *parent_node,    // NOT owned
-    json_t *child_node,     // NOT owned
-    json_t *kw,
+    json_t *parent_record,  // owned
+    json_t *child_record,  // owned
     hgobj src
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    KW_DECREF(kw);
-
     return treedb_link_nodes(
         priv->tranger,
         hook,
-        parent_node,
-        child_node
+        parent_record,
+        child_record
     );
 }
 
@@ -685,21 +682,18 @@ PRIVATE int mt_link_nodes(
 PRIVATE int mt_unlink_nodes(
     hgobj gobj,
     const char *hook,
-    json_t *parent_node,    // NOT owned
-    json_t *child_node,     // NOT owned
-    json_t *kw,
+    json_t *parent_record,  // owned
+    json_t *child_record,  // owned
     hgobj src
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    KW_DECREF(kw);
-
     return treedb_unlink_nodes(
         priv->tranger,
         hook,
-        parent_node,
-        child_node
+        parent_record,
+        child_record
     );
 }
 
