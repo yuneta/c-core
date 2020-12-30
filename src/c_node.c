@@ -570,7 +570,7 @@ PRIVATE json_t *mt_create_node( // Return is NOT YOURS
     hgobj gobj,
     const char *topic_name,
     json_t *kw, // owned
-    json_t *jn_options,
+    json_t *jn_options, // owned TODO
     hgobj src
 )
 {
@@ -580,8 +580,7 @@ PRIVATE json_t *mt_create_node( // Return is NOT YOURS
         priv->tranger,
         priv->treedb_name,
         topic_name,
-        kw, // owned
-        jn_options
+        kw // owned
     );
     return record;
 }
@@ -589,7 +588,7 @@ PRIVATE json_t *mt_create_node( // Return is NOT YOURS
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE int mt_save_node(
+PRIVATE int mt_future60(
     hgobj gobj,
     json_t *node, // NOT owned
     hgobj src
@@ -626,12 +625,14 @@ PRIVATE json_t *mt_update_node( // Return is NOT YOURS
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    BOOL create = kw_get_bool(jn_options, "create", 0, 0);
+
     json_t *record = treedb_update_node( // Return is NOT YOURS
         priv->tranger,
         priv->treedb_name,
         topic_name,
         kw, // owned
-        jn_options
+        create
     );
     return record;
 }
@@ -725,20 +726,20 @@ PRIVATE json_t *mt_get_node(
     /*
      *  "collapsed" WARNING HARDCODE to TRUE
      */
-    //json_object_set_new(jn_options, "collapsed", json_true());
+    json_object_set_new(jn_options, "collapsed", json_true());
 
-PUBLIC json_t *node_collapsed_view( // Return MUST be decref
-    json_t *tranger, // not owned
-    json_t *node, // not owned
-    json_t *jn_options // owned
-)
-
-    return treedb_get_node(
+    json_t *node = treedb_get_node(
         priv->tranger,
         priv->treedb_name,
         topic_name,
         id,
-        jn_options
+        0
+    );
+
+    return node_collapsed_view( // Return MUST be decref
+        priv->tranger, // not owned
+        node, // not owned
+        jn_options // owned
     );
 }
 
@@ -2221,12 +2222,14 @@ PRIVATE int ac_treedb_update_node(hgobj gobj, const char *event, json_t *kw, hgo
     json_t *record = kw_get_dict(kw, "record", 0, 0);
     json_t *jn_options = kw_get_dict(kw, "options", 0, 0); // "create", "auto-link"
 
+    BOOL create = kw_get_bool(jn_options, "create", 0, 0);
+
     json_t *node = treedb_update_node( // Return is NOT YOURS
         priv->tranger,
         priv->treedb_name,
         topic_name,
         json_incref(record),
-        json_incref(jn_options)
+        create
     );
     if(!node) {
         KW_DECREF(kw);
@@ -2238,7 +2241,6 @@ PRIVATE int ac_treedb_update_node(hgobj gobj, const char *event, json_t *kw, hgo
         treedb_auto_link(priv->tranger, node, json_incref(record), FALSE);
         treedb_save_node(priv->tranger, node);
     }
-
     KW_DECREF(kw);
     return 0;
 }
@@ -2348,7 +2350,7 @@ PRIVATE GCLASS _gclass = {
         mt_node_parents,
         mt_node_childs,
         mt_node_instances,
-        mt_save_node,
+        mt_future60,
         mt_topic_size,
         0, //mt_future62,
         0, //mt_future63,
