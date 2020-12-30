@@ -566,23 +566,28 @@ PRIVATE json_t *mt_topic_hooks(
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE json_t *mt_create_node( // Return is NOT YOURS
+PRIVATE json_t *mt_create_node( // Return is YOURS
     hgobj gobj,
     const char *topic_name,
     json_t *kw, // owned
-    json_t *jn_options, // owned TODO
+    json_t *jn_options, // owned
     hgobj src
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    json_t *record = treedb_create_node( // Return is NOT YOURS
+    json_t *node = treedb_create_node( // Return is NOT YOURS
         priv->tranger,
         priv->treedb_name,
         topic_name,
         kw // owned
     );
-    return record;
+
+    return node_collapsed_view( // Return MUST be decref
+        priv->tranger,
+        node, // not owned
+        jn_options // owned "fkey-ref-*", "hook-ref-*"
+    );
 }
 
 /***************************************************************************
@@ -601,7 +606,7 @@ PRIVATE size_t mt_topic_size(
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
-PRIVATE json_t *mt_update_node( // Return is NOT YOURS
+PRIVATE json_t *mt_update_node( // Return is YOURS
     hgobj gobj,
     const char *topic_name,
     json_t *kw,    // owned
@@ -613,14 +618,19 @@ PRIVATE json_t *mt_update_node( // Return is NOT YOURS
 
     BOOL create = kw_get_bool(jn_options, "create", 0, 0);
 
-    json_t *record = treedb_update_node( // Return is NOT YOURS
+    json_t *node = treedb_update_node( // Return is NOT YOURS
         priv->tranger,
         priv->treedb_name,
         topic_name,
         kw, // owned
         create
     );
-    return record;
+
+    return node_collapsed_view( // Return MUST be decref
+        priv->tranger,
+        node, // not owned
+        jn_options // owned "fkey-ref-*", "hook-ref-*"
+    );
 }
 
 /***************************************************************************
