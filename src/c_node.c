@@ -828,7 +828,11 @@ PRIVATE json_t *mt_get_node(
         topic_name,
         id
     );
-
+    if(!node) {
+        // Silence
+        JSON_DECREF(jn_options);
+        return 0;
+    }
     return node_collapsed_view( // Return MUST be decref
         priv->tranger, // not owned
         node, // not owned
