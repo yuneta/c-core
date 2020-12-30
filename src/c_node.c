@@ -2284,6 +2284,8 @@ PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src
 
     json_t *jn_loaded = json_object();
 
+    // TODO Chequear permisos
+
     BOOL fin = FALSE;
     const char *topic_name;
     json_t *topic_records;
@@ -2291,7 +2293,6 @@ PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         if(fin) {
             break;
         }
-
         json_t *list_records = kw_get_dict_value(
             jn_loaded,
             topic_name,
@@ -2361,6 +2362,8 @@ PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         json_array_foreach(topic_records, idx, record_node) {
             json_t *record = kw_get_dict(record_node, "record", 0, KW_REQUIRED);
             json_t *node = kw_get_dict(record_node, "node", 0, KW_REQUIRED);
+
+            // TODO chequear los varios formatos de fkeys
             treedb_clean_node(priv->tranger, node, FALSE);  // remove current links
             treedb_auto_link(priv->tranger, node, json_incref(record), FALSE);
             treedb_save_node(priv->tranger, node);
