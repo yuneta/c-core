@@ -610,7 +610,7 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
     hgobj gobj,
     const char *topic_name,
     json_t *kw,    // owned
-    json_t *jn_options, // owned "create", "clean"
+    json_t *jn_options, // owned "create", "autolink"
     hgobj src
 )
 {
@@ -622,9 +622,21 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
         priv->tranger,
         priv->treedb_name,
         topic_name,
-        kw, // owned
+        json_incref(kw),
         create
     );
+
+    if(!node) {
+        KW_DECREF(kw);
+        return 0;
+    }
+
+    if(kw_get_bool(jn_options, "autolink", 0, 0)) {
+        treedb_clean_node(priv->tranger, node, FALSE);  // remove current links
+        treedb_auto_link(priv->tranger, node, json_incref(kw), FALSE);
+        treedb_save_node(priv->tranger, node);
+    }
+    KW_DECREF(kw);
 
     return node_collapsed_view( // Return MUST be decref
         priv->tranger,
@@ -668,11 +680,53 @@ PRIVATE int mt_link_nodes(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    /*-------------------------------*
+     *      Recover nodes
+     *-------------------------------*/
+    const char *parent_topic_name = kw_get_str(parent_record, "__md_treedb__`topic_name", 0, 0);
+    const char *child_topic_name = kw_get_str(child_record, "__md_treedb__`topic_name", 0, 0);
+
+    json_t *parent_node = treedb_get_node( // WARNING Return is NOT YOURS, pure node
+        priv->tranger,
+        priv->treedb_name,
+        parent_topic_name,
+        kw_get_str(parent_record, "id", "", 0)
+    );
+    if(!parent_node) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "parent node not found",
+            NULL
+        );
+        log_debug_json(0, parent_record, "node not found");
+        return -1;
+    }
+
+    json_t *child_node = treedb_get_node( // WARNING Return is NOT YOURS, pure node
+        priv->tranger,
+        priv->treedb_name,
+        child_topic_name,
+        kw_get_str(child_record, "id", "", 0)
+    );
+    if(!child_node) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "child node not found",
+            NULL
+        );
+        log_debug_json(0, child_record, "node not found");
+        return -1;
+    }
+
     return treedb_link_nodes(
         priv->tranger,
         hook,
-        parent_record,
-        child_record
+        parent_node,
+        child_node
     );
 }
 
@@ -688,6 +742,48 @@ PRIVATE int mt_unlink_nodes(
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    /*-------------------------------*
+     *      Recover nodes
+     *-------------------------------*/
+    const char *parent_topic_name = kw_get_str(parent_record, "__md_treedb__`topic_name", 0, 0);
+    const char *child_topic_name = kw_get_str(child_record, "__md_treedb__`topic_name", 0, 0);
+
+    json_t *parent_node = treedb_get_node( // WARNING Return is NOT YOURS, pure node
+        priv->tranger,
+        priv->treedb_name,
+        parent_topic_name,
+        kw_get_str(parent_record, "id", "", 0)
+    );
+    if(!parent_node) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "parent node not found",
+            NULL
+        );
+        log_debug_json(0, parent_record, "node not found");
+        return -1;
+    }
+
+    json_t *child_node = treedb_get_node( // WARNING Return is NOT YOURS, pure node
+        priv->tranger,
+        priv->treedb_name,
+        child_topic_name,
+        kw_get_str(child_record, "id", "", 0)
+    );
+    if(!child_node) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "child node not found",
+            NULL
+        );
+        log_debug_json(0, child_record, "node not found");
+        return -1;
+    }
 
     return treedb_unlink_nodes(
         priv->tranger,
@@ -709,14 +805,6 @@ PRIVATE json_t *mt_get_node(
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    if(!jn_options) {
-        jn_options = json_object();
-    }
-    /*
-     *  "collapsed" WARNING HARDCODE to TRUE
-     */
-    json_object_set_new(jn_options, "collapsed", json_true());
 
     json_t *node = treedb_get_node(
         priv->tranger,
@@ -745,14 +833,6 @@ PRIVATE json_t *mt_list_nodes(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(!jn_options) {
-        jn_options = json_object();
-    }
-    /*
-     *  "collapsed" WARNING HARDCODE to TRUE
-     */
-    json_object_set_new(jn_options, "collapsed", json_true());
-
     // TODO Filtra la lista con los nodos con permiso para leer
 
     return treedb_list_nodes(
@@ -778,14 +858,6 @@ PRIVATE json_t *mt_node_instances(
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    if(!jn_options) {
-        jn_options = json_object();
-    }
-    /*
-     *  "collapsed" WARNING HARDCODE to TRUE
-     */
-    json_object_set_new(jn_options, "collapsed", json_true());
 
     // TODO Filtra la lista con los nodos con permiso para leer
 
@@ -2223,7 +2295,7 @@ PRIVATE int ac_treedb_update_node(hgobj gobj, const char *event, json_t *kw, hgo
         return -1;
     }
 
-    if(kw_get_bool(jn_options, "auto-link", 0, 0)) {
+    if(kw_get_bool(jn_options, "autolink", 0, 0)) {
         treedb_clean_node(priv->tranger, node, FALSE);  // remove current links
         treedb_auto_link(priv->tranger, node, json_incref(record), FALSE);
         treedb_save_node(priv->tranger, node);
