@@ -152,7 +152,7 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_get_node[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
+SDATAPM (ASN_OCTET_STR, "id",           0,              0,          "Node id"),
 SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: fkey-ref-only-id, fkey-ref-list-dict, fkey-ref-size, hook-ref-only-id, hook-ref-list-dict, hook-ref-size"),
 SDATA_END()
 };
@@ -585,8 +585,8 @@ PRIVATE json_t *mt_topic_hooks(
 PRIVATE json_t *mt_create_node( // Return is YOURS
     hgobj gobj,
     const char *topic_name,
-    json_t *kw, // owned
-    json_t *jn_options, // owned
+    json_t *kw,
+    json_t *jn_options,
     hgobj src
 )
 {
@@ -599,6 +599,13 @@ PRIVATE json_t *mt_create_node( // Return is YOURS
         kw // owned
     );
 
+    if(!jn_options) {
+        // By default with ids style
+        jn_options = json_pack("{s:b, s:b}",
+            "hook-ref-only-id", 1,
+            "fkey-ref-only-id", 1
+        );
+    }
     return node_collapsed_view( // Return MUST be decref
         priv->tranger,
         node, // not owned
@@ -625,8 +632,8 @@ PRIVATE size_t mt_topic_size(
 PRIVATE json_t *mt_update_node( // Return is YOURS
     hgobj gobj,
     const char *topic_name,
-    json_t *kw,    // owned
-    json_t *jn_options, // owned "create", "autolink"
+    json_t *kw,
+    json_t *jn_options, // "create", "autolink"
     hgobj src
 )
 {
@@ -654,6 +661,14 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
     }
     KW_DECREF(kw);
 
+    if(!jn_options) {
+        // By default with ids style
+        jn_options = json_pack("{s:b, s:b}",
+            "hook-ref-only-id", 1,
+            "fkey-ref-only-id", 1
+        );
+    }
+
     return node_collapsed_view( // Return MUST be decref
         priv->tranger,
         node, // not owned
@@ -667,7 +682,7 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
 PRIVATE int mt_delete_node(
     hgobj gobj,
     const char *topic_name,
-    json_t *kw,    // owned
+    json_t *kw,
     json_t *jn_options, // "force"
     hgobj src
 )
@@ -815,13 +830,20 @@ PRIVATE int mt_unlink_nodes(
 PRIVATE json_t *mt_get_node(
     hgobj gobj,
     const char *topic_name,
-    const char *id,
-    json_t *jn_options, // owned "fkey-ref-*", "hook-ref-*"
+    json_t *kw,         // WARNING only 'id' field is used to find the node to delete
+    json_t *jn_options, // "fkey-ref-*", "hook-ref-*"
     hgobj src
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    const char *id = kw_get_str(kw, "id", 0, 0);
+    if(!id) {
+        // Silence
+        JSON_DECREF(kw);
+        JSON_DECREF(jn_options);
+        return 0;
+    }
     json_t *node = treedb_get_node(
         priv->tranger,
         priv->treedb_name,
@@ -830,9 +852,20 @@ PRIVATE json_t *mt_get_node(
     );
     if(!node) {
         // Silence
+        JSON_DECREF(kw);
         JSON_DECREF(jn_options);
         return 0;
     }
+
+    if(!jn_options) {
+        // By default with ids style
+        jn_options = json_pack("{s:b, s:b}",
+            "hook-ref-only-id", 1,
+            "fkey-ref-only-id", 1
+        );
+    }
+    JSON_DECREF(kw);
+
     return node_collapsed_view( // Return MUST be decref
         priv->tranger, // not owned
         node, // not owned
@@ -854,6 +887,14 @@ PRIVATE json_t *mt_list_nodes(
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     // TODO Filtra la lista con los nodos con permiso para leer
+
+    if(!jn_options) {
+        // By default with ids style
+        jn_options = json_pack("{s:b, s:b}",
+            "hook-ref-only-id", 1,
+            "fkey-ref-only-id", 1
+        );
+    }
 
     return treedb_list_nodes(
         priv->tranger,
@@ -1837,7 +1878,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    const char *node_id = kw_get_str(kw, "node_id", "", 0);
+    const char *id = kw_get_str(kw, "id", "", 0);
     json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(topic_name)) {
@@ -1850,7 +1891,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
             kw  // owned
         );
     }
-    if(empty_string(node_id)) {
+    if(empty_string(id)) {
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1864,7 +1905,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     json_t *node = gobj_get_node(
         gobj,
         topic_name,
-        node_id,
+        json_incref(kw),
         jn_options,
         src
     );
