@@ -1329,7 +1329,7 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
         json_object_set_new(jn_iev, "kw", iev_kw);
 
         /*
-         *  TODO Obligatoriamente el destinatario tiene que ser un IOGate!!! ???
+         *  HACK Obligatoriamente el destinatario tiene que ser un IOGate!!! ???
          *  Todos los mensajes (comandos,stats,subscribe/unsubscribe) van
          *  al dst_service del mensaje en curso,
          *  y si éste no existe van dst_service del identity_card,
@@ -1338,6 +1338,8 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
          *
          *  En el agente se responde al src directamente porque los mensajes vienen de commando!
          *  Por eso en los que no vienen de comando tienen que usar el __temp__`channel_gobj!
+         *
+         *  Es un metodo de información más directo que el comando, porque no pasa por un parser.
          *
          *  WARNING efectos colaterales si lo cambio? seguro que muchos
          */
