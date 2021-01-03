@@ -598,11 +598,14 @@ PRIVATE json_t *mt_create_node( // Return is YOURS
         topic_name,
         kw // owned
     );
+    if(!node) {
+        JSON_DECREF(jn_options);
+        return 0;
+    }
 
     if(!jn_options) {
         // By default with ids style
-        jn_options = json_pack("{s:b, s:b}",
-            "only-id", 1,
+        jn_options = json_pack("{s:b}",
             "only-id", 1
         );
     }
@@ -650,6 +653,7 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
     );
 
     if(!node) {
+        JSON_DECREF(jn_options);
         KW_DECREF(kw);
         return 0;
     }
@@ -663,8 +667,7 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
 
     if(!jn_options) {
         // By default with ids style
-        jn_options = json_pack("{s:b, s:b}",
-            "only-id", 1,
+        jn_options = json_pack("{s:b}",
             "only-id", 1
         );
     }
@@ -859,8 +862,7 @@ PRIVATE json_t *mt_get_node(
 
     if(!jn_options) {
         // By default with ids style
-        jn_options = json_pack("{s:b, s:b}",
-            "only-id", 1,
+        jn_options = json_pack("{s:b}",
             "only-id", 1
         );
     }
@@ -890,8 +892,7 @@ PRIVATE json_t *mt_list_nodes(
 
     if(!jn_options) {
         // By default with ids style
-        jn_options = json_pack("{s:b, s:b}",
-            "only-id", 1,
+        jn_options = json_pack("{s:b}",
             "only-id", 1
         );
     }
