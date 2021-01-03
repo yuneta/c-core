@@ -882,7 +882,7 @@ PRIVATE json_t *mt_list_nodes(
     hgobj gobj,
     const char *topic_name,
     json_t *jn_filter,
-    json_t *jn_options, // owned fkey,hook options
+    json_t *jn_options, // fkey,hook options
     hgobj src
 )
 {
@@ -915,7 +915,7 @@ PRIVATE json_t *mt_node_instances(
     const char *topic_name,
     const char *pkey2,
     json_t *jn_filter,
-    json_t *jn_options, // owned, fkey,hook options
+    json_t *jn_options, // fkey,hook options
     hgobj src
 )
 {
