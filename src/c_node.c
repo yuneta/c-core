@@ -133,27 +133,27 @@ PRIVATE sdata_desc_t pm_parents[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_OCTET_STR, "link",         0,              0,          "Link port to parents"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: fkey-ref-only-id, fkey-ref-list-dict, fkey-ref-size"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: only-id, list-dict, size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_childs[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_OCTET_STR, "hook",         0,              0,          "Hook port to childs"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: hook-ref-only-id, hook-ref-list-dict, hook-ref-size"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: only-id, list-dict, size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_list_nodes[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: fkey-ref-only-id, fkey-ref-list-dict, fkey-ref-size, hook-ref-only-id, hook-ref-list-dict, hook-ref-size"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: only-id, list-dict, size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_get_node[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "id",           0,              0,          "Node id"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: fkey-ref-only-id, fkey-ref-list-dict, fkey-ref-size, hook-ref-only-id, hook-ref-list-dict, hook-ref-size"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: only-id, list-dict, size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_node_instances[] = {
@@ -162,7 +162,7 @@ SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"
 SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_OCTET_STR, "pkey2",        0,              0,          "PKey2 field"),
 SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: fkey-ref-only-id, fkey-ref-list-dict, fkey-ref-size, hook-ref-only-id, hook-ref-list-dict, hook-ref-size"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: only-id, list-dict, size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_node_pkey2s[] = {
@@ -602,14 +602,14 @@ PRIVATE json_t *mt_create_node( // Return is YOURS
     if(!jn_options) {
         // By default with ids style
         jn_options = json_pack("{s:b, s:b}",
-            "hook-ref-only-id", 1,
-            "fkey-ref-only-id", 1
+            "only-id", 1,
+            "only-id", 1
         );
     }
     return node_collapsed_view( // Return MUST be decref
         priv->tranger,
         node, // not owned
-        jn_options // owned "fkey-ref-*", "hook-ref-*"
+        jn_options // owned fkey,hook options
     );
 }
 
@@ -664,15 +664,15 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
     if(!jn_options) {
         // By default with ids style
         jn_options = json_pack("{s:b, s:b}",
-            "hook-ref-only-id", 1,
-            "fkey-ref-only-id", 1
+            "only-id", 1,
+            "only-id", 1
         );
     }
 
     return node_collapsed_view( // Return MUST be decref
         priv->tranger,
         node, // not owned
-        jn_options // owned "fkey-ref-*", "hook-ref-*"
+        jn_options // owned fkey,hook options
     );
 }
 
@@ -831,7 +831,7 @@ PRIVATE json_t *mt_get_node(
     hgobj gobj,
     const char *topic_name,
     json_t *kw,         // WARNING only 'id' field is used to find the node to delete
-    json_t *jn_options, // "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options, // fkey,hook options
     hgobj src
 )
 {
@@ -860,8 +860,8 @@ PRIVATE json_t *mt_get_node(
     if(!jn_options) {
         // By default with ids style
         jn_options = json_pack("{s:b, s:b}",
-            "hook-ref-only-id", 1,
-            "fkey-ref-only-id", 1
+            "only-id", 1,
+            "only-id", 1
         );
     }
     JSON_DECREF(kw);
@@ -880,7 +880,7 @@ PRIVATE json_t *mt_list_nodes(
     hgobj gobj,
     const char *topic_name,
     json_t *jn_filter,
-    json_t *jn_options, // owned "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options, // owned fkey,hook options
     hgobj src
 )
 {
@@ -891,8 +891,8 @@ PRIVATE json_t *mt_list_nodes(
     if(!jn_options) {
         // By default with ids style
         jn_options = json_pack("{s:b, s:b}",
-            "hook-ref-only-id", 1,
-            "fkey-ref-only-id", 1
+            "only-id", 1,
+            "only-id", 1
         );
     }
 
@@ -914,7 +914,7 @@ PRIVATE json_t *mt_node_instances(
     const char *topic_name,
     const char *pkey2,
     json_t *jn_filter,
-    json_t *jn_options, // owned, "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options, // owned, fkey,hook options
     hgobj src
 )
 {
