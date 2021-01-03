@@ -941,7 +941,7 @@ PRIVATE json_t *mt_node_parents(
     const char *topic_name,
     const char *id,
     const char *link,   // fkey
-    json_t *jn_options, // owned , "fkey-ref-*"
+    json_t *jn_options, // owned , fkey options
     hgobj src
 )
 {
@@ -1001,7 +1001,7 @@ PRIVATE json_t *mt_node_childs(
     const char *topic_name,
     const char *id,
     const char *hook,
-    json_t *jn_options,  // owned "hook-ref-*"
+    json_t *jn_options,  // owned fkey,hook options
     hgobj src
 )
 {
