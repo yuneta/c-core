@@ -26,7 +26,7 @@ PRIVATE char __realm_name__[NAME_MAX] = {0};
 PRIVATE char __realm_env__[NAME_MAX] = {0};
 PRIVATE char __yuno_role__[NAME_MAX] = {0};
 PRIVATE char __yuno_name__[NAME_MAX] = {0};
-PRIVATE char __yuno_alias__[NAME_MAX] = {0};
+PRIVATE char __yuno_tag__[NAME_MAX] = {0};
 
 PRIVATE char __app_name__[NAME_MAX] = {0};
 PRIVATE char __yuno_version__[NAME_MAX] = {0};
@@ -652,7 +652,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
     }
     const char *yuno_role  = kw_get_str(jn_yuno, "yuno_role", "", 0);
     const char *yuno_name  = kw_get_str(jn_yuno, "yuno_name", "", 0);
-    const char *yuno_alias  = kw_get_str(jn_yuno, "yuno_alias", "", 0);
+    const char *yuno_tag  = kw_get_str(jn_yuno, "yuno_tag", "", 0);
     if(empty_string(yuno_role)) {
         print_error(
             PEF_EXIT,
@@ -676,7 +676,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
     snprintf(__realm_env__, sizeof(__realm_env__), "%s", realm_env);
     snprintf(__yuno_role__, sizeof(__yuno_role__), "%s", yuno_role);
     snprintf(__yuno_name__, sizeof(__yuno_name__), "%s", yuno_name);
-    snprintf(__yuno_alias__, sizeof(__yuno_alias__), "%s", yuno_alias);
+    snprintf(__yuno_tag__, sizeof(__yuno_tag__), "%s", yuno_tag);
 
     set_process_name2(__yuno_role__, __yuno_name__);
 
@@ -720,7 +720,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
         json_t *jn_basic_info = json_pack("{s:s, s:s, s:s, s:s, s:s, s:s, s:s}",
             "role", __yuno_role__,
             "name", __yuno_name__,
-            "alias", __yuno_alias__,
+            "alias", __yuno_tag__,
             "version", __yuno_version__,
             "date", __app_datetime__,
             "description", __app_doc__,
@@ -803,7 +803,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
         "msg",          "%s", "Finished",
         "role",         "%s", __yuno_role__,
         "name",         "%s", __yuno_name__,
-        "alias",        "%s", __yuno_alias__,
+        "alias",        "%s", __yuno_tag__,
         NULL
     );
     JSON_DECREF(__jn_config__);
@@ -849,7 +849,7 @@ PRIVATE void process(const char *process_name, const char *work_dir, const char 
         "realm_env",    "%s", __realm_env__,
         "yuno_role",    "%s", __yuno_role__,
         "yuno_name",    "%s", __yuno_name__,
-        "yuno_alias",   "%s", __yuno_alias__,
+        "yuno_tag",   "%s", __yuno_tag__,
         "version",      "%s", __yuno_version__,
         "date",         "%s", __app_datetime__,
         "pid",          "%d", getpid(),
@@ -875,7 +875,7 @@ PRIVATE void process(const char *process_name, const char *work_dir, const char 
         __realm_name__,
         __realm_env__,
         __yuno_name__,
-        __yuno_alias__,
+        __yuno_tag__,
         jn_yuno
     );
     if(!gobj) {
