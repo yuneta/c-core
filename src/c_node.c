@@ -644,15 +644,93 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
 
     BOOL volatil = kw_get_bool(jn_options, "volatil", 0, 0);
     BOOL create = kw_get_bool(jn_options, "create", 0, 0);
-    json_t *node = 0;
 
-    if(volatil) {
-        node = treedb_get_node( // Return is NOT YOURS
+    json_t *node = 0;
+    json_t *iter = treedb_list_nodes(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name,
+        kw_incref(kw),
+        0
+    );
+    if(json_array_size(iter)==1) {
+        node = json_array_get(iter, 0);
+        json_incref(node);
+    } else if(json_array_size(iter)>1) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "Too much nodes for update",
+            NULL
+        );
+        log_debug_json(0, kw, "Too much nodes for update");
+        json_decref(iter);
+        JSON_DECREF(jn_options);
+        KW_DECREF(kw);
+        return 0;
+    }
+    json_decref(iter);
+
+    /*
+     *  Search in instances if not found in main index
+     */
+    if(!node) {
+        iter = treedb_node_instances(
             priv->tranger,
             priv->treedb_name,
             topic_name,
-            kw_get_str(kw, "id", "", 0)
+            "",
+            kw_incref(kw),
+            0
         );
+        if(json_array_size(iter)==1) {
+            node = json_array_get(iter, 0);
+            json_incref(node);
+        } else if(json_array_size(iter)>1) {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "Too much instances for update",
+                NULL
+            );
+            log_debug_json(0, kw, "Too much instances for update");
+            json_decref(iter);
+            JSON_DECREF(jn_options);
+            KW_DECREF(kw);
+            return 0;
+        }
+        json_decref(iter);
+    }
+
+    if(!node) {
+        if(create) {
+            node = treedb_create_node( // Return is NOT YOURS
+                priv->tranger,
+                priv->treedb_name,
+                topic_name,
+                kw_incref(kw)
+            );
+        }
+        if(!node) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "node not found",
+                "treedb_name",  "%s", priv->treedb_name,
+                "topic_name",   "%s", topic_name,
+                NULL
+            );
+            log_debug_json(0, kw, "node not found");
+            JSON_DECREF(jn_options);
+            KW_DECREF(kw);
+            return 0;
+        }
+    }
+
+    if(volatil) {
         set_volatil_values(
             priv->tranger,
             topic_name,
@@ -660,20 +738,13 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
             kw // NOT owned
         );
 
-    } else {
-        node = treedb_update_node( // Return is NOT YOURS
+    } else if(!create) {
+        treedb_update_node( // Return is NOT YOURS
             priv->tranger,
-            priv->treedb_name,
-            topic_name,
+            node,
             json_incref(kw),
-            create
+            TRUE
         );
-    }
-
-    if(!node) {
-        JSON_DECREF(jn_options);
-        KW_DECREF(kw);
-        return 0;
     }
 
     if(!volatil) {
@@ -918,14 +989,29 @@ PRIVATE json_t *mt_list_nodes(
         );
     }
 
-    return treedb_list_nodes(
+    json_t *iter = treedb_list_nodes(
         priv->tranger,
         priv->treedb_name,
         topic_name,
         jn_filter,
-        jn_options,
         0
     );
+    json_t *list = json_array();
+    int idx; json_t *node;
+    json_array_foreach(iter, idx, node) {
+        json_array_append_new(
+            list,
+            node_collapsed_view(
+                priv->tranger,
+                node,
+                json_incref(jn_options)
+            )
+        );
+    }
+    json_decref(iter);
+
+    json_decref(jn_options);
+    return list;
 }
 
 /***************************************************************************
@@ -951,15 +1037,31 @@ PRIVATE json_t *mt_node_instances(
         );
     }
 
-    return treedb_node_instances( // Return MUST be decref
+    json_t *iter = treedb_node_instances( // Return MUST be decref
         priv->tranger,
         priv->treedb_name,
         topic_name,
         pkey2,
         jn_filter,
-        jn_options,
         0
     );
+
+    json_t *list = json_array();
+    int idx; json_t *node;
+    json_array_foreach(iter, idx, node) {
+        json_array_append_new(
+            list,
+            node_collapsed_view(
+                priv->tranger,
+                node,
+                json_incref(jn_options)
+            )
+        );
+    }
+    json_decref(iter);
+
+    json_decref(jn_options);
+    return list;
 }
 
 /***************************************************************************
@@ -2400,13 +2502,13 @@ PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src
                     ignored++;
                 } else if(if_resource_exists==2) {
                     // Overwrite
-                    node = treedb_update_node( // Return is NOT YOURS
-                        priv->tranger,
-                        priv->treedb_name,
-                        topic_name,
-                        json_incref(record),
-                        FALSE
-                    );
+//   TODO                  node = treedb_update_node( // Return is NOT YOURS
+//                         priv->tranger,
+//                         priv->treedb_name,
+//                         topic_name,
+//                         json_incref(record),
+//                         FALSE
+//                     );
                     if(node) {
                         json_array_append(
                             list_records,
@@ -2546,8 +2648,6 @@ PRIVATE int treedb_callback(
  ***************************************************************************/
 PRIVATE int ac_treedb_update_node(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
     /*
      *  Get parameters
      */
@@ -2555,25 +2655,15 @@ PRIVATE int ac_treedb_update_node(hgobj gobj, const char *event, json_t *kw, hgo
     json_t *record = kw_get_dict(kw, "record", 0, 0);
     json_t *jn_options = kw_get_dict(kw, "options", 0, 0); // "create", "auto-link"
 
-    BOOL create = kw_get_bool(jn_options, "create", 0, 0);
-
-    json_t *node = treedb_update_node( // Return is NOT YOURS
-        priv->tranger,
-        priv->treedb_name,
+    json_t *node = gobj_update_node( // Return is YOURS
+        gobj,
         topic_name,
         json_incref(record),
-        create
+        json_incref(jn_options),
+        src
     );
-    if(!node) {
-        KW_DECREF(kw);
-        return -1;
-    }
+    json_decref(node); // TODO return something?
 
-    if(kw_get_bool(jn_options, "autolink", 0, 0)) {
-        treedb_clean_node(priv->tranger, node, FALSE);  // remove current links
-        treedb_auto_link(priv->tranger, node, json_incref(record), FALSE);
-        treedb_save_node(priv->tranger, node);
-    }
     KW_DECREF(kw);
     return 0;
 }
