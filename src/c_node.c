@@ -2087,8 +2087,8 @@ PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgob
 
     return msg_iev_build_webix(
         gobj,
-        0,
-        json_local_sprintf("%d instances touched", json_array_size(instances)),
+        -1,
+        json_sprintf("Not implemented"), // TODO json_local_sprintf("%d instances touched", json_array_size(instances)),
         tranger_topic_desc(priv->tranger, topic_name),
         instances,
         kw  // owned
