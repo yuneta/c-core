@@ -635,7 +635,7 @@ PRIVATE size_t mt_topic_size(
 PRIVATE json_t *mt_update_node( // Return is YOURS
     hgobj gobj,
     const char *topic_name,
-    json_t *kw,
+    json_t *kw, // WARNING only 'id' and topic_pkey2s fields are used to find the node to update
     json_t *jn_options, // "create" "autolink" "volatil" fkey,hook options
     hgobj src
 )
@@ -645,12 +645,15 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
     BOOL volatil = kw_get_bool(jn_options, "volatil", 0, 0);
     BOOL create = kw_get_bool(jn_options, "create", 0, 0);
 
+    json_t *jn_filter = json_object();
+    json_t *jn_id = kw_get_str(kw, "id", 0, 0);
+
     json_t *node = 0;
     json_t *iter = treedb_list_nodes(
         priv->tranger,
         priv->treedb_name,
         topic_name,
-        kw_incref(kw),
+        jn_filter,
         0
     );
     if(json_array_size(iter)==1) {
@@ -681,7 +684,7 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
             priv->treedb_name,
             topic_name,
             "",
-            kw_incref(kw),
+            jn_filter,
             0
         );
         if(json_array_size(iter)==1) {
@@ -777,7 +780,7 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
 PRIVATE int mt_delete_node(
     hgobj gobj,
     const char *topic_name,
-    json_t *kw,
+    json_t *kw, // WARNING only 'id' and topic_pkey2s fields are used to find the node to delete
     json_t *jn_options, // "force"
     hgobj src
 )
