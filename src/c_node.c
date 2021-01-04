@@ -923,6 +923,13 @@ PRIVATE json_t *mt_node_instances(
 
     // TODO Filtra la lista con los nodos con permiso para leer
 
+    if(!jn_options) {
+        // By default with ids style
+        jn_options = json_pack("{s:b}",
+            "only-id", 1
+        );
+    }
+
     return treedb_node_instances( // Return MUST be decref
         priv->tranger,
         priv->treedb_name,
