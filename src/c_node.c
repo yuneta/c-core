@@ -586,7 +586,7 @@ PRIVATE json_t *mt_create_node( // Return is YOURS
     hgobj gobj,
     const char *topic_name,
     json_t *kw,
-    json_t *jn_options,
+    json_t *jn_options, // fkey,hook options
     hgobj src
 )
 {
@@ -636,21 +636,39 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
     hgobj gobj,
     const char *topic_name,
     json_t *kw,
-    json_t *jn_options, // "create", "autolink"
+    json_t *jn_options, // "create" "autolink" "volatil" fkey,hook options
     hgobj src
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    BOOL volatil = kw_get_bool(jn_options, "volatil", 0, 0);
     BOOL create = kw_get_bool(jn_options, "create", 0, 0);
+    json_t *node = 0;
 
-    json_t *node = treedb_update_node( // Return is NOT YOURS
-        priv->tranger,
-        priv->treedb_name,
-        topic_name,
-        json_incref(kw),
-        create
-    );
+    if(volatil) {
+        node = treedb_get_node( // Return is NOT YOURS
+            priv->tranger,
+            priv->treedb_name,
+            topic_name,
+            kw_get_str(kw, "id", "", 0)
+        );
+        set_volatil_values(
+            priv->tranger,
+            topic_name,
+            node,  // NOT owned
+            kw // NOT owned
+        );
+
+    } else {
+        node = treedb_update_node( // Return is NOT YOURS
+            priv->tranger,
+            priv->treedb_name,
+            topic_name,
+            json_incref(kw),
+            create
+        );
+    }
 
     if(!node) {
         JSON_DECREF(jn_options);
@@ -658,11 +676,14 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
         return 0;
     }
 
-    if(kw_get_bool(jn_options, "autolink", 0, 0)) {
-        treedb_clean_node(priv->tranger, node, FALSE);  // remove current links
-        treedb_auto_link(priv->tranger, node, json_incref(kw), FALSE);
-        treedb_save_node(priv->tranger, node);
+    if(!volatil) {
+        if(kw_get_bool(jn_options, "autolink", 0, 0)) {
+            treedb_clean_node(priv->tranger, node, FALSE);  // remove current links
+            treedb_auto_link(priv->tranger, node, json_incref(kw), FALSE);
+            treedb_save_node(priv->tranger, node);
+        }
     }
+
     KW_DECREF(kw);
 
     if(!jn_options) {
