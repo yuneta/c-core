@@ -960,7 +960,7 @@ PRIVATE int mt_unlink_nodes(
 PRIVATE json_t *mt_get_node(
     hgobj gobj,
     const char *topic_name,
-    json_t *kw,         // only 'id' field is used to find the node to delete
+    json_t *kw,         // // 'id' and topic_pkey2s fields are used to find the node
     json_t *jn_options, // fkey,hook options
     hgobj src
 )
@@ -970,20 +970,8 @@ PRIVATE json_t *mt_get_node(
     const char *id = kw_get_str(kw, "id", 0, 0);
     if(!id) {
         // Silence
-        JSON_DECREF(kw);
         JSON_DECREF(jn_options);
-        return 0;
-    }
-    json_t *node = treedb_get_node(
-        priv->tranger,
-        priv->treedb_name,
-        topic_name,
-        id
-    );
-    if(!node) {
-        // Silence
-        JSON_DECREF(kw);
-        JSON_DECREF(jn_options);
+        KW_DECREF(kw);
         return 0;
     }
 
@@ -993,13 +981,68 @@ PRIVATE json_t *mt_get_node(
             "only-id", 1
         );
     }
-    JSON_DECREF(kw);
-
-    return node_collapsed_view( // Return MUST be decref
-        priv->tranger, // not owned
-        node, // not owned
-        jn_options // owned
+    json_t *jn_filter = treedb_topic_pkey2s_filter(
+        priv->tranger,
+        topic_name,
+        kw, // NO owned
+        id
     );
+
+    /*
+     *  Busca en indice principal
+     */
+    json_t *node = treedb_get_node(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name,
+        id
+    );
+    if(node && kw_match_simple(node, json_incref(jn_filter))) {
+        JSON_DECREF(jn_filter);
+        KW_DECREF(kw);
+        return node_collapsed_view( // Return MUST be decref
+            priv->tranger, // not owned
+            node, // not owned
+            jn_options // owned
+        );
+    }
+
+    json_t *iter_pkey2s = treedb_topic_pkey2s(priv->tranger, topic_name);
+    int idx; json_t *jn_pkey2_name;
+    json_array_foreach(iter_pkey2s, idx, jn_pkey2_name) {
+        const char *pkey2_name = json_string_value(jn_pkey2_name);
+        if(empty_string(pkey2_name)) {
+            continue;
+        }
+
+        const char *pkey2_value = kw_get_str(kw, pkey2_name, "", 0);
+
+        node = treedb_get_instance( // WARNING Return is NOT YOURS, pure node
+            priv->tranger,
+            priv->treedb_name,
+            topic_name,
+            pkey2_name, // required
+            id,         // primary key
+            pkey2_value // secondary key
+        );
+
+        if(node && kw_match_simple(node, json_incref(jn_filter))) {
+            json_decref(iter_pkey2s);
+            JSON_DECREF(jn_filter);
+            KW_DECREF(kw);
+            return node_collapsed_view( // Return MUST be decref
+                priv->tranger, // not owned
+                node, // not owned
+                jn_options // owned
+            );
+        }
+    }
+    json_decref(iter_pkey2s);
+
+    JSON_DECREF(jn_options);
+    JSON_DECREF(jn_filter);
+    JSON_DECREF(kw);
+    return 0;
 }
 
 /***************************************************************************
@@ -1040,7 +1083,7 @@ PRIVATE json_t *mt_list_nodes(
          *  Search in instances
          */
         json_decref(iter);
-        iter = treedb_node_instances(
+        iter = treedb_list_instances(
             priv->tranger,
             priv->treedb_name,
             topic_name,
@@ -1093,7 +1136,7 @@ PRIVATE json_t *mt_node_instances(
         );
     }
 
-    json_t *iter = treedb_node_instances( // Return MUST be decref
+    json_t *iter = treedb_list_instances( // Return MUST be decref
         priv->tranger,
         priv->treedb_name,
         topic_name,
