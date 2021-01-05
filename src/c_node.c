@@ -729,11 +729,79 @@ PRIVATE int mt_delete_node(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    const char *id = kw_get_str(kw, "id", 0, 0);
+    if(empty_string(id)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "id required to delete node",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(kw);
+        JSON_DECREF(jn_options);
+        return -1;
+    }
+
+    json_t *pkey2s_list = treedb_topic_pkey2s( // Return list with pkey2s
+        priv->tranger,
+        topic_name
+    );
+
+    /*
+     *  Find the node to delete, first in secondary keys, next primary key.
+     */
+    json_t *node = 0;
+
+    /*
+     *  Check if has a secondary key, get the first found
+     */
+    int idx; json_t *jn_pkey2_name;
+    json_array_foreach(pkey2s_list, idx, jn_pkey2_name) {
+        const char *pkey2_name = json_string_value(jn_pkey2_name);
+        const char *key2 = kw_get_str(kw, pkey2_name, 0, 0);
+        node = treedb_get_instance( // WARNING Return is NOT YOURS, pure node
+            priv->tranger,
+            priv->treedb_name,
+            topic_name,
+            pkey2_name,
+            id,     // primary key
+            key2    // secondary key
+        );
+        if(node) {
+            break;
+        }
+    }
+
+    if(!node) {
+        node = treedb_get_node( // WARNING Return is NOT YOURS, pure node
+            priv->tranger,
+            priv->treedb_name,
+            topic_name,
+            id
+        );
+    }
+    if(!node) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "node not found",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            "id",           "%s", id,
+            NULL
+        );
+        JSON_DECREF(kw);
+        JSON_DECREF(jn_options);
+        return -1;
+    }
+
     return treedb_delete_node(
         priv->tranger,
-        priv->treedb_name,
-        topic_name,
-        kw, // owned
+        node,
         jn_options
     );
 }
@@ -1081,52 +1149,78 @@ PRIVATE json_t *mt_node_childs(
     hgobj src
 )
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//
+//     json_t *node = treedb_get_node(
+//         priv->tranger,
+//         priv->treedb_name,
+//         topic_name,
+//         id
+//     );
+//     if(!node) {
+//         // silence
+//         JSON_DECREF(jn_options);
+//         return 0;
+//     }
+//
+//     /*
+//      *  Return a list of child nodes of the hook
+//      */
+//     if(!empty_string(hook)) {
+//         return treedb_list_childs( // Return MUST be decref
+//             priv->tranger,
+//             hook, // must be a hook field
+//             node, // not owned
+//             jn_options
+//         );
+//     }
+//
+//     /*
+//      *  If no hook return all hooks
+//      */
+//     json_t *childs = json_array();
+//     json_t *hooks = treedb_get_topic_hooks(priv->tranger, priv->treedb_name, topic_name);
+//     int idx; json_t *jn_hook;
+//     json_array_foreach(hooks, idx, jn_hook) {
+//         json_t *childs_ = treedb_list_childs( // Return MUST be decref
+//             priv->tranger,
+//             json_string_value(jn_hook), // must be a hook field
+//             node, // not owned
+//             json_incref(jn_options)
+//         );
+//         json_array_extend(childs, childs_);
+//         JSON_DECREF(childs_);
+//     }
+//     JSON_DECREF(hooks);
+//     JSON_DECREF(jn_options);
+//
+//     return childs;
 
-    json_t *node = treedb_get_node(
-        priv->tranger,
-        priv->treedb_name,
-        topic_name,
-        id
-    );
-    if(!node) {
-        // silence
-        JSON_DECREF(jn_options);
-        return 0;
-    }
 
-    /*
-     *  Return a list of child nodes of the hook
-     */
-    if(!empty_string(hook)) {
-        return treedb_list_childs( // Return MUST be decref
-            priv->tranger,
-            hook, // must be a hook field
-            node, // not owned
-            jn_options
-        );
-    }
 
-    /*
-     *  If no hook return all hooks
-     */
-    json_t *childs = json_array();
-    json_t *hooks = treedb_get_topic_hooks(priv->tranger, priv->treedb_name, topic_name);
-    int idx; json_t *jn_hook;
-    json_array_foreach(hooks, idx, jn_hook) {
-        json_t *childs_ = treedb_list_childs( // Return MUST be decref
-            priv->tranger,
-            json_string_value(jn_hook), // must be a hook field
-            node, // not owned
-            json_incref(jn_options)
-        );
-        json_array_extend(childs, childs_);
-        JSON_DECREF(childs_);
-    }
-    JSON_DECREF(hooks);
-    JSON_DECREF(jn_options);
 
-    return childs;
+
+
+
+//     if(kw_get_bool(jn_options, "size", 0, KW_WILD_NUMBER)) {
+//         json_t *jn_size = json_array();
+//         json_array_append_new(jn_size, json_integer(json_size(field_data)));
+//         JSON_DECREF(jn_options);
+//         JSON_DECREF(cols);
+//         return jn_size;
+//     }
+//
+//     if(json_empty(field_data)) {
+//         JSON_DECREF(jn_options);
+//         JSON_DECREF(cols);
+//         return json_array();
+//     }
+//
+//     json_t *refs = get_hook_refs(field_data, original_node);
+//     json_t *childs = apply_child_ref_options(refs, jn_options);
+//     JSON_DECREF(refs);
+
+return 0;
 }
 
 /***************************************************************************
