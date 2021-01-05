@@ -484,9 +484,6 @@ PRIVATE json_t *mt_topic_desc(hgobj gobj, const char *topic_name)
         int idx; json_t *jn_topic_name;
         json_array_foreach(topics_list, idx, jn_topic_name) {
             topic_name = json_string_value(jn_topic_name);
-            if(strcmp(topic_name, "__schema_version__")==0) {
-                continue;
-            }
             json_object_set_new(
                 jn_topics_desc,
                 topic_name,
@@ -2171,10 +2168,8 @@ PRIVATE json_t *cmd_node_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj s
 
     return msg_iev_build_webix(
         gobj,
-        pkey2s?0:-1,
-        pkey2s?
-            json_local_sprintf("%d pkey2s", json_object_size(pkey2s)):
-            json_string(log_last_message()),
+        0,
+        json_local_sprintf("%d pkey2s", json_array_size(pkey2s)),
         0,
         pkey2s,
         kw  // owned
