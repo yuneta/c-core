@@ -1024,13 +1024,32 @@ PRIVATE json_t *mt_list_nodes(
         );
     }
 
+    /*
+     *  Search in main list
+     */
     json_t *iter = treedb_list_nodes(
         priv->tranger,
         priv->treedb_name,
         topic_name,
-        jn_filter,
+        json_incref(jn_filter),
         0
     );
+
+    if(json_array_size(iter)==0) {
+        /*
+         *  Search in instances
+         */
+        json_decref(iter);
+        iter = treedb_node_instances(
+            priv->tranger,
+            priv->treedb_name,
+            topic_name,
+            "",
+            json_incref(jn_filter),
+            0
+        );
+    }
+
     json_t *list = json_array();
     int idx; json_t *node;
     json_array_foreach(iter, idx, node) {
@@ -1045,7 +1064,9 @@ PRIVATE json_t *mt_list_nodes(
     }
     json_decref(iter);
 
-    json_decref(jn_options);
+    JSON_DECREF(jn_filter);
+    JSON_DECREF(jn_options);
+
     return list;
 }
 
@@ -1077,7 +1098,7 @@ PRIVATE json_t *mt_node_instances(
         priv->treedb_name,
         topic_name,
         pkey2,
-        jn_filter,
+        json_incref(jn_filter),
         0
     );
 
@@ -1095,7 +1116,8 @@ PRIVATE json_t *mt_node_instances(
     }
     json_decref(iter);
 
-    json_decref(jn_options);
+    JSON_DECREF(jn_filter);
+    JSON_DECREF(jn_options);
     return list;
 }
 
