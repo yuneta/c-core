@@ -635,7 +635,7 @@ PRIVATE size_t mt_topic_size(
 PRIVATE json_t *mt_update_node( // Return is YOURS
     hgobj gobj,
     const char *topic_name,
-    json_t *kw, // WARNING only 'id' and topic_pkey2s fields are used to find the node to update
+    json_t *kw,         // 'id' and topic_pkey2s fields are used to find the node
     json_t *jn_options, // "create" "autolink" "volatil" fkey,hook options
     hgobj src
 )
@@ -645,67 +645,12 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
     BOOL volatil = kw_get_bool(jn_options, "volatil", 0, 0);
     BOOL create = kw_get_bool(jn_options, "create", 0, 0);
 
-    json_t *jn_filter = json_object();
-    json_t *jn_id = kw_get_str(kw, "id", 0, 0);
-
-    json_t *node = 0;
-    json_t *iter = treedb_list_nodes(
+    json_t *node = treedb_get_node(
         priv->tranger,
         priv->treedb_name,
         topic_name,
-        jn_filter,
-        0
+        ""
     );
-    if(json_array_size(iter)==1) {
-        node = json_array_get(iter, 0);
-        json_incref(node);
-    } else if(json_array_size(iter)>1) {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "Too much nodes for update",
-            NULL
-        );
-        log_debug_json(0, kw, "Too much nodes for update");
-        json_decref(iter);
-        JSON_DECREF(jn_options);
-        KW_DECREF(kw);
-        return 0;
-    }
-    json_decref(iter);
-
-    /*
-     *  Search in instances if not found in main index
-     */
-    if(!node) {
-        iter = treedb_node_instances(
-            priv->tranger,
-            priv->treedb_name,
-            topic_name,
-            "",
-            jn_filter,
-            0
-        );
-        if(json_array_size(iter)==1) {
-            node = json_array_get(iter, 0);
-            json_incref(node);
-        } else if(json_array_size(iter)>1) {
-            log_error(0,
-                "gobj",         "%s", gobj_full_name(gobj),
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "Too much instances for update",
-                NULL
-            );
-            log_debug_json(0, kw, "Too much instances for update");
-            json_decref(iter);
-            JSON_DECREF(jn_options);
-            KW_DECREF(kw);
-            return 0;
-        }
-        json_decref(iter);
-    }
 
     if(!node) {
         if(create) {
@@ -780,7 +725,7 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
 PRIVATE int mt_delete_node(
     hgobj gobj,
     const char *topic_name,
-    json_t *kw, // WARNING only 'id' and topic_pkey2s fields are used to find the node to delete
+    json_t *kw,         // 'id' and topic_pkey2s fields are used to find the node
     json_t *jn_options, // "force"
     hgobj src
 )
@@ -928,7 +873,7 @@ PRIVATE int mt_unlink_nodes(
 PRIVATE json_t *mt_get_node(
     hgobj gobj,
     const char *topic_name,
-    json_t *kw,         // WARNING only 'id' field is used to find the node to delete
+    json_t *kw,         // only 'id' field is used to find the node to delete
     json_t *jn_options, // fkey,hook options
     hgobj src
 )
