@@ -745,45 +745,13 @@ PRIVATE int mt_delete_node(
         return -1;
     }
 
-    json_t *pkey2s_list = treedb_topic_pkey2s( // Return list with pkey2s
+    json_t *main_node = treedb_get_node( // WARNING Return is NOT YOURS, pure node
         priv->tranger,
-        topic_name
+        priv->treedb_name,
+        topic_name,
+        id
     );
-
-    /*
-     *  Find the node to delete, first in secondary keys, next primary key.
-     */
-    json_t *node = 0;
-
-    /*
-     *  Check if has a secondary key, get the first found
-     */
-    int idx; json_t *jn_pkey2_name;
-    json_array_foreach(pkey2s_list, idx, jn_pkey2_name) {
-        const char *pkey2_name = json_string_value(jn_pkey2_name);
-        const char *key2 = kw_get_str(kw, pkey2_name, 0, 0);
-        node = treedb_get_instance( // WARNING Return is NOT YOURS, pure node
-            priv->tranger,
-            priv->treedb_name,
-            topic_name,
-            pkey2_name,
-            id,     // primary key
-            key2    // secondary key
-        );
-        if(node) {
-            break;
-        }
-    }
-
-    if(!node) {
-        node = treedb_get_node( // WARNING Return is NOT YOURS, pure node
-            priv->tranger,
-            priv->treedb_name,
-            topic_name,
-            id
-        );
-    }
-    if(!node) {
+    if(!main_node) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -799,11 +767,65 @@ PRIVATE int mt_delete_node(
         return -1;
     }
 
-    return treedb_delete_node(
-        priv->tranger,
-        node,
-        jn_options
-    );
+    json_t *node = 0;
+    int ret = 0;
+    int deleted = 0;
+    json_t *jn_filter = json_object();
+
+    /*
+     *  Check if has secondary keys
+     */
+    json_t *pkey2s_list = treedb_topic_pkey2s(priv->tranger, topic_name);
+    int idx; json_t *jn_pkey2_name;
+    json_array_foreach(pkey2s_list, idx, jn_pkey2_name) {
+        const char *pkey2_name = json_string_value(jn_pkey2_name);
+        const char *key2 = kw_get_str(kw, pkey2_name, 0, 0);
+        node = treedb_get_instance( // WARNING Return is NOT YOURS, pure node
+            priv->tranger,
+            priv->treedb_name,
+            topic_name,
+            pkey2_name,
+            id,     // primary key
+            key2    // secondary key
+        );
+        if(node && node != main_node) {
+            json_object_set_new(jn_filter, pkey2_name, json_string(key2));
+            ret += treedb_delete_node(
+                priv->tranger,
+                node,
+                json_incref(jn_options)
+            );
+            deleted++;
+        }
+    }
+    json_decref(pkey2s_list);
+
+    if(kw_match_simple(main_node, jn_filter)) {
+        ret += treedb_delete_node(
+            priv->tranger,
+            main_node,
+            json_incref(jn_options)
+        );
+        deleted++;
+    }
+
+    if(!deleted) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "node not found",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            "id",           "%s", id,
+            NULL
+        );
+        ret += -1;
+    }
+
+    JSON_DECREF(kw);
+    JSON_DECREF(jn_options);
+    return ret;
 }
 
 /***************************************************************************
