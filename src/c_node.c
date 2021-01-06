@@ -850,7 +850,7 @@ PRIVATE int mt_link_nodes(
     const char *child_topic_name = kw_get_str(child_record, "__md_treedb__`topic_name", 0, 0);
 
     json_t *parent_node = fetch_node( // WARNING Return is NOT YOURS, pure node
-        priv->tranger,
+        gobj,
         parent_topic_name,
         parent_record
     );
@@ -869,7 +869,7 @@ PRIVATE int mt_link_nodes(
     }
 
     json_t *child_node = fetch_node( // WARNING Return is NOT YOURS, pure node
-        priv->tranger,
+        gobj,
         child_topic_name,
         child_record
     );
@@ -917,7 +917,7 @@ PRIVATE int mt_unlink_nodes(
     const char *child_topic_name = kw_get_str(child_record, "__md_treedb__`topic_name", 0, 0);
 
     json_t *parent_node = fetch_node( // WARNING Return is NOT YOURS, pure node
-        priv->tranger,
+        gobj,
         parent_topic_name,
         parent_record
     );
@@ -936,7 +936,7 @@ PRIVATE int mt_unlink_nodes(
     }
 
     json_t *child_node = fetch_node( // WARNING Return is NOT YOURS, pure node
-        priv->tranger,
+        gobj,
         child_topic_name,
         child_record
     );
@@ -1007,7 +1007,7 @@ PRIVATE json_t *mt_list_nodes(
     hgobj gobj,
     const char *topic_name,
     json_t *jn_filter,
-    json_t *jn_options, // fkey,hook options
+    json_t *jn_options, // "include-instances" fkey,hook options
     hgobj src
 )
 {
@@ -1021,6 +1021,7 @@ PRIVATE json_t *mt_list_nodes(
             "only-id", 1
         );
     }
+    BOOL include_instances = kw_get_bool(jn_options, "include-instances", 0, KW_WILD_NUMBER);
 
     /*
      *  Search in main list
@@ -1033,7 +1034,7 @@ PRIVATE json_t *mt_list_nodes(
         0
     );
 
-    if(json_array_size(iter)==0) {
+    if(json_array_size(iter)==0 && include_instances) {
         /*
          *  Search in instances
          */
