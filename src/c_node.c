@@ -1278,13 +1278,15 @@ PRIVATE int mt_shoot_snap(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    KW_DECREF(kw);
-
-    return treedb_shoot_snap(
+    const char *description = kw_get_str(kw, "description", "", 0);
+    int ret = treedb_shoot_snap(
         priv->tranger,
         priv->treedb_name,
-        tag
+        tag,
+        description
     );
+    KW_DECREF(kw);
+    return ret;
 }
 
 /***************************************************************************
