@@ -37,7 +37,7 @@ SDATA (ASN_COUNTER,     "rxBytes",          SDF_RD, 0, "Bytes received"),
 SDATA (ASN_OCTET_STR,   "stopped_event_name",   SDF_RD,  "EV_STOPPED", "Stopped event name"),
 SDATA (ASN_OCTET_STR,   "tx_ready_event_name",  SDF_RD,  "EV_TX_READY", "Must be empty if you don't want receive this event"),
 SDATA (ASN_OCTET_STR,   "rx_data_event_name",   SDF_RD,  "EV_RX_DATA", "Must be empty if you don't want receive this event"),
-SDATA (ASN_BOOLEAN,     "exitOnError",          SDF_RD,  0, "Exit if Listen failed"),
+SDATA (ASN_BOOLEAN,     "exitOnError",          SDF_RD,  1, "Exit if Listen failed"),
 SDATA (ASN_POINTER,     "user_data",            0,  0, "user data"),
 SDATA (ASN_POINTER,     "user_data2",           0,  0, "more user data"),
 SDATA (ASN_POINTER,     "subscriber",           0,  0, "subscriber of output-events. Default if null is parent."),
@@ -267,8 +267,13 @@ PRIVATE int mt_start(hgobj gobj)
             "msg",          "%s", "uv_udp_bind() FAILED",
             "url",          "%s", priv->url,
             "uv_error",     "%s", uv_err_name(r),
-            NULL);
-        return -1;
+            NULL
+        );
+        if(priv->exitOnError) {
+            exit(0); // WARNING exit with 0 to stop daemon watcher!
+        } else {
+            return -1;
+        }
     }
     gobj_write_str_attr(gobj, "lHost", host);
     gobj_write_str_attr(gobj, "lPort", port);
