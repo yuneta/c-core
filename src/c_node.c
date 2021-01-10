@@ -1541,7 +1541,6 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         json_incref(jn_options),
         src
     );
-    JSON_INCREF(node);
     return msg_iev_build_webix(gobj,
         node?0:-1,
         json_local_sprintf(node?"Node created!":log_last_message()),
@@ -1634,7 +1633,6 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         json_incref(jn_options),
         src
     );
-    JSON_INCREF(node);
     return msg_iev_build_webix(gobj,
         node?0:-1,
         json_local_sprintf(node?"Node update!":log_last_message()),
@@ -2329,7 +2327,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         node?0:-1,
         node?0:json_local_sprintf("Node not found"),
         node?tranger_topic_desc(priv->tranger, topic_name):0,
-        kw_incref(node),
+        node,
         kw  // owned
     );
 }
@@ -3030,14 +3028,14 @@ PRIVATE int ac_treedb_update_node(hgobj gobj, const char *event, json_t *kw, hgo
 /***************************************************************************
  *                          FSM
  ***************************************************************************/
-PRIVATE const EVENT input_events[] = { // HACK System gclass, not public events
-    {"EV_TREEDB_UPDATE_NODE",   0,   0,    0},
+PRIVATE const EVENT input_events[] = { // HACK System gclass, not public events TODO o si?
+    {"EV_TREEDB_UPDATE_NODE",   EVF_PUBLIC_EVENT,   0,    0},
     // bottom input
     {NULL, 0, 0, 0}
 };
-PRIVATE const EVENT output_events[] = { // HACK System gclass, not public events
-    {"EV_TREEDB_NODE_UPDATED",  EVF_NO_WARN_SUBS,  0,  0},
-    {"EV_TREEDB_NODE_DELETED",  EVF_NO_WARN_SUBS,  0,  0},
+PRIVATE const EVENT output_events[] = { // HACK System gclass, not public events TODO o si?
+    {"EV_TREEDB_NODE_UPDATED",  EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,  0,  0},
+    {"EV_TREEDB_NODE_DELETED",  EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,  0,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const char *state_names[] = {
