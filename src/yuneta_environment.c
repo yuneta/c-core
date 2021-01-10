@@ -218,3 +218,34 @@ PUBLIC char *yuneta_log_file(
     return bf;
 }
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC char *yuneta_realm_store_dir(
+    char *bf,
+    int bfsize,
+    const char *service,
+    const char *owner,
+    const char *realm_id,
+    const char *dir,
+    BOOL create
+)
+{
+    if(empty_string(yuneta_work_dir())) {
+        *bf = 0;
+        return 0;
+    }
+
+    build_path6(bf, bfsize, yuneta_work_dir(), "store", service, owner, realm_id, dir);
+
+    if(create) {
+        if(access(bf, 0)!=0) {
+            mkrdir(bf, 0, yuneta_xpermission());
+            if(access(bf, 0)!=0) {
+                *bf = 0;
+                return 0;
+            }
+        }
+    }
+    return bf;
+}

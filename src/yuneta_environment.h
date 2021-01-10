@@ -36,7 +36,12 @@ PUBLIC const char *yuneta_domain_dir(void);
  *  work_dir            from environment.work_dir json config
  *  domain_dir          from environment.domain_dir json config
  */
-PUBLIC char *yuneta_realm_dir(char *bf, int bfsize, const char *subdomain, BOOL create);
+PUBLIC char *yuneta_realm_dir(
+    char *bf,
+    int bfsize,
+    const char *subdomain,
+    BOOL create
+);
 PUBLIC char *yuneta_realm_file(
     char *bf,
     int bfsize,
@@ -45,7 +50,13 @@ PUBLIC char *yuneta_realm_file(
     BOOL create
 );
 
-PUBLIC char *yuneta_store_dir(char *bf, int bfsize, const char *dir, const char *subdir, BOOL create);
+PUBLIC char *yuneta_store_dir(
+    char *bf,
+    int bfsize,
+    const char *dir,
+    const char *subdir,
+    BOOL create
+);
 PUBLIC char *yuneta_store_file(
     char *bf,
     int bfsize,
@@ -55,11 +66,25 @@ PUBLIC char *yuneta_store_file(
     BOOL create
 );
 
-PUBLIC char *yuneta_log_dir(char *bf, int bfsize, BOOL create);
+PUBLIC char *yuneta_log_dir(
+    char *bf,
+    int bfsize,
+    BOOL create
+);
 PUBLIC char *yuneta_log_file(
     char *bf,
     int bfsize,
     const char *filename,
+    BOOL create
+);
+
+PUBLIC char *yuneta_realm_store_dir(
+    char *bf,
+    int bfsize,
+    const char *service,
+    const char *owner,
+    const char *realm_id,
+    const char *dir,
     BOOL create
 );
 
