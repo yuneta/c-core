@@ -2162,7 +2162,7 @@ PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         topic_name,
         node_id,
         link,
-        jn_options,
+        json_incref(jn_options),
         src
     );
 
@@ -2212,7 +2212,7 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         topic_name,
         node_id,
         hook,
-        jn_options,
+        json_incref(jn_options),
         src
     );
 
@@ -2267,7 +2267,7 @@ PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         gobj,
         topic_name,
         jn_filter,  // owned
-        jn_options,
+        json_incref(jn_options),
         src
     );
 
@@ -2319,7 +2319,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         gobj,
         topic_name,
         json_incref(kw),
-        jn_options,
+        json_incref(jn_options),
         src
     );
 
@@ -2382,7 +2382,7 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
         topic_name,
         pkey2,
         jn_filter,  // owned
-        jn_options,
+        json_incref(jn_options),
         src
     );
 
