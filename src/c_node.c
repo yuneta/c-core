@@ -660,6 +660,7 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
 
     BOOL volatil = kw_get_bool(jn_options, "volatil", 0, 0);
     BOOL create = kw_get_bool(jn_options, "create", 0, 0);
+    BOOL autolink = kw_get_bool(jn_options, "autolink", 0, 0);
 
     if(!jn_options) {
         // By default with ids style
@@ -709,12 +710,9 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
             priv->tranger,
             node,
             json_incref(kw),
-            TRUE
+            autolink?FALSE:TRUE
         );
-    }
-
-    if(!volatil) {
-        if(kw_get_bool(jn_options, "autolink", 0, 0)) {
+        if(autolink) {
             treedb_clean_node(priv->tranger, node, FALSE);  // remove current links
             treedb_auto_link(priv->tranger, node, json_incref(kw), FALSE);
             treedb_save_node(priv->tranger, node);
@@ -971,8 +969,8 @@ PRIVATE int mt_unlink_nodes(
     return treedb_unlink_nodes(
         priv->tranger,
         hook,
-        parent_record,
-        child_record
+        parent_node,
+        child_node
     );
 }
 
