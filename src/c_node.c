@@ -28,7 +28,7 @@ PRIVATE int treedb_callback(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *operation,  // "node_updated", "node_deleted"
+    const char *operation,  // "EV_TREEDB_NODE_UPDATED", "EV_TREEDB_NODE_DELETED"
     json_t *node            // owned
 );
 
@@ -2910,10 +2910,19 @@ PRIVATE int treedb_callback(
     json_t *node            // owned
 )
 {
+    json_t *collapse_node = node_collapsed_view( // Return MUST be decref
+        tranger,
+        node, // not owned
+        json_pack("{s:b}",
+            "list-dict", 1  // HACK always list-dict
+        )
+    );
+    json_decref(node);
+
     json_t *kw = json_pack("{s:s, s:s, s:o}",
         "treedb_name", treedb_name,
         "topic_name", topic_name,
-        "node", node
+        "node", collapse_node
     );
 
     return gobj_publish_event(user_data, operation, kw);
