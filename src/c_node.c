@@ -670,7 +670,6 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
     }
 
     json_t *node = fetch_node(gobj, topic_name, kw);
-
     if(!node) {
         if(create) {
             node = treedb_create_node( // Return is NOT YOURS
@@ -705,13 +704,15 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
             kw // NOT owned
         );
 
-    } else if(!create) {
-        treedb_update_node( // Return is NOT YOURS
-            priv->tranger,
-            node,
-            json_incref(kw),
-            autolink?FALSE:TRUE
-        );
+    } else {
+        if(!create) {
+            treedb_update_node( // Return is NOT YOURS
+                priv->tranger,
+                node,
+                json_incref(kw),
+                autolink?FALSE:TRUE
+            );
+        }
         if(autolink) {
             treedb_clean_node(priv->tranger, node, FALSE);  // remove current links
             treedb_auto_link(priv->tranger, node, json_incref(kw), FALSE);
@@ -719,7 +720,7 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
         }
     }
 
-    KW_DECREF(kw);
+    json_decref(kw);
 
     return node_collapsed_view( // Return MUST be decref
         priv->tranger,
@@ -1610,7 +1611,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     }
 
     if(!jn_content) {
-        jn_content = kw_incref(kw_get_dict(kw, "record", 0, 0));
+        jn_content = json_deep_copy(kw_get_dict(kw, "record", 0, 0));
     }
 
     if(!jn_content) {
@@ -1631,6 +1632,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         json_incref(jn_options),
         src
     );
+
     return msg_iev_build_webix(gobj,
         node?0:-1,
         json_local_sprintf(node?"Node update!":log_last_message()),
@@ -2917,13 +2919,13 @@ PRIVATE int treedb_callback(
             "list-dict", 1  // HACK always list-dict
         )
     );
-    json_decref(node);
 
     json_t *kw = json_pack("{s:s, s:s, s:o}",
         "treedb_name", treedb_name,
         "topic_name", topic_name,
         "node", collapse_node
     );
+    json_decref(node);
 
     return gobj_publish_event(user_data, operation, kw);
 }
