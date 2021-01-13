@@ -1870,11 +1870,21 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         src
     );
 
+    json_t *jn_data = json_array();
+    child_node = gobj_get_node(
+        gobj,
+        child_topic_name,
+        json_pack("{s:s}", "id", child_id),
+        0,
+        src
+    );
+    json_array_append_new(jn_data, child_node);
+
     return msg_iev_build_webix(gobj,
         result,
         result<0?json_local_sprintf(log_last_message()):json_local_sprintf("Nodes linked!"),
-        0,
-        0,
+        gobj_topic_desc(gobj, child_topic_name),
+        jn_data,
         kw  // owned
     );
 }
@@ -1994,11 +2004,21 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         src
     );
 
+    json_t *jn_data = json_array();
+    child_node = gobj_get_node(
+        gobj,
+        child_topic_name,
+        json_pack("{s:s}", "id", child_id),
+        0,
+        src
+    );
+    json_array_append_new(jn_data, child_node);
+
     return msg_iev_build_webix(gobj,
         result,
-        result<0?json_local_sprintf(log_last_message()):json_local_sprintf("Nodes linked!"),
-        0,
-        0,
+        result<0?json_local_sprintf(log_last_message()):json_local_sprintf("Nodes unlinked!"),
+        gobj_topic_desc(gobj, child_topic_name),
+        jn_data,
         kw  // owned
     );
 }
