@@ -89,7 +89,7 @@ SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"
 SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Node content in base64"),
 SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Node content in string"),
 SDATAPM (ASN_JSON,      "record",       0,              0,          "Node content in json"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: "),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: fkey,hook options"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_update_node[] = {
@@ -98,7 +98,7 @@ SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"
 SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Node content in base64"),
 SDATAPM (ASN_OCTET_STR, "content",      0,              0,          "Node content in string"),
 SDATAPM (ASN_JSON,      "record",       0,              0,          "Node content in json"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: \"create\", \"clean\""),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: 'create' 'autolink' 'volatil' fkey,hook options"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_delete_node[] = {
@@ -111,6 +111,7 @@ SDATA_END()
 PRIVATE sdata_desc_t pm_link_nodes[] = {
 SDATAPM (ASN_OCTET_STR, "parent_ref",   0,              0,          "Parent node ref (parent_topic_name^parent_id^hook_name)"),
 SDATAPM (ASN_OCTET_STR, "child_ref",    0,              0,          "Child node ref (child_topic_name^child_id)"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: fkey,hook options"),
 SDATA_END()
 };
 
@@ -1762,6 +1763,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 {
     const char *parent_ref = kw_get_str(kw, "parent_ref", "", 0);
     const char *child_ref = kw_get_str(kw, "child_ref", "", 0);
+    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(parent_ref)) {
         return msg_iev_build_webix(
@@ -1875,7 +1877,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         gobj,
         child_topic_name,
         json_pack("{s:s}", "id", child_id),
-        0,
+        json_incref(jn_options),
         src
     );
     json_array_append_new(jn_data, child_node);
@@ -1896,6 +1898,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
 {
     const char *parent_ref = kw_get_str(kw, "parent_ref", "", 0);
     const char *child_ref = kw_get_str(kw, "child_ref", "", 0);
+    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(parent_ref)) {
         return msg_iev_build_webix(
@@ -2009,7 +2012,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         gobj,
         child_topic_name,
         json_pack("{s:s}", "id", child_id),
-        0,
+        json_incref(jn_options),
         src
     );
     json_array_append_new(jn_data, child_node);
