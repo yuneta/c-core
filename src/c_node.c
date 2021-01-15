@@ -38,6 +38,11 @@ PRIVATE json_t *fetch_node(  // WARNING Return is NOT YOURS, pure node
     json_t *kw  // NOT owned, 'id' and topic_pkey2s fields are used to find the node
 );
 
+PRIVATE int export_treedb(
+    hgobj gobj,
+    const char *path,
+    hgobj src
+);
 
 /***************************************************************************
  *          Data: config, public data, private data
@@ -204,6 +209,7 @@ SDATA_END()
 PRIVATE sdata_desc_t pm_export_db[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "filename",     0,              0,          "Filename to save db"),
+SDATAPM (ASN_BOOLEAN,   "overwrite",    0,              0,          "Overwrite the file if it exits"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_print_tranger[] = {
@@ -2721,6 +2727,72 @@ PRIVATE json_t *cmd_deactivate_snap(hgobj gobj, const char *cmd, json_t *kw, hgo
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE json_t *cmd_export_db(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *filename = kw_get_str(kw, "filename", "", 0);
+    BOOL overwrite = kw_get_bool(kw, "overwrite", 0, KW_WILD_NUMBER);
+
+    char path[PATH_MAX];
+    char name[NAME_MAX];
+    char date[100];
+
+    if(empty_string(filename)) {
+        current_timestamp(date, sizeof(date));
+        time_t t;
+        struct tm *tm;
+        time(&t);
+        tm = localtime(&t);
+        strftime(date, sizeof(date), "%Y-%m-%d", tm);
+        snprintf(name, sizeof(name), "%s-%s-%s.trdb.json",
+            priv->treedb_name,
+            kw_get_str(priv->treedb_schema, "schema_version", "", KW_REQUIRED),
+            date
+        );
+    } else {
+        snprintf(name, sizeof(name), "%s.trdb.json", filename);
+    }
+
+    yuneta_realm_file(path, sizeof(path), "temp", "", TRUE);
+
+    json_t *jn_data = json_pack("{s:s, s:s}",
+        "path", path,
+        "filename", name
+    );
+
+    yuneta_realm_file(path, sizeof(path), "temp", name, TRUE);
+
+    if(access(path, 0)==0) {
+        if(!overwrite) {
+            json_decref(jn_data);
+            return msg_iev_build_webix(gobj,
+                -1,
+                json_local_sprintf("File '%s' already exists. Use overwrite option", name),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+    }
+
+    int ret = export_treedb(gobj, path, src);
+
+    /*
+     *  Inform
+     */
+    return msg_iev_build_webix(gobj,
+        ret,
+        json_local_sprintf("Treedb exported %s", ret==0?"ok":"failed"),
+        0,
+        jn_data, // owned
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -2870,38 +2942,6 @@ PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src
     );
 }
 
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_export_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-    const char *filename = kw_get_str(kw, "filename", 0, 0);
-    if(empty_string(filename)) {
-        return msg_iev_build_webix(gobj,
-            -1,
-            json_local_sprintf(
-                "What filename?"
-            ),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
-    int ret = 0;
-    int exported = 0;
-
-    // TODO pendiente export db
-
-    return msg_iev_build_webix(gobj,
-        ret,
-        ret==0?json_sprintf("Exported %d records", exported):json_string(log_last_message()),
-        0,
-        0,
-        kw  // owned
-    );
-}
-
 
 
 
@@ -3018,6 +3058,55 @@ PRIVATE json_t *fetch_node(
     return node;
 }
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int export_treedb(hgobj gobj, const char *path, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    FILE *file = fopen(path, "w");
+    if(!file) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Cannot create file",
+            "path",         "%s", path,
+            NULL
+        );
+        return -1;
+    }
+
+    json_t *jn_db = json_object();
+
+    json_t *topics_list = gobj_treedb_topics(
+        gobj,
+        priv->treedb_name,
+        0,
+        src
+    );
+    int idx; json_t *jn_topic_name;
+    json_array_foreach(topics_list, idx, jn_topic_name) {
+        const char *topic_name = json_string_value(jn_topic_name);
+        json_t *nodes = gobj_list_nodes( // Return MUST be decref
+            gobj,
+            topic_name,
+            0,
+            json_pack("{s:s}", "options", ""),
+            src
+        );
+        json_object_set_new(jn_db, topic_name, nodes);
+    }
+
+    json_decref(topics_list);
+
+    json_dump_file(jn_db, path, JSON_INDENT(4));
+    json_decref(jn_db);
+
+    return 0;
+}
+
 
 
 
@@ -3057,7 +3146,7 @@ PRIVATE int ac_treedb_update_node(hgobj gobj, const char *event, json_t *kw, hgo
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = { // HACK System gclass, not public events TODO o si?
-    {"EV_TREEDB_UPDATE_NODE",   EVF_PUBLIC_EVENT,   0,    0},
+    {"EV_TREEDB_UPDATE_NODE",   EVF_PUBLIC_EVENT,   0,      0},
     // bottom input
     {NULL, 0, 0, 0}
 };
