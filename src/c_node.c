@@ -2795,33 +2795,38 @@ PRIVATE json_t *cmd_export_db(hgobj gobj, const char *event, json_t *kw, hgobj s
  ***************************************************************************/
 PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
     const char *content64 = kw_get_str(kw, "content64", "", 0);
-    int if_resource_exists = kw_get_int(kw, "if-resource-exists", 0, 0);
+    int if_resource_exists = kw_get_int(kw, "if-resource-exists", 0, KW_WILD_NUMBER);
 
     /*------------------------------------------------*
      *  Firstly get content in base64 and decode
      *------------------------------------------------*/
     json_t *jn_db;
-    if(!empty_string(content64)) {
-        GBUFFER *gbuf_content = gbuf_decodebase64string(content64);
-        jn_db = gbuf2json(
-            gbuf_content,  // owned
-            2
+    if(empty_string(content64)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What content64?"),
+            0,
+            0,
+            kw  // owned
         );
-        if(!jn_db) {
-            return msg_iev_build_webix(
-                gobj,
-                -1,
-                json_local_sprintf("Bad json in content64"),
-                0,
-                0,
-                kw  // owned
-            );
-        }
-    } else {
-        jn_db = json_object();
+    }
+
+    GBUFFER *gbuf_content = gbuf_decodebase64string(content64);
+    jn_db = gbuf2json(
+        gbuf_content,  // owned
+        2
+    );
+    if(!jn_db) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("Bad json in content64"),
+            0,
+            0,
+            kw  // owned
+        );
     }
 
     /*-----------------------------*
@@ -2836,8 +2841,11 @@ PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src
     int overwrite = 0;
     int ignored = 0;
     int failure = 0;
+    int abort = 0;
+    int link_failure = 0;
 
     json_t *jn_loaded = json_object();
+    json_t *jn_errores = json_object();
 
     // TODO Chequear permisos
 
@@ -2860,48 +2868,54 @@ PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src
             if(fin) {
                 break;
             }
-            json_t *node = treedb_create_node( // Return is NOT YOURS
-                priv->tranger,
-                priv->treedb_name,
+            json_t *node = gobj_create_node( // Return is NOT YOURS
+                gobj,
                 topic_name,
-                json_incref(record)
+                json_incref(record),
+                0,
+                src
             );
             if(node) {
+                json_decref(node);
                 json_array_append(
                     list_records,
-                    json_pack("{s:O,s:O}",
-                        "record", record,
-                        "node", node
-                    )
+                    record
                 );
                 new++;
             } else {
+                int n = kw_get_int(jn_errores, log_last_message(), 0, KW_CREATE);
+                n++;
+                json_object_set_new(jn_errores, log_last_message(), json_integer(n));
+
                 if(if_resource_exists==1) {
                     // Skip
                     ignored++;
                 } else if(if_resource_exists==2) {
                     // Overwrite
-//   TODO pendiente import_db node = treedb_update_node( // Return is NOT YOURS
-//                         priv->tranger,
-//                         priv->treedb_name,
-//                         topic_name,
-//                         json_incref(record),
-//                         FALSE
-//                     );
+                    node = gobj_get_node(
+                        gobj,
+                        topic_name,
+                        json_incref(record),
+                        0,
+                        src
+                    );
                     if(node) {
+                        json_decref(node);
                         json_array_append(
                             list_records,
-                            json_pack("{s:O,s:O}",
-                                "record", record,
-                                "node", node
-                            )
+                            record
                         );
                         overwrite++;
                     } else {
+                        int n = kw_get_int(jn_errores, log_last_message(), 0, KW_CREATE);
+                        n++;
+                        json_object_set_new(jn_errores, log_last_message(), json_integer(n));
+
                         failure++;
                     }
                 } else {
                     // abort
+                    abort++;
                     fin = TRUE;
                     break;
                 }
@@ -2912,32 +2926,45 @@ PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src
     /*
      *  Create links
      */
-    json_object_foreach(jn_db, topic_name, topic_records) {
-        int idx; json_t *record_node;
-        json_array_foreach(topic_records, idx, record_node) {
-            json_t *record = kw_get_dict(record_node, "record", 0, KW_REQUIRED);
-            json_t *node = kw_get_dict(record_node, "node", 0, KW_REQUIRED);
-
-            // TODO chequear los varios formatos de fkeys
-            treedb_clean_node(priv->tranger, node, FALSE);  // remove current links
-            treedb_auto_link(priv->tranger, node, json_incref(record), FALSE);
-            treedb_save_node(priv->tranger, node);
+    json_object_foreach(jn_loaded, topic_name, topic_records) {
+        int idx; json_t *record;
+        json_array_foreach(topic_records, idx, record) {
+            json_t *node = gobj_update_node(
+                gobj,
+                topic_name,
+                json_incref(record),
+                json_pack("{s:b}", "autolink", 1),
+                src
+            );
+            if(node) {
+                json_decref(node);
+            } else {
+                link_failure++;
+            }
         }
     }
 
     json_decref(jn_db);
+    json_decref(jn_loaded);
 
     /*
      *  Inform
      */
+    json_t *jn_data = json_pack("{s:i, s:i, s:i, s:i, s:i, s:i, s:o}",
+        "abort", abort,
+        "added", new,
+        "overwrite", overwrite,
+        "ignored", ignored,
+        "failule", failure,
+        "link failure", link_failure,
+        "errores", jn_errores
+    );
+
     return msg_iev_build_webix(gobj,
         ret,
-        ret==0?
-            json_sprintf("New records: %d, Overwrite: %d, Ignored: %d, Failure: %d",
-                new, overwrite, ignored, failure):
-            json_string(log_last_message()),
         0,
         0,
+        jn_data,
         kw  // owned
     );
 }
