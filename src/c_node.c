@@ -41,6 +41,7 @@ PRIVATE json_t *fetch_node(  // WARNING Return is NOT YOURS, pure node
 PRIVATE int export_treedb(
     hgobj gobj,
     const char *path,
+    BOOL with_metadata,
     hgobj src
 );
 
@@ -210,6 +211,7 @@ PRIVATE sdata_desc_t pm_export_db[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "filename",     0,              0,          "Filename to save db"),
 SDATAPM (ASN_BOOLEAN,   "overwrite",    0,              0,          "Overwrite the file if it exits"),
+SDATAPM (ASN_BOOLEAN,   "with-metatada",0,              0,          "Write metadata"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_print_tranger[] = {
@@ -626,12 +628,6 @@ PRIVATE json_t *mt_create_node( // Return is YOURS
         return 0;
     }
 
-    if(!jn_options) {
-        // By default with ids style
-        jn_options = json_pack("{s:b}",
-            "only-id", 1
-        );
-    }
     return node_collapsed_view( // Return MUST be decref
         priv->tranger,
         node, // not owned
@@ -668,13 +664,6 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
     BOOL volatil = kw_get_bool(jn_options, "volatil", 0, 0);
     BOOL create = kw_get_bool(jn_options, "create", 0, 0);
     BOOL autolink = kw_get_bool(jn_options, "autolink", 0, 0);
-
-    if(!jn_options) {
-        // By default with ids style
-        jn_options = json_pack("{s:b}",
-            "only-id", 1
-        );
-    }
 
     json_t *node = fetch_node(gobj, topic_name, kw);
     if(!node) {
@@ -995,13 +984,6 @@ PRIVATE json_t *mt_get_node(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(!jn_options) {
-        // By default with ids style
-        jn_options = json_pack("{s:b}",
-            "only-id", 1
-        );
-    }
-
     json_t *node = fetch_node(gobj, topic_name, kw);
     if(!node) {
         // Silence
@@ -1031,12 +1013,6 @@ PRIVATE json_t *mt_list_nodes(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(!jn_options) {
-        // By default with ids style
-        jn_options = json_pack("{s:b}",
-            "only-id", 1
-        );
-    }
     BOOL include_instances = kw_get_bool(jn_options, "include-instances", 0, KW_WILD_NUMBER);
 
     /*
@@ -1136,13 +1112,6 @@ PRIVATE json_t *mt_list_instances(
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     // TODO Filtra la lista con los nodos con permiso para leer
-
-    if(!jn_options) {
-        // By default with ids style
-        jn_options = json_pack("{s:b}",
-            "only-id", 1
-        );
-    }
 
     json_t *iter = treedb_list_instances( // Return MUST be decref
         priv->tranger,
@@ -2733,6 +2702,7 @@ PRIVATE json_t *cmd_export_db(hgobj gobj, const char *event, json_t *kw, hgobj s
 
     const char *filename = kw_get_str(kw, "filename", "", 0);
     BOOL overwrite = kw_get_bool(kw, "overwrite", 0, KW_WILD_NUMBER);
+    BOOL with_metadata = kw_get_bool(kw, "with-metatada", 0, KW_WILD_NUMBER);
 
     char path[PATH_MAX];
     char name[NAME_MAX];
@@ -2776,7 +2746,7 @@ PRIVATE json_t *cmd_export_db(hgobj gobj, const char *event, json_t *kw, hgobj s
         }
     }
 
-    int ret = export_treedb(gobj, path, src);
+    int ret = export_treedb(gobj, path, with_metadata, src);
 
     /*
      *  Inform
@@ -3088,7 +3058,7 @@ PRIVATE json_t *fetch_node(
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int export_treedb(hgobj gobj, const char *path, hgobj src)
+PRIVATE int export_treedb(hgobj gobj, const char *path, BOOL with_metadata, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
