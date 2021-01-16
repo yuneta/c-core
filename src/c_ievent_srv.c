@@ -710,6 +710,8 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
             src
         );
 
+        set_timeout(priv->timer, gobj_read_uint32_attr(gobj, "timeout_idgot"));
+
         KW_DECREF(kw);
         return 0; // Don't return -1, don't drop connection, let send negative ack. Drop by timeout.
     }
