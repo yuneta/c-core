@@ -35,8 +35,11 @@ typedef struct cnf_cmd_s {
 /***************************************************************************
  *              Prototypes
  ***************************************************************************/
-PRIVATE int set_user_traces(hgobj gobj);
-PRIVATE int set_user_no_traces(hgobj gobj);
+PRIVATE int set_user_gclass_traces(hgobj gobj);
+PRIVATE int set_user_gclass_no_traces(hgobj gobj);
+PRIVATE int set_user_gobj_traces(hgobj gobj);
+PRIVATE int set_user_gobj_no_traces(hgobj gobj);
+
 PRIVATE int save_global_trace(
     hgobj gobj,
     const char *level,
@@ -562,6 +565,9 @@ PRIVATE void mt_create(hgobj gobj)
         }
     }
 
+    set_user_gclass_traces(gobj);
+    set_user_gclass_no_traces(gobj);
+
     /*
      *  Create the event loop
      */
@@ -668,8 +674,8 @@ PRIVATE int mt_start(hgobj gobj)
      *  Set user traces
      *  Here set gclass/gobj traces
      */
-    set_user_traces(gobj);
-    set_user_no_traces(gobj);
+    set_user_gobj_traces(gobj);
+    set_user_gobj_no_traces(gobj);
 
     // TODO recorre resource stats y pon gobj_set_attr_stats()
 
@@ -3980,7 +3986,102 @@ PRIVATE void load_stats(hgobj gobj)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int set_user_traces(hgobj gobj)
+PRIVATE int set_user_gclass_traces(hgobj gobj)
+{
+    json_t *jn_trace_levels = gobj_read_json_attr(gobj, "trace_levels");
+    if(!jn_trace_levels) {
+        jn_trace_levels = json_object();
+        gobj_write_json_attr(gobj, "trace_levels", jn_trace_levels);
+        json_decref(jn_trace_levels);
+    }
+
+    json_t *jn_global = json_object_get(jn_trace_levels, "__global_trace__");
+    if(jn_global) {
+        size_t idx;
+        json_t *jn_level;
+        json_array_foreach(jn_global, idx, jn_level) {
+            const char *level = json_string_value(jn_level);
+            gobj_set_global_trace(level, TRUE);
+        }
+    }
+
+    const char *key;
+    json_t *jn_name;
+    json_object_foreach(jn_trace_levels, key, jn_name) {
+        const char *name = key;
+        GCLASS *gclass = gobj_find_gclass(name, FALSE);
+        if(!gclass) {
+            continue;
+        }
+        if(!json_is_array(jn_name)) {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "value MUST be a json list",
+                "name",         "%s", name,
+                NULL
+            );
+            continue;
+        }
+
+        size_t idx;
+        json_t *jn_level;
+        json_array_foreach(jn_name, idx, jn_level) {
+            const char *level = json_string_value(jn_level);
+            gobj_set_gclass_trace(gclass, level, TRUE);
+        }
+    }
+
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int set_user_gclass_no_traces(hgobj gobj)
+{
+    json_t *jn_no_trace_levels = gobj_read_json_attr(gobj, "no_trace_levels");
+    if(!jn_no_trace_levels) {
+        jn_no_trace_levels = json_object();
+        gobj_write_json_attr(gobj, "no_trace_levels", jn_no_trace_levels);
+        json_decref(jn_no_trace_levels);
+    }
+    const char *key;
+    json_t *jn_name;
+    json_object_foreach(jn_no_trace_levels, key, jn_name) {
+        const char *name = key;
+        GCLASS *gclass = gobj_find_gclass(name, FALSE);
+        if(!gclass) {
+            continue;
+        }
+        if(!json_is_array(jn_name)) {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "value MUST be a json list",
+                "name",         "%s", name,
+                NULL
+            );
+            continue;
+        }
+
+        size_t idx;
+        json_t *jn_level;
+        json_array_foreach(jn_name, idx, jn_level) {
+            const char *level = json_string_value(jn_level);
+            gobj_set_gclass_no_trace(gclass, level, TRUE);
+        }
+    }
+
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int set_user_gobj_traces(hgobj gobj)
 {
     json_t *jn_trace_levels = gobj_read_json_attr(gobj, "trace_levels");
     if(!jn_trace_levels) {
@@ -4019,7 +4120,7 @@ PRIVATE int set_user_traces(hgobj gobj)
         GCLASS *gclass = 0;
         hgobj namedgobj = 0;
         gclass = gobj_find_gclass(name, FALSE);
-        if(!gclass) {
+        if(!gclass) { // Check gclass to check if no gclass and no gobj
             namedgobj = gobj_find_unique_gobj(name, FALSE);
             if(!namedgobj) {
                 log_error(0,
@@ -4033,6 +4134,11 @@ PRIVATE int set_user_traces(hgobj gobj)
                 continue;
             }
         }
+        if(!namedgobj) {
+            // Must be gclass, already set
+            continue;
+        }
+
         if(!json_is_array(jn_name)) {
             log_error(0,
                 "gobj",         "%s", gobj_full_name(gobj),
@@ -4049,9 +4155,7 @@ PRIVATE int set_user_traces(hgobj gobj)
         json_t *jn_level;
         json_array_foreach(jn_name, idx, jn_level) {
             const char *level = json_string_value(jn_level);
-            if(gclass) {
-                gobj_set_gclass_trace(gclass, level, TRUE);
-            } else {
+            if(namedgobj) {
                 gobj_set_gobj_trace(namedgobj, level, TRUE, 0); // Se pierden los "channel_name"!!!
             }
         }
@@ -4063,7 +4167,7 @@ PRIVATE int set_user_traces(hgobj gobj)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int set_user_no_traces(hgobj gobj)
+PRIVATE int set_user_gobj_no_traces(hgobj gobj)
 {
     json_t *jn_no_trace_levels = gobj_read_json_attr(gobj, "no_trace_levels");
     if(!jn_no_trace_levels) {
@@ -4091,7 +4195,7 @@ PRIVATE int set_user_no_traces(hgobj gobj)
         GCLASS *gclass = 0;
         hgobj namedgobj = 0;
         gclass = gobj_find_gclass(name, FALSE);
-        if(!gclass) {
+        if(!gclass) { // Check gclass to check if no gclass and no gobj
             namedgobj = gobj_find_unique_gobj(name, FALSE);
             if(!namedgobj) {
                 log_error(0,
@@ -4104,6 +4208,10 @@ PRIVATE int set_user_no_traces(hgobj gobj)
                 );
                 continue;
             }
+        }
+        if(!namedgobj) {
+            // Must be gclass, already set
+            continue;
         }
         if(!json_is_array(jn_name)) {
             log_error(0,
@@ -4121,9 +4229,7 @@ PRIVATE int set_user_no_traces(hgobj gobj)
         json_t *jn_level;
         json_array_foreach(jn_name, idx, jn_level) {
             const char *level = json_string_value(jn_level);
-            if(gclass) {
-                gobj_set_gclass_no_trace(gclass, level, TRUE);
-            } else {
+            if(namedgobj) {
                 gobj_set_gobj_no_trace(namedgobj, level, TRUE);
             }
         }
