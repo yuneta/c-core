@@ -492,7 +492,7 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
     forbidden |= !gobj_user_has_authz(
         gobj,
         "read",
-        kw,
+        json_incref(kw),
         src
     );
     if(forbidden) {

@@ -50,7 +50,6 @@ PRIVATE int export_treedb(
  ***************************************************************************/
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -214,14 +213,6 @@ SDATAPM (ASN_BOOLEAN,   "overwrite",    0,              0,          "Overwrite t
 SDATAPM (ASN_BOOLEAN,   "with-metatada",0,              0,          "Write metadata"),
 SDATA_END()
 };
-PRIVATE sdata_desc_t pm_print_tranger[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "path",         0,              "",         "Path"),
-SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "No expanded (default) return [[size]]"),
-SDATAPM (ASN_UNSIGNED,  "lists_limit",  0,              0,          "Expand lists only if size < limit. 0 no limit"),
-SDATAPM (ASN_UNSIGNED,  "dicts_limit",  0,              0,          "Expand dicts only if size < limit. 0 no limit"),
-SDATA_END()
-};
 
 PRIVATE const char *a_help[] = {"h", "?", 0};
 PRIVATE const char *a_nodes[] = {"list-nodes", "list-records", 0};
@@ -263,7 +254,6 @@ SDATACM2 (ASN_SCHEMA,    "export-db",   SDF_AUTHZ_X,    0,  pm_export_db,   cmd_
 SDATACM2 (ASN_SCHEMA,    "pkey2s",      SDF_AUTHZ_X,    0,  pm_node_pkey2s, cmd_node_pkey2s,    "List node's pkey2"),
 SDATACM2 (ASN_SCHEMA,    "desc",        SDF_AUTHZ_X,    a_schema, pm_desc,  cmd_desc,           "Schema of topic"),
 SDATACM2 (ASN_SCHEMA,    "descs",       SDF_AUTHZ_X,    a_schemas, 0,       cmd_desc,           "Schema of topics"),
-SDATACM2 (ASN_SCHEMA,    "print-tranger",SDF_AUTHZ_X,   0,  pm_print_tranger, cmd_print_tranger,  "Print tranger"),
 SDATACM2 (ASN_SCHEMA,    "trace",       SDF_AUTHZ_X,    0,  pm_trace,       cmd_trace,          "Set trace"),
 SDATA_END()
 };
@@ -1382,55 +1372,6 @@ PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     return gobj_build_authzs_doc(gobj, cmd, kw, src);
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    BOOL expanded = kw_get_bool(kw, "expanded", 0, KW_WILD_NUMBER);
-    int lists_limit = kw_get_int(kw, "lists_limit", 100, KW_WILD_NUMBER);
-    int dicts_limit = kw_get_int(kw, "dicts_limit", 100, KW_WILD_NUMBER);
-    const char *path = kw_get_str(kw, "path", "", 0);
-
-    json_t *value = priv->tranger;
-
-    if(!empty_string(path)) {
-        value = kw_find_path(value, path, FALSE);
-        if(!value) {
-            return msg_iev_build_webix(gobj,
-                -1,
-                json_local_sprintf("Path not found: '%s'", path),
-                0,
-                0,
-                kw  // owned
-            );
-        }
-    }
-
-    if(expanded) {
-        if(!lists_limit && !dicts_limit) {
-            kw_incref(value); // All
-        } else {
-            value = kw_collapse(value, lists_limit, dicts_limit);
-        }
-    } else {
-        value = kw_collapse(value, 0, 0);
-    }
-
-    /*
-     *  Inform
-     */
-    return msg_iev_build_webix(gobj,
-        0,
-        0,
-        0,
-        value,
-        kw  // owned
-    );
 }
 
 /***************************************************************************
