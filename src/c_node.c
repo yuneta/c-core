@@ -202,7 +202,7 @@ SDATA_END()
 PRIVATE sdata_desc_t pm_import_db[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Content in base64"),
-SDATAPM (ASN_UNSIGNED,  "if-resource-exists", 0,        0,          "0 Abort, 1 Skip, 2 Overwrite"),
+SDATAPM (ASN_OCTET_STR, "if-resource-exists", 0,        0,          "abort, skip, overwrite"),
 SDATA_END()
 };
 
@@ -800,26 +800,15 @@ PRIVATE int mt_delete_node(
     json_decref(pkey2s_list);
 
     if(kw_match_simple(main_node, jn_filter)) {
-        ret += treedb_delete_node(
+        int r = treedb_delete_node(
             priv->tranger,
             main_node,
             json_incref(jn_options)
         );
-        deleted++;
-    }
-
-    if(!deleted) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "node not found",
-            "treedb_name",  "%s", priv->treedb_name,
-            "topic_name",   "%s", topic_name,
-            "id",           "%s", id,
-            NULL
-        );
-        ret += -1;
+        if(r==0) {
+            deleted++;
+        }
+        ret += r;
     }
 
     JSON_DECREF(kw);
@@ -2707,7 +2696,15 @@ PRIVATE json_t *cmd_export_db(hgobj gobj, const char *event, json_t *kw, hgobj s
 PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     const char *content64 = kw_get_str(kw, "content64", "", 0);
-    int if_resource_exists = kw_get_int(kw, "if-resource-exists", 0, KW_WILD_NUMBER);
+
+    int if_resource_exists = 0; // abort by default
+    const char *if_resource_exists_ = kw_get_str(kw, "if-resource-exists", "", 0);
+
+    if(strcasecmp(if_resource_exists_, "skip")==0) {
+        if_resource_exists = 1;
+    } else if(strcasecmp(if_resource_exists_, "overwrite")==0) {
+        if_resource_exists = 2;
+    }
 
     /*------------------------------------------------*
      *  Firstly get content in base64 and decode
@@ -2828,6 +2825,7 @@ PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src
                     // abort
                     abort++;
                     fin = TRUE;
+                    log_debug_json(0, record, "%s", log_last_message());
                     break;
                 }
             }
@@ -2848,9 +2846,11 @@ PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src
                 src
             );
             if(node) {
+                //log_debug_json(0, node, "node added");
                 json_decref(node);
             } else {
                 link_failure++;
+                log_debug_json(0, record, "link_failure");
             }
         }
     }
