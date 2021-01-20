@@ -108,7 +108,6 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_delete_node[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
 SDATAPM (ASN_JSON,      "record",       0,              0,          "Node content in json"),
 SDATAPM (ASN_BOOLEAN,   "force",        0,              0,          "Force delete"),
 SDATA_END()
@@ -1517,7 +1516,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     }
 
     if(!jn_content) {
-        jn_content = json_deep_copy(kw_get_dict(kw, "record", 0, 0));
+        jn_content = kw_incref(kw_get_dict(kw, "record", 0, 0));
     }
 
     if(!jn_content) {
@@ -1554,7 +1553,6 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
 PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    const char *filter = kw_get_str(kw, "filter", "", 0);
     BOOL force = kw_get_bool(kw, "force", 0, KW_WILD_NUMBER);
 
     if(empty_string(topic_name)) {
@@ -1568,26 +1566,9 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         );
     }
 
-    json_t *jn_filter = 0;
-    if(!empty_string(filter)) {
-        jn_filter = legalstring2json(filter, TRUE);
-        if(!jn_filter) {
-            return msg_iev_build_webix(
-                gobj,
-                -1,
-                json_local_sprintf("Can't decode filter json"),
-                0,
-                0,
-                kw  // owned
-            );
-        }
-    }
-
-    if(!jn_filter) {
-        jn_filter = kw_incref(kw_get_dict(kw, "record", 0, 0));
-    }
-
-    if(!kw_has_key(jn_filter, "id")) {
+    json_t *jn_record = json_incref(kw_get_dict(kw, "record", 0, 0));
+    if(!kw_has_key(jn_record, "id")) {
+        json_decref(jn_record);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1601,62 +1582,42 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     /*
      *  Get a iter of matched resources.
      */
-    json_t *iter = gobj_list_nodes(
+    json_t *node = gobj_get_node(
         gobj,
         topic_name,
-        jn_filter,  // filter
+        jn_record,
         0,
         src
     );
-
-    if(json_array_size(iter)==0) {
-        JSON_DECREF(iter);
+    if(!node) {
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Select one node please"),
+            json_local_sprintf("Node not found"),
             0,
             0,
             kw  // owned
         );
     }
 
-    /*
-     *  Delete
-     *  HACK if there are several nodes to delete then force is true
-     *      in order to avoid incongruences in links
-     */
-    if(json_array_size(iter)>1) {
-        force = TRUE;
+    JSON_INCREF(node);
+    if(gobj_delete_node(gobj, topic_name, node, json_pack("{s:b}", "force", force), src)<0) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf(log_last_message()),
+            0,
+            0,
+            kw  // owned
+        );
     }
-    json_t *jn_data = json_array();
-    int idx; json_t *node;
-    json_array_foreach(iter, idx, node) {
-        const char *id = kw_get_str(node, "id", "", KW_REQUIRED);
-        JSON_INCREF(node);
-        if(gobj_delete_node(gobj, topic_name, node, json_pack("{s:b}", "force", force), src)<0) {
-            JSON_DECREF(iter);
-            JSON_DECREF(jn_data);
-            return msg_iev_build_webix(
-                gobj,
-                -1,
-                json_local_sprintf(log_last_message()),
-                0,
-                0,
-                kw  // owned
-            );
-        }
-        json_array_append_new(jn_data, json_string(id));
-    }
-
-    JSON_DECREF(iter);
 
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("%d nodes deleted", idx),
+        json_local_sprintf("Node deleted"),
         gobj_topic_desc(gobj, topic_name),
-        jn_data,
+        node,
         kw  // owned
     );
 }
