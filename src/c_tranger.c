@@ -60,6 +60,7 @@ PRIVATE int load_record_callback(
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_check_json(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_create_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -87,6 +88,12 @@ SDATAPM (ASN_OCTET_STR, "topic_name",   SDF_AUTHZ_P,    0,          "Topic name"
 SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "No expanded (default) return [[size]]"),
 SDATAPM (ASN_UNSIGNED,  "lists_limit",  0,              0,          "Expand lists only if size < limit. 0 no limit"),
 SDATAPM (ASN_UNSIGNED,  "dicts_limit",  0,              0,          "Expand dicts only if size < limit. 0 no limit"),
+SDATA_END()
+};
+
+PRIVATE sdata_desc_t pm_check_json[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_INTEGER, "max_refcount",   0,              0,          "Maximum refcount"),
 SDATA_END()
 };
 
@@ -164,16 +171,17 @@ PRIVATE sdata_desc_t command_table[] = {
 SDATACM (ASN_SCHEMA,    "help",             a_help,     pm_help,    cmd_help,       "Command's help"),
 SDATACM (ASN_SCHEMA,    "authzs",           0,          pm_authzs,  cmd_authzs,     "Authorization's help"),
 
-/*-CMD2---type-----------name----------------flag-----------alias---items---------------json_fn-------------description--*/
-SDATACM2 (ASN_SCHEMA,    "print-tranger",    SDF_AUTHZ_X,   0,      pm_print_tranger,   cmd_print_tranger,  "Print tranger"),
-SDATACM2 (ASN_SCHEMA,    "topics",           SDF_AUTHZ_X,   0,      0,                  cmd_topics,         "List topics"),
-SDATACM2 (ASN_SCHEMA,    "desc",             SDF_AUTHZ_X,   0,      pm_desc,            cmd_desc,           "Schema of topic or full"),
-SDATACM2 (ASN_SCHEMA,    "create-topic",     SDF_AUTHZ_X,   0,      pm_create_topic,    cmd_create_topic,   "Create topic"),
-SDATACM2 (ASN_SCHEMA,    "delete-topic",     SDF_AUTHZ_X,   0,      pm_delete_topic,    cmd_delete_topic,   "Delete topic"),
-SDATACM2 (ASN_SCHEMA,    "open-list",        SDF_AUTHZ_X,   0,      pm_open_list,       cmd_open_list,      "Open list"),
-SDATACM2 (ASN_SCHEMA,    "close-list",       SDF_AUTHZ_X,   0,      pm_close_list,      cmd_close_list,     "Close list"),
-SDATACM2 (ASN_SCHEMA,    "add-record",       SDF_AUTHZ_X,   0,      pm_add_record,      cmd_add_record,     "Add record"),
-SDATACM2 (ASN_SCHEMA,    "get-list-data",    SDF_AUTHZ_X,   0,      pm_get_list_data,   cmd_get_list_data,  "Get list data"),
+/*-CMD2---type----------name----------------flag------------alias---items---------------json_fn-------------description--*/
+SDATACM2 (ASN_SCHEMA,   "print-tranger",    SDF_AUTHZ_X,    0,      pm_print_tranger,   cmd_print_tranger,  "Print tranger"),
+SDATACM2 (ASN_SCHEMA,   "check-json",       0,              0,      pm_check_json,      cmd_check_json, "Check json refcounts"),
+SDATACM2 (ASN_SCHEMA,   "topics",           SDF_AUTHZ_X,    0,      0,                  cmd_topics,         "List topics"),
+SDATACM2 (ASN_SCHEMA,   "desc",             SDF_AUTHZ_X,    0,      pm_desc,            cmd_desc,           "Schema of topic or full"),
+SDATACM2 (ASN_SCHEMA,   "create-topic",     SDF_AUTHZ_X,    0,      pm_create_topic,    cmd_create_topic,   "Create topic"),
+SDATACM2 (ASN_SCHEMA,   "delete-topic",     SDF_AUTHZ_X,    0,      pm_delete_topic,    cmd_delete_topic,   "Delete topic"),
+SDATACM2 (ASN_SCHEMA,   "open-list",        SDF_AUTHZ_X,    0,      pm_open_list,       cmd_open_list,      "Open list"),
+SDATACM2 (ASN_SCHEMA,   "close-list",       SDF_AUTHZ_X,    0,      pm_close_list,      cmd_close_list,     "Close list"),
+SDATACM2 (ASN_SCHEMA,   "add-record",       SDF_AUTHZ_X,    0,      pm_add_record,      cmd_add_record,     "Add record"),
+SDATACM2 (ASN_SCHEMA,   "get-list-data",    SDF_AUTHZ_X,    0,      pm_get_list_data,   cmd_get_list_data,  "Get list data"),
 SDATA_END()
 };
 
@@ -543,6 +551,27 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
         0,
         0,
         value,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_check_json(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    int max_refcount = kw_get_int(kw, "max_refcount", 1, KW_WILD_NUMBER);
+
+    json_t *tranger = priv->tranger;
+    int result = 0;
+    json_check_refcounts(tranger, max_refcount, &result)?0:-1;
+    return msg_iev_build_webix(gobj,
+        result,
+        json_local_sprintf("check refcounts of tranger: %s", result==0?"Ok":"Bad"),
+        0,
+        0,
         kw  // owned
     );
 }

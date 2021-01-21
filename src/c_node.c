@@ -66,7 +66,6 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_node_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_list_snaps(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_snap_content(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -75,6 +74,7 @@ PRIVATE json_t *cmd_activate_snap(hgobj gobj, const char *cmd, json_t *kw, hgobj
 PRIVATE json_t *cmd_deactivate_snap(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_export_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t* cmd_system_topic_schema(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 
 PRIVATE sdata_desc_t pm_help[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
@@ -227,33 +227,33 @@ PRIVATE sdata_desc_t command_table[] = {
 SDATACM (ASN_SCHEMA,    "help",             a_help,     pm_help,    cmd_help,       "Command's help"),
 SDATACM (ASN_SCHEMA,    "authzs",           0,          pm_authzs,  cmd_authzs,     "Authorization's help"),
 
-/*-CMD2---type-----------name-----------flag------------ali-items-----------json_fn-------------description--*/
-SDATACM2 (ASN_SCHEMA,    "treedbs",     SDF_AUTHZ_X,    0,  0,              cmd_treedbs,        "List treedb's"),
-SDATACM2 (ASN_SCHEMA,    "topics",      SDF_AUTHZ_X,    0,  pm_topics,      cmd_topics,         "List topics"),
-SDATACM2 (ASN_SCHEMA,    "create-node", SDF_AUTHZ_X,    a_create, pm_create_node, cmd_create_node, "Create node"),
-SDATACM2 (ASN_SCHEMA,    "update-node", SDF_AUTHZ_X,    a_update, pm_update_node, cmd_update_node, "Update node"),
-SDATACM2 (ASN_SCHEMA,    "delete-node", SDF_AUTHZ_X,    a_delete, pm_delete_node, cmd_delete_node, "Delete node"),
-SDATACM2 (ASN_SCHEMA,    "nodes",       SDF_AUTHZ_X,    a_nodes, pm_list_nodes, cmd_list_nodes,  "List nodes"),
-SDATACM2 (ASN_SCHEMA,    "node",        SDF_AUTHZ_X,    a_node, pm_get_node, cmd_get_node,       "Get node by id"),
-SDATACM2 (ASN_SCHEMA,    "instances",   SDF_AUTHZ_X,    0,  pm_node_instances,cmd_node_instances,"List node's instances"),
-SDATACM2 (ASN_SCHEMA,    "link-nodes",  SDF_AUTHZ_X,    0,  pm_link_nodes,  cmd_link_nodes,     "Link nodes"),
-SDATACM2 (ASN_SCHEMA,    "unlink-nodes",SDF_AUTHZ_X,    0,  pm_link_nodes,  cmd_unlink_nodes,   "Unlink nodes"),
-SDATACM2 (ASN_SCHEMA,    "hooks",       SDF_AUTHZ_X,    0,  pm_hooks,       cmd_hooks,          "Hooks of node"),
-SDATACM2 (ASN_SCHEMA,    "links",       SDF_AUTHZ_X,    0,  pm_links,       cmd_links,          "Links of node"),
-SDATACM2 (ASN_SCHEMA,    "parents",     SDF_AUTHZ_X,    0,  pm_parents,     cmd_parents,        "Parents of node"),
-SDATACM2 (ASN_SCHEMA,    "childs",      SDF_AUTHZ_X,    0,  pm_childs,      cmd_childs,         "Childs of node"),
-SDATACM2 (ASN_SCHEMA,    "touch-instance",SDF_AUTHZ_X,  0,  pm_node_instances,cmd_touch_instance,"Touch (save) instance to force to be the last instance"),
-SDATACM2 (ASN_SCHEMA,    "snaps",       SDF_AUTHZ_X,    0,  0,              cmd_list_snaps,     "List snaps"),
-SDATACM2 (ASN_SCHEMA,    "snap-content",SDF_AUTHZ_X,    0,  pm_snap_content,cmd_snap_content,   "Show snap content"),
-SDATACM2 (ASN_SCHEMA,    "shoot-snap",  SDF_AUTHZ_X,    0,  pm_shoot_snap,  cmd_shoot_snap,     "Shoot snap"),
-SDATACM2 (ASN_SCHEMA,    "activate-snap",SDF_AUTHZ_X,   0,  pm_activate_snap,cmd_activate_snap, "Activate snap"),
-SDATACM2 (ASN_SCHEMA,    "deactivate-snap",SDF_AUTHZ_X, 0,  0,              cmd_deactivate_snap,"De-Activate snap"),
-SDATACM2 (ASN_SCHEMA,    "import-db",   SDF_AUTHZ_X,    0,  pm_import_db,   cmd_import_db, "Import db"),
-SDATACM2 (ASN_SCHEMA,    "export-db",   SDF_AUTHZ_X,    0,  pm_export_db,   cmd_export_db, "Export db"),
-SDATACM2 (ASN_SCHEMA,    "pkey2s",      SDF_AUTHZ_X,    0,  pm_node_pkey2s, cmd_node_pkey2s,    "List node's pkey2"),
-SDATACM2 (ASN_SCHEMA,    "desc",        SDF_AUTHZ_X,    a_schema, pm_desc,  cmd_desc,           "Schema of topic"),
-SDATACM2 (ASN_SCHEMA,    "descs",       SDF_AUTHZ_X,    a_schemas, 0,       cmd_desc,           "Schema of topics"),
-SDATACM2 (ASN_SCHEMA,    "trace",       SDF_AUTHZ_X,    0,  pm_trace,       cmd_trace,          "Set trace"),
+/*-CMD2---type----------name------------flag------------ali-items-----------json_fn-------------description--*/
+SDATACM2 (ASN_SCHEMA,   "treedbs",      SDF_AUTHZ_X,    0,  0,              cmd_treedbs,        "List treedb's"),
+SDATACM2 (ASN_SCHEMA,   "topics",       SDF_AUTHZ_X,    0,  pm_topics,      cmd_topics,         "List topics"),
+SDATACM2 (ASN_SCHEMA,   "create-node",  SDF_AUTHZ_X,    a_create, pm_create_node, cmd_create_node, "Create node"),
+SDATACM2 (ASN_SCHEMA,   "update-node",  SDF_AUTHZ_X,    a_update, pm_update_node, cmd_update_node, "Update node"),
+SDATACM2 (ASN_SCHEMA,   "delete-node",  SDF_AUTHZ_X,    a_delete, pm_delete_node, cmd_delete_node, "Delete node"),
+SDATACM2 (ASN_SCHEMA,   "nodes",        SDF_AUTHZ_X,    a_nodes, pm_list_nodes, cmd_list_nodes,  "List nodes"),
+SDATACM2 (ASN_SCHEMA,   "node",         SDF_AUTHZ_X,    a_node, pm_get_node, cmd_get_node,       "Get node by id"),
+SDATACM2 (ASN_SCHEMA,   "instances",    SDF_AUTHZ_X,    0,  pm_node_instances,cmd_node_instances,"List node's instances"),
+SDATACM2 (ASN_SCHEMA,   "link-nodes",   SDF_AUTHZ_X,    0,  pm_link_nodes,  cmd_link_nodes,     "Link nodes"),
+SDATACM2 (ASN_SCHEMA,   "unlink-nodes", SDF_AUTHZ_X,    0,  pm_link_nodes,  cmd_unlink_nodes,   "Unlink nodes"),
+SDATACM2 (ASN_SCHEMA,   "hooks",        SDF_AUTHZ_X,    0,  pm_hooks,       cmd_hooks,          "Hooks of node"),
+SDATACM2 (ASN_SCHEMA,   "links",        SDF_AUTHZ_X,    0,  pm_links,       cmd_links,          "Links of node"),
+SDATACM2 (ASN_SCHEMA,   "parents",      SDF_AUTHZ_X,    0,  pm_parents,     cmd_parents,        "Parents of node"),
+SDATACM2 (ASN_SCHEMA,   "childs",       SDF_AUTHZ_X,    0,  pm_childs,      cmd_childs,         "Childs of node"),
+SDATACM2 (ASN_SCHEMA,   "snaps",        SDF_AUTHZ_X,    0,  0,              cmd_list_snaps,     "List snaps"),
+SDATACM2 (ASN_SCHEMA,   "snap-content", SDF_AUTHZ_X,    0,  pm_snap_content,cmd_snap_content,   "Show snap content"),
+SDATACM2 (ASN_SCHEMA,   "shoot-snap",   SDF_AUTHZ_X,    0,  pm_shoot_snap,  cmd_shoot_snap,     "Shoot snap"),
+SDATACM2 (ASN_SCHEMA,   "activate-snap",SDF_AUTHZ_X,   0,  pm_activate_snap,cmd_activate_snap, "Activate snap"),
+SDATACM2 (ASN_SCHEMA,   "deactivate-snap",SDF_AUTHZ_X, 0,  0,              cmd_deactivate_snap,"De-Activate snap"),
+SDATACM2 (ASN_SCHEMA,   "import-db",    SDF_AUTHZ_X,    0,  pm_import_db,   cmd_import_db, "Import db"),
+SDATACM2 (ASN_SCHEMA,   "export-db",    SDF_AUTHZ_X,    0,  pm_export_db,   cmd_export_db, "Export db"),
+SDATACM2 (ASN_SCHEMA,   "pkey2s",       SDF_AUTHZ_X,    0,  pm_node_pkey2s, cmd_node_pkey2s,    "List node's pkey2"),
+SDATACM2 (ASN_SCHEMA,   "desc",         SDF_AUTHZ_X,    a_schema, pm_desc,  cmd_desc,           "Schema of topic"),
+SDATACM2 (ASN_SCHEMA,   "descs",        SDF_AUTHZ_X,    a_schemas, 0,       cmd_desc,           "Schema of topics"),
+SDATACM (ASN_SCHEMA,    "system-schema",0,              0,  cmd_system_topic_schema, "Get system schema"),
+SDATACM2 (ASN_SCHEMA,   "trace",        SDF_AUTHZ_X,    0,  pm_trace,       cmd_trace,          "Set trace"),
 SDATA_END()
 };
 
@@ -1370,7 +1370,7 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *content64 = kw_get_str(kw, "content64", "", 0);
     const char *content = kw_get_str(kw, "content", "", 0);
-    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -1442,7 +1442,7 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         gobj,
         topic_name,
         jn_content, // owned
-        json_incref(jn_options),
+        json_incref(_jn_options),
         src
     );
     return msg_iev_build_webix(gobj,
@@ -1462,7 +1462,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *content64 = kw_get_str(kw, "content64", "", 0);
     const char *content = kw_get_str(kw, "content", "", 0);
-    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -1534,7 +1534,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         gobj,
         topic_name,
         jn_content, // owned
-        json_incref(jn_options),
+        json_incref(_jn_options),
         src
     );
 
@@ -1629,7 +1629,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 {
     const char *parent_ref = kw_get_str(kw, "parent_ref", "", 0);
     const char *child_ref = kw_get_str(kw, "child_ref", "", 0);
-    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(parent_ref)) {
         return msg_iev_build_webix(
@@ -1742,7 +1742,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         gobj,
         child_topic_name,
         json_pack("{s:s}", "id", child_id),
-        json_incref(jn_options),
+        json_incref(_jn_options),
         src
     );
 
@@ -1762,7 +1762,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
 {
     const char *parent_ref = kw_get_str(kw, "parent_ref", "", 0);
     const char *child_ref = kw_get_str(kw, "child_ref", "", 0);
-    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(parent_ref)) {
         return msg_iev_build_webix(
@@ -1875,7 +1875,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         gobj,
         child_topic_name,
         json_pack("{s:s}", "id", child_id),
-        json_incref(jn_options),
+        json_incref(_jn_options),
         src
     );
 
@@ -1893,6 +1893,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
  ***************************************************************************/
 PRIVATE json_t *cmd_treedbs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
+    json_incref(kw);
     json_t *treedbs = gobj_treedbs(gobj, kw, src);
 
     return msg_iev_build_webix(gobj,
@@ -1920,6 +1921,7 @@ PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
             kw  // owned
         );
     }
+    json_incref(kw);
     json_t *topics = gobj_treedb_topics(gobj, treedb_name, kw, src);
 
     return msg_iev_build_webix(gobj,
@@ -1937,6 +1939,19 @@ PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    if(strcmp(cmd, "desc")==0) {
+        if(empty_string(topic_name)) {
+            return msg_iev_build_webix(
+                gobj,
+                -1,
+                json_local_sprintf("What topic_name?"),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+    }
+
     json_t *desc = gobj_topic_desc(gobj, topic_name); // Empty topic_name -> return all
 
     return msg_iev_build_webix(gobj,
@@ -1944,6 +1959,23 @@ PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         desc?0:json_string(log_last_message()),
         0,
         desc,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t* cmd_system_topic_schema(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
+{
+    /*
+     *  Inform
+     */
+    return msg_iev_build_webix(gobj,
+        0,
+        0,
+        0,
+        _treedb_create_topic_cols_desc(),
         kw  // owned
     );
 }
@@ -1979,6 +2011,7 @@ PRIVATE json_t *cmd_links(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
 
+    json_incref(kw);
     json_t *links = gobj_topic_links(gobj, priv->treedb_name, topic_name, kw, src);
 
     return msg_iev_build_webix(gobj,
@@ -1999,6 +2032,7 @@ PRIVATE json_t *cmd_hooks(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
 
+    json_incref(kw);
     json_t *hooks = gobj_topic_hooks(gobj, priv->treedb_name, topic_name, kw, src);
 
     return msg_iev_build_webix(gobj,
@@ -2019,7 +2053,7 @@ PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *node_id = kw_get_str(kw, "node_id", "", 0);
     const char *link = kw_get_str(kw, "link", "", 0);
-    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -2047,7 +2081,7 @@ PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         topic_name,
         node_id,
         link,
-        json_incref(jn_options),
+        json_incref(_jn_options),
         src
     );
 
@@ -2069,7 +2103,7 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *node_id = kw_get_str(kw, "node_id", "", 0);
     const char *hook = kw_get_str(kw, "hook", "", 0);
-    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -2097,7 +2131,7 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         topic_name,
         node_id,
         hook,
-        json_incref(jn_options),
+        json_incref(_jn_options),
         src
     );
 
@@ -2120,7 +2154,7 @@ PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *filter = kw_get_str(kw, "filter", "", 0);
-    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -2152,7 +2186,7 @@ PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         gobj,
         topic_name,
         jn_filter,  // owned
-        json_incref(jn_options),
+        json_incref(_jn_options),
         src
     );
 
@@ -2177,7 +2211,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *id = kw_get_str(kw, "id", "", 0);
-    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -2204,7 +2238,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         gobj,
         topic_name,
         json_incref(kw),
-        json_incref(jn_options),
+        json_incref(_jn_options),
         src
     );
 
@@ -2228,7 +2262,7 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
     const char *node_id = kw_get_str(kw, "node_id", "", 0);
     const char *pkey2 = kw_get_str(kw, "pkey2", "", 0);
     const char *filter = kw_get_str(kw, "filter", "", 0);
-    json_t *jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -2267,7 +2301,7 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
         topic_name,
         pkey2,
         jn_filter,  // owned
-        json_incref(jn_options),
+        json_incref(_jn_options),
         src
     );
 
@@ -2278,95 +2312,6 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
             json_local_sprintf("%d instances", json_array_size(instances)):
             json_string(log_last_message()),
         instances?tranger_topic_desc(priv->tranger, topic_name):0,
-        instances,
-        kw  // owned
-    );
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_touch_instance(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    const char *node_id = kw_get_str(kw, "node_id", "", 0);
-    const char *pkey2 = kw_get_str(kw, "pkey2", "", 0);
-    const char *filter = kw_get_str(kw, "filter", "", 0);
-
-    if(empty_string(topic_name)) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_local_sprintf("What topic_name?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-    json_t *jn_filter = 0;
-    if(!empty_string(filter)) {
-        jn_filter = legalstring2json(filter, TRUE);
-        if(!jn_filter) {
-            return msg_iev_build_webix(
-                gobj,
-                -1,
-                json_local_sprintf("Can't decode filter json"),
-                0,
-                0,
-                kw  // owned
-            );
-        }
-    }
-    if(!empty_string(node_id)) {
-        if(!jn_filter) {
-            jn_filter = json_pack("{s:s}", "id", node_id);
-        } else {
-            json_object_set_new(jn_filter, "id", json_string(node_id));
-        }
-    }
-
-    json_t *instances = gobj_list_instances(
-        gobj,
-        topic_name,
-        pkey2,
-        jn_filter,  // owned
-        0,
-        src
-    );
-
-    /*
-     *  This is a danger operation, only one instance please
-     */
-    if(json_array_size(instances)!=1) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_local_sprintf("Select only one instance please"),
-            tranger_topic_desc(priv->tranger, topic_name),
-            instances,
-            kw  // owned
-        );
-    }
-    int idx; json_t *instance;
-    json_array_foreach(instances, idx, instance) {
-        json_decref(
-            gobj_update_node(
-                gobj,
-                topic_name,
-                instance,
-                0,
-                src
-            )
-        );
-    }
-
-    return msg_iev_build_webix(
-        gobj,
-        0,
-        json_local_sprintf("%d instances touched", json_array_size(instances)),
-        tranger_topic_desc(priv->tranger, topic_name),
         instances,
         kw  // owned
     );
@@ -3026,13 +2971,13 @@ PRIVATE int ac_treedb_update_node(hgobj gobj, const char *event, json_t *kw, hgo
      */
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     json_t *record = kw_get_dict(kw, "record", 0, 0);
-    json_t *jn_options = kw_get_dict(kw, "options", 0, 0); // "create", "auto-link"
+    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0); // "create", "auto-link"
 
     json_t *node = gobj_update_node( // Return is YOURS
         gobj,
         topic_name,
         json_incref(record),
-        json_incref(jn_options),
+        json_incref(_jn_options),
         src
     );
     json_decref(node); // return something? de momento no, uso interno.

@@ -284,7 +284,6 @@ PRIVATE const char *a_help[] = {"h", "?", 0};
 PRIVATE const char *a_services[] = {"services", "list-services", 0};
 PRIVATE const char *a_read_attrs[] = {"read-attrs", 0};
 PRIVATE const char *a_read_attrs2[] = {"read-attrs2", 0};
-PRIVATE const char *a_sys_schema[] = {"topic-cols-schema", 0};
 
 PRIVATE sdata_desc_t command_table[] = {
 /*-CMD---type-----------name------------------------alias---items-----------json_fn----------------------description---------- */
@@ -364,7 +363,7 @@ SDATACM (ASN_SCHEMA,    "remove-denied-ip",         0,      pm_remove_denied_ip,
 SDATACM (ASN_SCHEMA,    "get-2key-schema",          0,      0, cmd_2key_get_schema, "Get 2key schema"),
 SDATACM (ASN_SCHEMA,    "get-2key-value",           0,      pm_2key_get_value, cmd_2key_get_value, "Get 2key value"),
 SDATACM (ASN_SCHEMA,    "get-2key-subvalue",        0,      pm_2key_get_value, cmd_2key_get_subvalue, "Get 2key sub-value"),
-SDATACM (ASN_SCHEMA,    "system-topic-schema",      a_sys_schema, 0,  cmd_system_topic_schema, "Get system topic schema"),
+SDATACM (ASN_SCHEMA,    "system-schema",      0, 0,  cmd_system_topic_schema, "Get system topic schema"),
 SDATA_END()
 };
 
