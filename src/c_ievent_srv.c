@@ -1226,7 +1226,12 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
                 "__publishing__"
             );
             json_object_del(iev_kw, "__md_iev__");
-            json_object_set_new(iev_kw, "__global__", kw3);
+            json_t *__global__ = kw_get_dict(iev_kw, "__global__", 0, 0);
+            if(__global__) {
+                json_object_update_new(__global__, kw3);
+            } else {
+                json_object_set_new(iev_kw, "__global__", kw3);
+            }
         }
 
         gobj_subscribe_event(gobj_service, iev_event, iev_kw, gobj);
