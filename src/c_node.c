@@ -769,7 +769,6 @@ PRIVATE int mt_delete_node(
 
     json_t *node = 0;
     int ret = 0;
-    int deleted = 0;
     json_t *jn_filter = json_object();
 
     /*
@@ -795,7 +794,6 @@ PRIVATE int mt_delete_node(
                 node,
                 json_incref(jn_options)
             );
-            deleted++;
         }
     }
     json_decref(pkey2s_list);
@@ -806,9 +804,6 @@ PRIVATE int mt_delete_node(
             main_node,
             json_incref(jn_options)
         );
-        if(r==0) {
-            deleted++;
-        }
         ret += r;
     }
 
@@ -1604,6 +1599,7 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
 
     JSON_INCREF(node);
     if(gobj_delete_node(gobj, topic_name, node, json_pack("{s:b}", "force", force), src)<0) {
+        JSON_DECREF(node);
         return msg_iev_build_webix(
             gobj,
             -1,
