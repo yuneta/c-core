@@ -28,7 +28,9 @@ PRIVATE int treedb_callback(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *operation,  // "EV_TREEDB_NODE_UPDATED", "EV_TREEDB_NODE_DELETED"
+    const char *operation,  // "EV_TREEDB_NODE_UPDATED",
+                            // "EV_TREEDB_NODE_UPDATED",
+                            // "EV_TREEDB_NODE_DELETED"
     json_t *node            // owned
 );
 
@@ -2811,7 +2813,9 @@ PRIVATE int treedb_callback(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *operation,  // "EV_TREEDB_NODE_UPDATED", "EV_TREEDB_NODE_DELETED"
+    const char *operation,  // "EV_TREEDB_NODE_UPDATED",
+                            // "EV_TREEDB_NODE_UPDATED",
+                            // "EV_TREEDB_NODE_DELETED"
     json_t *node            // owned
 )
 {
@@ -2995,6 +2999,7 @@ PRIVATE const EVENT input_events[] = { // HACK System gclass, not public events 
     {NULL, 0, 0, 0}
 };
 PRIVATE const EVENT output_events[] = { // HACK System gclass, not public events TODO o si?
+    {"EV_TREEDB_NODE_CREATED",  EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,  0,  0},
     {"EV_TREEDB_NODE_UPDATED",  EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,  0,  0},
     {"EV_TREEDB_NODE_DELETED",  EVF_PUBLIC_EVENT|EVF_NO_WARN_SUBS,  0,  0},
     {NULL, 0, 0, 0}
