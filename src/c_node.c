@@ -111,7 +111,7 @@ SDATA_END()
 PRIVATE sdata_desc_t pm_delete_node[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_JSON,      "record",       0,              0,          "Node content in json"),
-SDATAPM (ASN_BOOLEAN,   "force",        0,              0,          "Force delete"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: 'force'"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_link_nodes[] = {
@@ -1551,7 +1551,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
 PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    BOOL force = kw_get_bool(kw, "force", 0, KW_WILD_NUMBER);
+    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
 
     if(empty_string(topic_name)) {
         return msg_iev_build_webix(
@@ -1599,7 +1599,13 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     }
 
     JSON_INCREF(node);
-    if(gobj_delete_node(gobj, topic_name, node, json_pack("{s:b}", "force", force), src)<0) {
+    if(gobj_delete_node(
+            gobj,
+            topic_name,
+            node,
+            json_incref(_jn_options),
+            src
+    )<0) {
         JSON_DECREF(node);
         return msg_iev_build_webix(
             gobj,
