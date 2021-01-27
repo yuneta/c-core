@@ -2941,7 +2941,7 @@ PRIVATE int export_treedb(hgobj gobj, const char *path, BOOL with_metadata, hgob
             gobj,
             topic_name,
             0,
-            json_pack("{s:b}", "no-metadata", !with_metadata),
+            json_pack("{s:b}", "with-metadata", with_metadata),
             src
         );
         json_object_set_new(jn_db, topic_name, nodes);
