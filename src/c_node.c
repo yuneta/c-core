@@ -819,7 +819,9 @@ PRIVATE int mt_delete_node(
 PRIVATE int mt_link_nodes(
     hgobj gobj,
     const char *hook,
+    const char *parent_topic_name,
     json_t *parent_record,  // owned
+    const char *child_topic_name,
     json_t *child_record,  // owned
     hgobj src
 )
@@ -829,8 +831,8 @@ PRIVATE int mt_link_nodes(
     /*-------------------------------*
      *      Recover nodes
      *-------------------------------*/
-    const char *parent_topic_name = kw_get_str(parent_record, "__md_treedb__`topic_name", 0, 0);
-    const char *child_topic_name = kw_get_str(child_record, "__md_treedb__`topic_name", 0, 0);
+    //const char *parent_topic_name = kw_get_str(parent_record, "__md_treedb__`topic_name", 0, 0);
+    //const char *child_topic_name = kw_get_str(child_record, "__md_treedb__`topic_name", 0, 0);
 
     json_t *parent_node = fetch_node( // WARNING Return is NOT YOURS, pure node
         gobj,
@@ -886,7 +888,9 @@ PRIVATE int mt_link_nodes(
 PRIVATE int mt_unlink_nodes(
     hgobj gobj,
     const char *hook,
+    const char *parent_topic_name,
     json_t *parent_record,  // owned
+    const char *child_topic_name,
     json_t *child_record,  // owned
     hgobj src
 )
@@ -896,8 +900,8 @@ PRIVATE int mt_unlink_nodes(
     /*-------------------------------*
      *      Recover nodes
      *-------------------------------*/
-    const char *parent_topic_name = kw_get_str(parent_record, "__md_treedb__`topic_name", 0, 0);
-    const char *child_topic_name = kw_get_str(child_record, "__md_treedb__`topic_name", 0, 0);
+    //const char *parent_topic_name = kw_get_str(parent_record, "__md_treedb__`topic_name", 0, 0);
+    //const char *child_topic_name = kw_get_str(child_record, "__md_treedb__`topic_name", 0, 0);
 
     json_t *parent_node = fetch_node( // WARNING Return is NOT YOURS, pure node
         gobj,
@@ -1738,7 +1742,9 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
     int result = gobj_link_nodes(
         gobj,
         hook_name,
+        parent_topic_name,
         parent_node,
+        child_topic_name,
         child_node,
         src
     );
@@ -1871,7 +1877,9 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
     int result = gobj_unlink_nodes(
         gobj,
         hook_name,
+        parent_topic_name,
         parent_node,
+        child_topic_name,
         child_node,
         src
     );
