@@ -147,27 +147,27 @@ PRIVATE sdata_desc_t pm_parents[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_OCTET_STR, "link",         0,              0,          "Link port to parents"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: only-id, list-dict, size"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: only_id, list_dict, size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_childs[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_OCTET_STR, "hook",         0,              0,          "Hook port to childs"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: only-id, list-dict, size"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: only_id, list_dict, size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_list_nodes[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: only-id, list-dict, size"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: only_id, list_dict, size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_get_node[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "id",           0,              0,          "Node id"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: only-id, list-dict, size"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: only_id, list_dict, size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_node_instances[] = {
@@ -176,7 +176,7 @@ SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"
 SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_OCTET_STR, "pkey2",        0,              0,          "PKey2 field"),
 SDATAPM (ASN_OCTET_STR, "filter",       0,              0,          "Search filter"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: only-id, list-dict, size"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: only_id, list_dict, size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_node_pkey2s[] = {
@@ -2831,7 +2831,7 @@ PRIVATE int treedb_callback(
         tranger,
         node, // not owned
         json_pack("{s:b}",
-            "list-dict", 1  // HACK always list-dict
+            "list_dict", 1  // HACK always list_dict
         )
     );
 
