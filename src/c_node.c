@@ -1372,9 +1372,16 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *content64 = kw_get_str(kw, "content64", "", 0);
     const char *content = kw_get_str(kw, "content", "", 0);
-    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict_value(kw, "options", 0, 0);
+    json_t *jn_options = 0;
+    if(json_is_string(_jn_options)) {
+        jn_options = legalstring2json(json_string_value(_jn_options), TRUE);
+    } else if(json_is_object(_jn_options)) {
+        jn_options = json_incref(_jn_options);
+    }
 
     if(empty_string(topic_name)) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1398,6 +1405,7 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         jn_content = legalstring2json(gbuf_cur_rd_pointer(gbuf_content), TRUE);
         GBUF_DECREF(gbuf_content);
         if(!jn_content) {
+            json_decref(jn_options);
             return msg_iev_build_webix(
                 gobj,
                 -1,
@@ -1413,6 +1421,7 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         if(!empty_string(content)) {
             jn_content = legalstring2json(content, TRUE);
             if(!jn_content) {
+                json_decref(jn_options);
                 return msg_iev_build_webix(
                     gobj,
                     -1,
@@ -1430,6 +1439,7 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     }
 
     if(!jn_content) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1444,7 +1454,7 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         gobj,
         topic_name,
         jn_content, // owned
-        json_incref(_jn_options),
+        jn_options,
         src
     );
     return msg_iev_build_webix(gobj,
@@ -1464,9 +1474,16 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *content64 = kw_get_str(kw, "content64", "", 0);
     const char *content = kw_get_str(kw, "content", "", 0);
-    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict_value(kw, "options", 0, 0);
+    json_t *jn_options = 0;
+    if(json_is_string(_jn_options)) {
+        jn_options = legalstring2json(json_string_value(_jn_options), TRUE);
+    } else if(json_is_object(_jn_options)) {
+        jn_options = json_incref(_jn_options);
+    }
 
     if(empty_string(topic_name)) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1490,6 +1507,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         jn_content = legalstring2json(gbuf_cur_rd_pointer(gbuf_content), TRUE);
         GBUF_DECREF(gbuf_content);
         if(!jn_content) {
+            json_decref(jn_options);
             return msg_iev_build_webix(
                 gobj,
                 -1,
@@ -1505,6 +1523,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         if(!empty_string(content)) {
             jn_content = legalstring2json(content, TRUE);
             if(!jn_content) {
+                json_decref(jn_options);
                 return msg_iev_build_webix(
                     gobj,
                     -1,
@@ -1522,6 +1541,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     }
 
     if(!jn_content) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1536,7 +1556,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         gobj,
         topic_name,
         jn_content, // owned
-        json_incref(_jn_options),
+        jn_options,
         src
     );
 
@@ -1555,9 +1575,16 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
 PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict_value(kw, "options", 0, 0);
+    json_t *jn_options = 0;
+    if(json_is_string(_jn_options)) {
+        jn_options = legalstring2json(json_string_value(_jn_options), TRUE);
+    } else if(json_is_object(_jn_options)) {
+        jn_options = json_incref(_jn_options);
+    }
 
     if(empty_string(topic_name)) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1571,6 +1598,7 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     json_t *jn_record = json_incref(kw_get_dict(kw, "record", 0, 0));
     if(!kw_has_key(jn_record, "id")) {
         json_decref(jn_record);
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1592,6 +1620,7 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         src
     );
     if(!node) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1607,7 +1636,7 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
             gobj,
             topic_name,
             node,
-            json_incref(_jn_options),
+            jn_options,
             src
     )<0) {
         JSON_DECREF(node);
@@ -1638,9 +1667,16 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 {
     const char *parent_ref = kw_get_str(kw, "parent_ref", "", 0);
     const char *child_ref = kw_get_str(kw, "child_ref", "", 0);
-    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict_value(kw, "options", 0, 0);
+    json_t *jn_options = 0;
+    if(json_is_string(_jn_options)) {
+        jn_options = legalstring2json(json_string_value(_jn_options), TRUE);
+    } else if(json_is_object(_jn_options)) {
+        jn_options = json_incref(_jn_options);
+    }
 
     if(empty_string(parent_ref)) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1651,6 +1687,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         );
     }
     if(empty_string(child_ref)) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1674,6 +1711,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
          *  It's not a fkey.
          *  It's not an error, it happens when it's a hook and fkey field.
          */
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1693,6 +1731,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         child_id, sizeof(child_id)
     )) {
         // It's not a child ref
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1711,6 +1750,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         src
     );
     if(!parent_node) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1729,6 +1769,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         src
     );
     if(!child_node) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1753,7 +1794,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         gobj,
         child_topic_name,
         json_pack("{s:s}", "id", child_id),
-        json_incref(_jn_options),
+        jn_options,
         src
     );
 
@@ -1773,9 +1814,16 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
 {
     const char *parent_ref = kw_get_str(kw, "parent_ref", "", 0);
     const char *child_ref = kw_get_str(kw, "child_ref", "", 0);
-    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict_value(kw, "options", 0, 0);
+    json_t *jn_options = 0;
+    if(json_is_string(_jn_options)) {
+        jn_options = legalstring2json(json_string_value(_jn_options), TRUE);
+    } else if(json_is_object(_jn_options)) {
+        jn_options = json_incref(_jn_options);
+    }
 
     if(empty_string(parent_ref)) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1786,6 +1834,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         );
     }
     if(empty_string(child_ref)) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1809,6 +1858,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
          *  It's not a fkey.
          *  It's not an error, it happens when it's a hook and fkey field.
          */
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1828,6 +1878,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         child_id, sizeof(child_id)
     )) {
         // It's not a child ref
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1846,6 +1897,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         src
     );
     if(!parent_node) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1864,6 +1916,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         src
     );
     if(!child_node) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -1888,7 +1941,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         gobj,
         child_topic_name,
         json_pack("{s:s}", "id", child_id),
-        json_incref(_jn_options),
+        jn_options,
         src
     );
 
@@ -2066,9 +2119,16 @@ PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *node_id = kw_get_str(kw, "node_id", "", 0);
     const char *link = kw_get_str(kw, "link", "", 0);
-    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict_value(kw, "options", 0, 0);
+    json_t *jn_options = 0;
+    if(json_is_string(_jn_options)) {
+        jn_options = legalstring2json(json_string_value(_jn_options), TRUE);
+    } else if(json_is_object(_jn_options)) {
+        jn_options = json_incref(_jn_options);
+    }
 
     if(empty_string(topic_name)) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -2079,6 +2139,7 @@ PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         );
     }
     if(empty_string(node_id)) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -2094,7 +2155,7 @@ PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         topic_name,
         node_id,
         link,
-        json_incref(_jn_options),
+        jn_options,
         src
     );
 
@@ -2116,9 +2177,16 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *node_id = kw_get_str(kw, "node_id", "", 0);
     const char *hook = kw_get_str(kw, "hook", "", 0);
-    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict_value(kw, "options", 0, 0);
+    json_t *jn_options = 0;
+    if(json_is_string(_jn_options)) {
+        jn_options = legalstring2json(json_string_value(_jn_options), TRUE);
+    } else if(json_is_object(_jn_options)) {
+        jn_options = json_incref(_jn_options);
+    }
 
     if(empty_string(topic_name)) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -2129,6 +2197,7 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         );
     }
     if(empty_string(node_id)) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -2144,7 +2213,7 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         topic_name,
         node_id,
         hook,
-        json_incref(_jn_options),
+        jn_options,
         src
     );
 
@@ -2167,9 +2236,16 @@ PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *filter = kw_get_str(kw, "filter", "", 0);
-    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict_value(kw, "options", 0, 0);
+    json_t *jn_options = 0;
+    if(json_is_string(_jn_options)) {
+        jn_options = legalstring2json(json_string_value(_jn_options), TRUE);
+    } else if(json_is_object(_jn_options)) {
+        jn_options = json_incref(_jn_options);
+    }
 
     if(empty_string(topic_name)) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -2184,6 +2260,7 @@ PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
     if(!empty_string(filter)) {
         jn_filter = legalstring2json(filter, TRUE);
         if(!jn_filter) {
+            json_decref(jn_options);
             return msg_iev_build_webix(
                 gobj,
                 -1,
@@ -2199,7 +2276,7 @@ PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         gobj,
         topic_name,
         jn_filter,  // owned
-        json_incref(_jn_options),
+        jn_options,
         src
     );
 
@@ -2224,9 +2301,16 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *id = kw_get_str(kw, "id", "", 0);
-    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict_value(kw, "options", 0, 0);
+    json_t *jn_options = 0;
+    if(json_is_string(_jn_options)) {
+        jn_options = legalstring2json(json_string_value(_jn_options), TRUE);
+    } else if(json_is_object(_jn_options)) {
+        jn_options = json_incref(_jn_options);
+    }
 
     if(empty_string(topic_name)) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -2237,6 +2321,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         );
     }
     if(empty_string(id)) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -2251,7 +2336,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         gobj,
         topic_name,
         json_incref(kw),
-        json_incref(_jn_options),
+        jn_options,
         src
     );
 
@@ -2275,9 +2360,16 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
     const char *node_id = kw_get_str(kw, "node_id", "", 0);
     const char *pkey2 = kw_get_str(kw, "pkey2", "", 0);
     const char *filter = kw_get_str(kw, "filter", "", 0);
-    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
+    json_t *_jn_options = kw_get_dict_value(kw, "options", 0, 0);
+    json_t *jn_options = 0;
+    if(json_is_string(_jn_options)) {
+        jn_options = legalstring2json(json_string_value(_jn_options), TRUE);
+    } else if(json_is_object(_jn_options)) {
+        jn_options = json_incref(_jn_options);
+    }
 
     if(empty_string(topic_name)) {
+        json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
             -1,
@@ -2291,6 +2383,7 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
     if(!empty_string(filter)) {
         jn_filter = legalstring2json(filter, TRUE);
         if(!jn_filter) {
+            json_decref(jn_options);
             return msg_iev_build_webix(
                 gobj,
                 -1,
@@ -2314,7 +2407,7 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
         topic_name,
         pkey2,
         jn_filter,  // owned
-        json_incref(_jn_options),
+        jn_options,
         src
     );
 
