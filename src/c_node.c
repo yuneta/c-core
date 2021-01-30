@@ -703,7 +703,7 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
         }
         if(autolink) {
             treedb_clean_node(priv->tranger, node, FALSE);  // remove current links
-            treedb_auto_link(priv->tranger, node, json_incref(kw), FALSE);
+            treedb_autolink(priv->tranger, node, json_incref(kw), FALSE);
             treedb_save_node(priv->tranger, node);
         }
     }
