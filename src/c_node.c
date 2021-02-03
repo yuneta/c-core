@@ -2889,6 +2889,49 @@ PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src
     );
 }
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+// PRIVATE json_t *cmd_tree(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+// {
+//     do {
+//         if(!fichajes_roles ||
+//                 !(json_str_in_list(fichajes_roles, "admin", FALSE) ||
+//                 json_str_in_list(fichajes_roles, "gestor", FALSE))) {
+//             jn_comment = json_string("User has not 'admin' or 'gestor' role");
+//             result = -1;
+//             break;
+//         }
+//
+//         /*
+//          *  Get lista departments
+//          */
+//         const char *department = kw_get_str(kw, "department", 0, 0);
+//         if(!department) {
+//             department = "direccion";
+//         }
+//         json_t *node = gobj_get_node( // Return is NOT YOURS
+//             priv->treedb_gest,
+//             "gest_departments",
+//             json_pack("{s:s}", "id", department),
+//             0,
+//             src
+//         );
+//         if(node) {
+//             json_t *filter = json_pack("{s:s, s:s, s:s}", // Fields to include
+//                 "name", "value", // HACK rename field name->value
+//                 "users", "",
+//                 "managers", ""
+//             );
+//             jn_data = webix_new_list_tree(node, "departments", "data", filter, "");
+//         } else {
+//             result = -1;
+//             jn_comment = json_string(log_last_message());
+//         }
+//     } while(0);
+/*
+}*/
+
 
 
 
