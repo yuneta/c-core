@@ -293,7 +293,7 @@ SDATACM (ASN_SCHEMA,    "view-config",              0,      0,              cmd_
 SDATACM (ASN_SCHEMA,    "view-mem",                 0,      0,              cmd_view_mem,               "View yuno memory"),
 SDATACM (ASN_SCHEMA,    "view-mem2",                0,      0,              cmd_view_mem2,              "View yuno memory with segmented free blocks"),
 SDATACM (ASN_SCHEMA,    "view-gclass-register",     0,      0,              cmd_view_gclass_register,   "View gclass's register"),
-SDATACM (ASN_SCHEMA,    "view-service-register",    a_services,0,           cmd_view_service_register,  "View service's register"),
+SDATACM (ASN_SCHEMA,    "view-service-register",    a_services,pm_gclass_name,cmd_view_service_register,  "View service's register"),
 SDATACM (ASN_SCHEMA,    "view-unique-register",     0,      0,              cmd_view_unique_register,   "View unique-name's register"),
 
 SDATACM (ASN_SCHEMA,    "view-gclass",              0,      pm_gclass_name, cmd_view_gclass,            "View gclass description"),
@@ -1200,12 +1200,15 @@ PRIVATE json_t *cmd_view_gclass_register(hgobj gobj, const char *cmd, json_t *kw
  ***************************************************************************/
 PRIVATE json_t *cmd_view_service_register(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
+    const char *gclass_name = kw_get_str(kw, "gclass_name", "", 0);
+
+
     return msg_iev_build_webix(
         gobj,
         0,
         0,
         0,
-        gobj_repr_service_register(),
+        gobj_repr_service_register(gclass_name),
         kw  // owned
     );
 }
