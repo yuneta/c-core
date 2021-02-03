@@ -684,11 +684,13 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
     KW_INCREF(kw);
     json_t *jn_resp = gobj_authenticate(gobj_service, kw, gobj);
     if(kw_get_int(jn_resp, "result", -1, KW_REQUIRED|KW_CREATE)<0) {
+        const char *comment = kw_get_str(jn_resp, "comment", "", 0);
         log_warning(0,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
             "msg",          "%s", "Authentication rejected",
+            "cause",        "%s", comment,
             NULL
         );
 
