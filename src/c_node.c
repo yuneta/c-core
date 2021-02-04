@@ -493,7 +493,27 @@ PRIVATE json_t *mt_topic_desc(hgobj gobj, const char *topic_name)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     if(!empty_string(topic_name)) {
+        /*-----------------------------------*
+         *      Check appropiate topic
+         *-----------------------------------*/
+        if(!treedb_is_treedbs_topic(
+            priv->tranger,
+            priv->treedb_name,
+            topic_name
+        )) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Topic name not found in treedbs",
+                "treedb_name",  "%s", priv->treedb_name,
+                "topic_name",   "%s", topic_name,
+                NULL
+            );
+            return 0;
+        }
         return tranger_topic_desc(priv->tranger, topic_name);
+
     } else {
         json_t *topics_list = treedb_topics( //Return a list with topic names of the treedb
             priv->tranger,
@@ -529,6 +549,27 @@ PRIVATE json_t *mt_topic_links(
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     if(!empty_string(topic_name)) {
+        /*-----------------------------------*
+         *      Check appropiate topic
+         *-----------------------------------*/
+        if(!treedb_is_treedbs_topic(
+            priv->tranger,
+            priv->treedb_name,
+            topic_name
+        )) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Topic name not found in treedbs",
+                "treedb_name",  "%s", priv->treedb_name,
+                "topic_name",   "%s", topic_name,
+                NULL
+            );
+            KW_DECREF(kw);
+            return 0;
+        }
+
         KW_DECREF(kw);
         return treedb_get_topic_links(priv->tranger, treedb_name, topic_name);
     }
@@ -569,6 +610,27 @@ PRIVATE json_t *mt_topic_hooks(
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     if(!empty_string(topic_name)) {
+        /*-----------------------------------*
+         *      Check appropiate topic
+         *-----------------------------------*/
+        if(!treedb_is_treedbs_topic(
+            priv->tranger,
+            priv->treedb_name,
+            topic_name
+        )) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Topic name not found in treedbs",
+                "treedb_name",  "%s", priv->treedb_name,
+                "topic_name",   "%s", topic_name,
+                NULL
+            );
+            KW_DECREF(kw);
+            return 0;
+        }
+
         KW_DECREF(kw);
         return treedb_get_topic_hooks(priv->tranger, treedb_name, topic_name);
     }
@@ -608,6 +670,28 @@ PRIVATE json_t *mt_create_node( // Return is YOURS
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name
+    )) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_options);
+        KW_DECREF(kw);
+        return 0;
+    }
 
     json_t *node = treedb_create_node( // Return is NOT YOURS
         priv->tranger,
@@ -656,6 +740,28 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
     BOOL volatil = kw_get_bool(jn_options, "volatil", 0, 0);
     BOOL create = kw_get_bool(jn_options, "create", 0, 0);
     BOOL autolink = kw_get_bool(jn_options, "autolink", 0, 0);
+
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name
+    )) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_options);
+        KW_DECREF(kw);
+        return 0;
+    }
 
     json_t *node = fetch_node(gobj, topic_name, kw);
     if(!node) {
@@ -729,6 +835,28 @@ PRIVATE int mt_delete_node(
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name
+    )) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_options);
+        KW_DECREF(kw);
+        return 0;
+    }
 
     const char *id = kw_get_str(kw, "id", 0, 0);
     if(empty_string(id)) {
@@ -828,6 +956,47 @@ PRIVATE int mt_link_nodes(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(
+        priv->tranger,
+        priv->treedb_name,
+        parent_topic_name
+    )) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", parent_topic_name,
+            NULL
+        );
+        JSON_DECREF(parent_record);
+        JSON_DECREF(child_record);
+        return -1;
+    }
+
+    if(!treedb_is_treedbs_topic(
+        priv->tranger,
+        priv->treedb_name,
+        child_topic_name
+    )) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", child_topic_name,
+            NULL
+        );
+        JSON_DECREF(parent_record);
+        JSON_DECREF(child_record);
+        return -1;
+    }
+
     /*-------------------------------*
      *      Recover nodes
      *-------------------------------*/
@@ -897,6 +1066,47 @@ PRIVATE int mt_unlink_nodes(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(
+        priv->tranger,
+        priv->treedb_name,
+        parent_topic_name
+    )) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", parent_topic_name,
+            NULL
+        );
+        JSON_DECREF(parent_record);
+        JSON_DECREF(child_record);
+        return -1;
+    }
+
+    if(!treedb_is_treedbs_topic(
+        priv->tranger,
+        priv->treedb_name,
+        child_topic_name
+    )) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", child_topic_name,
+            NULL
+        );
+        JSON_DECREF(parent_record);
+        JSON_DECREF(child_record);
+        return -1;
+    }
+
     /*-------------------------------*
      *      Recover nodes
      *-------------------------------*/
@@ -964,6 +1174,28 @@ PRIVATE json_t *mt_get_node(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name
+    )) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_options);
+        KW_DECREF(kw);
+        return 0;
+    }
+
     json_t *node = fetch_node(gobj, topic_name, kw);
     if(!node) {
         // Silence
@@ -992,6 +1224,28 @@ PRIVATE json_t *mt_list_nodes(
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name
+    )) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_filter);
+        JSON_DECREF(jn_options);
+        return 0;
+    }
 
     BOOL include_instances = kw_get_bool(jn_options, "include-instances", 0, KW_WILD_NUMBER);
 
@@ -1091,6 +1345,28 @@ PRIVATE json_t *mt_list_instances(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name
+    )) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_filter);
+        JSON_DECREF(jn_options);
+        return 0;
+    }
+
     // TODO Filtra la lista con los nodos con permiso para leer
 
     json_t *iter = treedb_list_instances( // Return MUST be decref
@@ -1134,6 +1410,27 @@ PRIVATE json_t *mt_node_parents(
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name
+    )) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_options);
+        return 0;
+    }
 
     json_t *node = treedb_get_node(
         priv->tranger,
@@ -1193,6 +1490,29 @@ PRIVATE json_t *mt_node_childs(
     hgobj src
 )
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name
+    )) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_options);
+        return 0;
+    }
+
 //     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 //
 //     json_t *node = treedb_get_node(
@@ -3014,6 +3334,11 @@ PRIVATE json_t *fetch_node(
         topic_name,
         id
     );
+    if(!node) {
+        // Error already logged
+        JSON_DECREF(jn_filter);
+        return 0;
+    }
     if(node && kw_match_simple(node, json_incref(jn_filter))) {
         JSON_DECREF(jn_filter);
         return node;
