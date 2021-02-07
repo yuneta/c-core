@@ -737,9 +737,9 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    BOOL volatil = kw_get_bool(jn_options, "volatil", 0, 0);
-    BOOL create = kw_get_bool(jn_options, "create", 0, 0);
-    BOOL autolink = kw_get_bool(jn_options, "autolink", 0, 0);
+    BOOL volatil = kw_get_bool(jn_options, "volatil", 0, KW_WILD_NUMBER);
+    BOOL create = kw_get_bool(jn_options, "create", 0, KW_WILD_NUMBER);
+    BOOL autolink = kw_get_bool(jn_options, "autolink", 0, KW_WILD_NUMBER);
 
     /*-----------------------------------*
      *      Check appropiate topic
