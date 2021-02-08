@@ -51,6 +51,7 @@ SDATA (ASN_OCTET_STR,   "remote_yuno_role",     SDF_RD, 0, "confirmed remote yun
 SDATA (ASN_OCTET_STR,   "remote_yuno_name",     SDF_RD, 0, "confirmed remote yuno name"),
 SDATA (ASN_OCTET_STR,   "remote_yuno_service",  SDF_RD, 0, "confirmed remote yuno service"),
 SDATA (ASN_JSON,        "extra_info",           SDF_RD, 0, "dict data set by user, added to the identity card msg."),
+SDATA (ASN_OCTET_STR,   "__username__",         SDF_RD, 0, "Username"),
 
 SDATA (ASN_UNSIGNED,    "timeout_idack",        SDF_RD, 5*1000, "timeout waiting idAck"),
 
@@ -691,9 +692,11 @@ PRIVATE int ac_identity_card_ack(hgobj gobj, const char *event, json_t *kw, hgob
     const char *src_yuno = kw_get_str(jn_ievent_id, "src_yuno", "", 0);
     const char *src_role = kw_get_str(jn_ievent_id, "src_role", "", 0);
     const char *src_service = kw_get_str(jn_ievent_id, "src_service", "", 0);
+    const char *username = kw_get_str(jn_ievent_id, "username", "", 0);
     gobj_write_str_attr(gobj, "remote_yuno_name", src_yuno);
     gobj_write_str_attr(gobj, "remote_yuno_role", src_role);
     gobj_write_str_attr(gobj, "remote_yuno_service", src_service);
+    gobj_write_str_attr(gobj, "__username__", username);
 
     // WARNING comprueba result, ahora puede venir negativo
     int result = kw_get_int(kw, "result", -1, 0);

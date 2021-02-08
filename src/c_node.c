@@ -244,7 +244,7 @@ SDATACM2 (ASN_SCHEMA,   "link-nodes",   SDF_AUTHZ_X,    0,  pm_link_nodes,  cmd_
 SDATACM2 (ASN_SCHEMA,   "unlink-nodes", SDF_AUTHZ_X,    0,  pm_link_nodes,  cmd_unlink_nodes,   "Unlink nodes"),
 SDATACM2 (ASN_SCHEMA,   "hooks",        SDF_AUTHZ_X,    0,  pm_hooks,       cmd_hooks,          "Hooks of node"),
 SDATACM2 (ASN_SCHEMA,   "links",        SDF_AUTHZ_X,    0,  pm_links,       cmd_links,          "Links of node"),
-SDATACM2 (ASN_SCHEMA,   "parents",      SDF_AUTHZ_X,    0,  pm_parents,     cmd_parents,        "Parents of node"),
+SDATACM2 (ASN_SCHEMA,   "parents",      SDF_AUTHZ_X,    0,  pm_parents,     cmd_parents,        "Parent Refs of node"),
 SDATACM2 (ASN_SCHEMA,   "childs",       SDF_AUTHZ_X,    0,  pm_childs,      cmd_childs,         "Childs of node"),
 SDATACM2 (ASN_SCHEMA,   "snaps",        SDF_AUTHZ_X,    0,  0,              cmd_list_snaps,     "List snaps"),
 SDATACM2 (ASN_SCHEMA,   "snap-content", SDF_AUTHZ_X,    0,  pm_snap_content,cmd_snap_content,   "Show snap content"),
@@ -1566,65 +1566,39 @@ PRIVATE json_t *mt_node_childs(
         return 0;
     }
 
+    /*
+     *  Return a list of child nodes of the hook
+     */
+    json_t *iter = treedb_node_childs( // Return MUST be decref
+        priv->tranger,
+        hook, // must be a hook field
+        node, // not owned
+        json_incref(jn_filter),
+        json_incref(jn_options)
+    );
+
+    if(!iter) {
+        // Error already logged
+        JSON_DECREF(jn_filter);
+        JSON_DECREF(jn_options);
+        JSON_DECREF(kw);
+        return 0;
+    }
+
     json_t *childs = json_array();
 
-    if(!empty_string(hook)) {
-        /*
-         *  Return a list of child nodes of the hook
-         */
-        json_t *iter = treedb_node_childs( // Return MUST be decref
-            priv->tranger,
-            hook, // must be a hook field
-            node, // not owned
-            json_incref(jn_filter),
-            json_incref(jn_options)
-        );
-        if(iter) {
-            int idx; json_t *node;
-            json_array_foreach(iter, idx, node) {
-                json_array_append_new(
-                    childs,
-                    node_collapsed_view(
-                        priv->tranger,
-                        node,
-                        json_incref(jn_options)
-                    )
-                );
-            }
-            json_decref(iter);
-        }
-    } else {
-        /*
-         *  If no hook return all hooks
-         */
-        json_t *hooks = treedb_get_topic_hooks(priv->tranger, priv->treedb_name, topic_name);
-        int idx; json_t *jn_hook;
-        json_array_foreach(hooks, idx, jn_hook) {
-            json_t *iter = treedb_node_childs( // Return MUST be decref
+    int idx; json_t *child;
+    json_array_foreach(iter, idx, child) {
+        json_array_append_new(
+            childs,
+            node_collapsed_view(
                 priv->tranger,
-                json_string_value(jn_hook), // must be a hook field
-                node, // not owned
-                json_incref(jn_filter),
+                child,
                 json_incref(jn_options)
-            );
-
-            if(iter) {
-                int idx; json_t *node;
-                json_array_foreach(iter, idx, node) {
-                    json_array_append_new(
-                        childs,
-                        node_collapsed_view(
-                            priv->tranger,
-                            node,
-                            json_incref(jn_options)
-                        )
-                    );
-                }
-                json_decref(iter);
-            }
-        }
-        JSON_DECREF(hooks);
+            )
+        );
     }
+    json_decref(iter);
 
     JSON_DECREF(jn_filter);
     JSON_DECREF(jn_options);
@@ -2582,6 +2556,18 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
             gobj,
             -1,
             json_local_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    if(empty_string(hook)) {
+        json_decref(jn_filter);
+        json_decref(jn_options);
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What hook?"),
             0,
             0,
             kw  // owned
