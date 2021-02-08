@@ -1577,6 +1577,13 @@ PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
         "channel",
         json_string(gobj_name(src))
     );
+    const char *__username__ = gobj_read_str_attr(src, "__username__");
+    kw_set_subdict_value(
+        kw,
+        "__temp__",
+        "__username__",
+        json_string(__username__)
+    );
     kw_set_subdict_value(
         kw,
         "__temp__",
@@ -1672,6 +1679,12 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
         "__temp__",
         "channel",
         json_string(gobj_name(src))
+    );
+    kw_set_subdict_value(
+        kw,
+        "__temp__",
+        "__username__",
+        json_string(gobj_read_str_attr(src, "__username__"))
     );
     kw_set_subdict_value(
         kw,

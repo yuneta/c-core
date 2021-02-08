@@ -52,7 +52,7 @@ SDATA (ASN_POINTER,     "gobj_service",         0,      0, "gobj of identity_car
 
 SDATA (ASN_BOOLEAN,     "authenticated",        SDF_RD, 0, "True if entry was authenticated"),
 SDATA (ASN_JSON,        "jwt_payload",          SDF_RD, 0, "JWT payload"),
-SDATA (ASN_OCTET_STR,   "__username__",         SDF_RD, 0, "Username"),
+SDATA (ASN_OCTET_STR,   "__username__",         SDF_RD, "", "Username"),
 
 // TODO available_services for this gate
 // TODO available_services in this gate
@@ -772,13 +772,18 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
      *-----------------------------------------------------------*/
     if(!priv->inform_on_close) {
         priv->inform_on_close = TRUE;
-        json_t *kw_on_open = json_pack("{s:s, s:s, s:s, s:s, s:O}",
+        json_t *kw_on_open = json_pack("{s:s, s:s, s:s, s:O}",
             "client_yuno_name", gobj_read_str_attr(gobj, "client_yuno_name"),
             "client_yuno_role", gobj_read_str_attr(gobj, "client_yuno_role"),
             "client_yuno_service", gobj_read_str_attr(gobj, "client_yuno_service"),
-            "__username__", gobj_read_str_attr(gobj, "__username__"),
             "identity_card", kw // REQUIRED for agent!!
         );
+        kw_set_subdict_value(
+            kw_on_open,
+            "__temp__", "__username__",
+            json_string(gobj_read_str_attr(gobj, "__username__"))
+        );
+
         gobj_publish_event(gobj, "EV_ON_OPEN", kw_on_open);
     }
 
@@ -861,7 +866,7 @@ PRIVATE int ac_mt_stats(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
     kw_set_subdict_value(
         kw,
-        "__local__", "__username__",
+        "__temp__", "__username__",
         json_string(gobj_read_str_attr(gobj, "__username__"))
     );
 
@@ -939,7 +944,7 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
     kw_set_subdict_value(
         kw,
-        "__local__", "__username__",
+        "__temp__", "__username__",
         json_string(gobj_read_str_attr(gobj, "__username__"))
     );
 
@@ -1329,7 +1334,7 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
          */
         kw_set_subdict_value(
             iev_kw,
-            "__local__", "__username__",
+            "__temp__", "__username__",
             json_string(gobj_read_str_attr(gobj, "__username__"))
         );
 
