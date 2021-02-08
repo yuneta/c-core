@@ -288,37 +288,37 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
 };
 
 PRIVATE sdata_desc_t pm_authz_create[] = {
-/*-PM-----type--------------name----------------flag------------description---------- */
-SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,              "Treedb name"),
-SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,              "Topic name"),
+/*-PM-----type--------------name----------------flag--------authpath--------description-- */
+SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,          "",             "Treedb name"),
+SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,          "",             "Topic name"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_authz_write[] = {
-/*-PM-----type--------------name----------------flag------------description---------- */
-SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,              "Treedb name"),
-SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,              "Topic name"),
-SDATAPM0 (ASN_OCTET_STR,    "id",               0,              "Node Id"),
+/*-PM-----type--------------name----------------flag--------authpath--------description-- */
+SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,          "",             "Treedb name"),
+SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,          "",             "Topic name"),
+SDATAPM0 (ASN_OCTET_STR,    "id",               0,          "record`id",    "Node Id"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_authz_read[] = {
-/*-PM-----type--------------name----------------flag------------description---------- */
-SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,              "Treedb name"),
-SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,              "Topic name"),
-SDATAPM0 (ASN_OCTET_STR,    "id",               0,              "Node Id"),
+/*-PM-----type--------------name----------------flag--------authpath--------description-- */
+SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,          "__md_treedb__`treedb_name",             "Treedb name"),
+SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,          "__md_treedb__`topic_name",             "Topic name"),
+SDATAPM0 (ASN_OCTET_STR,    "id",               0,          "id",           "Node Id"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_authz_delete[] = {
-/*-PM-----type--------------name----------------flag------------description---------- */
-SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,              "Treedb name"),
-SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,              "Topic name"),
-SDATAPM0 (ASN_OCTET_STR,    "id",               0,              "Node Id"),
+/*-PM-----type--------------name----------------flag--------authpath--------description-- */
+SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,          "",             "Treedb name"),
+SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,          "",             "Topic name"),
+SDATAPM0 (ASN_OCTET_STR,    "id",               0,          "record`id",    "Node Id"),
 SDATA_END()
 };
 
 PRIVATE sdata_desc_t authz_table[] = {
 /*-AUTHZ-- type---------name------------flag----alias---items---------------description--*/
 SDATAAUTHZ (ASN_SCHEMA, "create",       0,      0,      pm_authz_create,    "Permission to create nodes"),
-SDATAAUTHZ (ASN_SCHEMA, "write",        0,      0,      pm_authz_write,     "Permission to write nodes"),
+SDATAAUTHZ (ASN_SCHEMA, "update",       0,      0,      pm_authz_write,     "Permission to update nodes"),
 SDATAAUTHZ (ASN_SCHEMA, "read",         0,      0,      pm_authz_read,      "Permission to read nodes"),
 SDATAAUTHZ (ASN_SCHEMA, "delete",       0,      0,      pm_authz_delete,    "Permission to delete nodes"),
 SDATA_END()
@@ -1304,50 +1304,23 @@ PRIVATE json_t *mt_list_nodes(
     json_t *list = json_array();
     int idx; json_t *node;
     json_array_foreach(iter, idx, node) {
-        /*-------------------*
-         *      AUTHZS
-         *-------------------*/
-#ifdef PEPE
-        if(!gobj_user_has_authz(gobj, "read", json_incref(node), src)) { // TODO def permiso
-
-            /*
-             *  Permiso def en user:
-                    gclass_name: Node,
-                        treedb_name
-
-                En node tengo __treedb_name__, __topic_name__, "id"
-
-                Qué quiero? limitar el acceso a un determinado nodo de un treedb/topic
-                    Chequea el treedb,topic,id de este nodo con el permiso "read" del usuario (o rol)?
-
-                    luego en la definición del permiso tienen que ir los campos a comprobar,
-                    (tree,topic,id) si coinciden con los mios
-
-                        __md_treedb__`__treedb_name__ == role.gclass.read.treedbname &&
-                        __md_topic__`__topic_name__ == role.gclass.read.topicname &&
-                        __md_treedb__`__treedb_name__ == role.gclass.read.treedbname &&
-
-            */
-            // TODO busca en la lista de permisos de this (gobj) los parametros de "read"
-            // y haz match de los los parametros ???
-
-            // los parametros del authz son nombres de propiedades de la clase
-            continue;
+        /*----------------------------------------*
+         *  Check AUTHZS
+         *----------------------------------------*/
+        /*
+         *  En node tengo __treedb_name__, __topic_name__, "id"
+         */
+        const char *permission = "read";
+        if(gobj_user_has_authz(gobj, permission, json_incref(node), src)) {
+            json_array_append_new(
+                list,
+                node_collapsed_view( // TODO añade opción "expand"
+                    priv->tranger,
+                    node,
+                    json_incref(jn_options)
+                )
+            );
         }
-        if(!gobj_user_has_authz(gobj, "expand", json_incref(node), src)) { // TODO def permiso
-            // Borra la opción si la tiene.
-            json_object_del(jn_options, "expand");
-        }
-#endif
-
-        json_array_append_new(
-            list,
-            node_collapsed_view( // TODO añade opción "expand"
-                priv->tranger,
-                node,
-                json_incref(jn_options)
-            )
-        );
     }
     json_decref(iter);
 
@@ -1775,6 +1748,9 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
 
     if(!jn_content) {
         jn_content = kw_incref(kw_get_dict(kw, "record", 0, 0));
+    } else {
+        // To authz
+        json_object_set(kw, "record", jn_content);
     }
 
     if(!jn_content) {
@@ -1783,6 +1759,23 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
             gobj,
             -1,
             json_local_sprintf("What content?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    KW_INCREF(kw);
+    const char *permission = "create";
+    if(!gobj_user_has_authz(gobj, permission, kw, src)) {
+        json_decref(jn_options);
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -1834,22 +1827,6 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     }
 
     /*----------------------------------------*
-     *  Check authzs
-     *----------------------------------------*/
-    KW_INCREF(kw);
-    if(!gobj_user_has_authz(gobj, "write", kw, src)) {
-        json_decref(jn_options);
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_local_sprintf("No permission to '%s'", "write"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
-    /*----------------------------------------*
      *  Get content
      *  Priority: content64, content, record
      *----------------------------------------*/
@@ -1893,6 +1870,9 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
 
     if(!jn_content) {
         jn_content = kw_incref(kw_get_dict(kw, "record", 0, 0));
+    } else {
+        // To authz
+        json_object_set(kw, "record", jn_content);
     }
 
     if(!jn_content) {
@@ -1901,6 +1881,23 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
             gobj,
             -1,
             json_local_sprintf("What content?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    KW_INCREF(kw);
+    const char *permission = "update";
+    if(!gobj_user_has_authz(gobj, permission, kw, src)) {
+        json_decref(jn_options);
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -1958,6 +1955,23 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
             gobj,
             -1,
             json_local_sprintf("field 'id' is required to delete nodes"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    KW_INCREF(kw);
+    const char *permission = "delete";
+    if(!gobj_user_has_authz(gobj, permission, kw, src)) {
+        json_decref(jn_options);
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned

@@ -222,35 +222,6 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
 /*---------------------------------------------*
  *      GClass authz levels
  *---------------------------------------------*/
-PRIVATE sdata_desc_t pm_authz_create[] = {
-/*-PM-----type--------------name----------------flag------------description---------- */
-SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,              "Topic name"),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_authz_read[] = {
-/*-PM-----type--------------name----------------flag------------description---------- */
-SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,              "Topic name"),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_authz_write[] = {
-/*-PM-----type--------------name----------------flag------------description---------- */
-SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,              "Topic name"),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_authz_delete[] = {
-/*-PM-----type--------------name----------------flag------------description---------- */
-SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,              "Topic name"),
-SDATA_END()
-};
-
-PRIVATE sdata_desc_t authz_table[] = {
-/*-AUTHZ-- type---------name------------flag----alias---items---------------description--*/
-SDATAAUTHZ (ASN_SCHEMA, "create",       0,      0,      pm_authz_create,    "Permission to create tranger topics"),
-SDATAAUTHZ (ASN_SCHEMA, "read",         0,      0,      pm_authz_read,      "Permission to read tranger topics data"),
-SDATAAUTHZ (ASN_SCHEMA, "write",        0,      0,      pm_authz_write,     "Permission to add records to tranger topics"),
-SDATAAUTHZ (ASN_SCHEMA, "delete",       0,      0,      pm_authz_delete,    "Permission to delete tranger topics"),
-SDATA_END()
-};
 
 /*---------------------------------------------*
  *              Private data
@@ -1590,7 +1561,7 @@ PRIVATE GCLASS _gclass = {
     0,  // lmt
     tattr_desc,
     sizeof(PRIVATE_DATA),
-    authz_table,  // acl
+    0,  // acl
     s_user_trace_level,
     command_table,  // command_table
     0,  // gcflag
