@@ -154,7 +154,8 @@ PRIVATE sdata_desc_t pm_childs[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_OCTET_STR, "hook",         0,              0,          "Hook port to childs"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: refs, hook_refs, only_id, hook_only_id, list_dict, fkey_list_dict, size, hook_size"),
+SDATAPM (ASN_JSON,      "filter",       0,              0,          "Filter to childs"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: recursive, refs, hook_refs, only_id, hook_only_id, list_dict, fkey_list_dict, size, hook_size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_list_nodes[] = {
@@ -166,7 +167,7 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_get_node[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
-SDATAPM (ASN_OCTET_STR, "id",           0,              0,          "Node id"),
+SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: refs, hook_refs, fkey_refs, only_id, hook_only_id, fkey_only_id, list_dict, hook_list_dict, fkey_list_dict, size, hook_size"),
 SDATA_END()
 };
@@ -286,15 +287,40 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
 {0, 0},
 };
 
+PRIVATE sdata_desc_t pm_authz_create[] = {
+/*-PM-----type--------------name----------------flag------------description---------- */
+SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,              "Treedb name"),
+SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,              "Topic name"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_authz_write[] = {
+/*-PM-----type--------------name----------------flag------------description---------- */
+SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,              "Treedb name"),
+SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,              "Topic name"),
+SDATAPM0 (ASN_OCTET_STR,    "id",               0,              "Node Id"),
+SDATA_END()
+};
 PRIVATE sdata_desc_t pm_authz_read[] = {
 /*-PM-----type--------------name----------------flag------------description---------- */
+SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,              "Treedb name"),
 SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,              "Topic name"),
+SDATAPM0 (ASN_OCTET_STR,    "id",               0,              "Node Id"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_authz_delete[] = {
+/*-PM-----type--------------name----------------flag------------description---------- */
+SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,              "Treedb name"),
+SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,              "Topic name"),
+SDATAPM0 (ASN_OCTET_STR,    "id",               0,              "Node Id"),
 SDATA_END()
 };
 
 PRIVATE sdata_desc_t authz_table[] = {
 /*-AUTHZ-- type---------name------------flag----alias---items---------------description--*/
-SDATAAUTHZ (ASN_SCHEMA, "read",         0,      0,      pm_authz_read,      "Permission to read node data"),
+SDATAAUTHZ (ASN_SCHEMA, "create",       0,      0,      pm_authz_create,    "Permission to create nodes"),
+SDATAAUTHZ (ASN_SCHEMA, "write",        0,      0,      pm_authz_write,     "Permission to write nodes"),
+SDATAAUTHZ (ASN_SCHEMA, "read",         0,      0,      pm_authz_read,      "Permission to read nodes"),
+SDATAAUTHZ (ASN_SCHEMA, "delete",       0,      0,      pm_authz_delete,    "Permission to delete nodes"),
 SDATA_END()
 };
 
@@ -502,7 +528,7 @@ PRIVATE json_t *mt_topic_desc(hgobj gobj, const char *topic_name)
             topic_name
         )) {
             log_error(0,
-                "gobj",         "%s", __FILE__,
+                "gobj",         "%s", gobj_full_name(gobj),
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
                 "msg",          "%s", "Topic name not found in treedbs",
@@ -558,7 +584,7 @@ PRIVATE json_t *mt_topic_links(
             topic_name
         )) {
             log_error(0,
-                "gobj",         "%s", __FILE__,
+                "gobj",         "%s", gobj_full_name(gobj),
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
                 "msg",          "%s", "Topic name not found in treedbs",
@@ -619,7 +645,7 @@ PRIVATE json_t *mt_topic_hooks(
             topic_name
         )) {
             log_error(0,
-                "gobj",         "%s", __FILE__,
+                "gobj",         "%s", gobj_full_name(gobj),
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
                 "msg",          "%s", "Topic name not found in treedbs",
@@ -680,7 +706,7 @@ PRIVATE json_t *mt_create_node( // Return is YOURS
         topic_name
     )) {
         log_error(0,
-            "gobj",         "%s", __FILE__,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
@@ -750,7 +776,7 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
         topic_name
     )) {
         log_error(0,
-            "gobj",         "%s", __FILE__,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
@@ -775,7 +801,7 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
         }
         if(!node) {
             log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
+                "gobj",         "%s", gobj_full_name(gobj),
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
                 "msg",          "%s", "node not found",
@@ -845,7 +871,7 @@ PRIVATE int mt_delete_node(
         topic_name
     )) {
         log_error(0,
-            "gobj",         "%s", __FILE__,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
@@ -861,7 +887,7 @@ PRIVATE int mt_delete_node(
     const char *id = kw_get_str(kw, "id", 0, 0);
     if(empty_string(id)) {
         log_error(0,
-            "gobj",         "%s", __FILE__,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "id required to delete node",
@@ -882,7 +908,7 @@ PRIVATE int mt_delete_node(
     );
     if(!main_node) {
         log_error(0,
-            "gobj",         "%s", __FILE__,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "node not found",
@@ -965,7 +991,7 @@ PRIVATE int mt_link_nodes(
         parent_topic_name
     )) {
         log_error(0,
-            "gobj",         "%s", __FILE__,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
@@ -984,7 +1010,7 @@ PRIVATE int mt_link_nodes(
         child_topic_name
     )) {
         log_error(0,
-            "gobj",         "%s", __FILE__,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
@@ -1075,7 +1101,7 @@ PRIVATE int mt_unlink_nodes(
         parent_topic_name
     )) {
         log_error(0,
-            "gobj",         "%s", __FILE__,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
@@ -1094,7 +1120,7 @@ PRIVATE int mt_unlink_nodes(
         child_topic_name
     )) {
         log_error(0,
-            "gobj",         "%s", __FILE__,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
@@ -1183,7 +1209,7 @@ PRIVATE json_t *mt_get_node(
         topic_name
     )) {
         log_error(0,
-            "gobj",         "%s", __FILE__,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
@@ -1234,7 +1260,7 @@ PRIVATE json_t *mt_list_nodes(
         topic_name
     )) {
         log_error(0,
-            "gobj",         "%s", __FILE__,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
@@ -1354,7 +1380,7 @@ PRIVATE json_t *mt_list_instances(
         topic_name
     )) {
         log_error(0,
-            "gobj",         "%s", __FILE__,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
@@ -1403,7 +1429,7 @@ PRIVATE json_t *mt_list_instances(
 PRIVATE json_t *mt_node_parents(
     hgobj gobj,
     const char *topic_name,
-    const char *id,
+    json_t *kw,         // 'id' and topic_pkey2s fields are used to find the node
     const char *link,   // fkey
     json_t *jn_options, // owned , fkey options
     hgobj src
@@ -1420,7 +1446,7 @@ PRIVATE json_t *mt_node_parents(
         topic_name
     )) {
         log_error(0,
-            "gobj",         "%s", __FILE__,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
@@ -1429,18 +1455,23 @@ PRIVATE json_t *mt_node_parents(
             NULL
         );
         JSON_DECREF(jn_options);
+        JSON_DECREF(kw);
         return 0;
     }
 
-    json_t *node = treedb_get_node(
-        priv->tranger,
-        priv->treedb_name,
-        topic_name,
-        id
-    );
+    json_t *node = fetch_node(gobj, topic_name, kw);
     if(!node) {
-        // silence
+        log_warning(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Node not found",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
         JSON_DECREF(jn_options);
+        JSON_DECREF(kw);
         return 0;
     }
 
@@ -1448,7 +1479,8 @@ PRIVATE json_t *mt_node_parents(
      *  Return a list of parent nodes pointed by the link (fkey)
      */
     if(!empty_string(link)) {
-        return treedb_list_parents( // Return MUST be decref
+        JSON_DECREF(kw);
+        return treedb_parent_refs( // Return MUST be decref
             priv->tranger,
             link, // must be a fkey field
             node, // not owned
@@ -1463,7 +1495,7 @@ PRIVATE json_t *mt_node_parents(
     json_t *links = treedb_get_topic_links(priv->tranger, priv->treedb_name, topic_name);
     int idx; json_t *jn_link;
     json_array_foreach(links, idx, jn_link) {
-        json_t *parents_ = treedb_list_parents( // Return MUST be decref
+        json_t *parents_ = treedb_parent_refs( // Return MUST be decref
             priv->tranger,
             json_string_value(jn_link), // must be a fkey field
             node, // not owned
@@ -1473,8 +1505,9 @@ PRIVATE json_t *mt_node_parents(
         JSON_DECREF(parents_);
     }
     JSON_DECREF(links);
-    JSON_DECREF(jn_options);
 
+    JSON_DECREF(jn_options);
+    JSON_DECREF(kw);
     return parents;
 }
 
@@ -1484,9 +1517,10 @@ PRIVATE json_t *mt_node_parents(
 PRIVATE json_t *mt_node_childs(
     hgobj gobj,
     const char *topic_name,
-    const char *id,
+    json_t *kw,         // 'id' and topic_pkey2s fields are used to find the node
     const char *hook,
-    json_t *jn_options,  // owned fkey,hook options
+    json_t *jn_filter,  // filter to childs tree
+    json_t *jn_options, // hook options
     hgobj src
 )
 {
@@ -1500,8 +1534,8 @@ PRIVATE json_t *mt_node_childs(
         priv->treedb_name,
         topic_name
     )) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
+        log_warning(0,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
@@ -1509,82 +1543,93 @@ PRIVATE json_t *mt_node_childs(
             "topic_name",   "%s", topic_name,
             NULL
         );
+        JSON_DECREF(jn_filter);
         JSON_DECREF(jn_options);
+        JSON_DECREF(kw);
         return 0;
     }
 
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-//
-//     json_t *node = treedb_get_node(
-//         priv->tranger,
-//         priv->treedb_name,
-//         topic_name,
-//         id
-//     );
-//     if(!node) {
-//         // silence
-//         JSON_DECREF(jn_options);
-//         return 0;
-//     }
-//
-//     /*
-//      *  Return a list of child nodes of the hook
-//      */
-//     if(!empty_string(hook)) {
-//         return treedb_list_childs( // Return MUST be decref
-//             priv->tranger,
-//             hook, // must be a hook field
-//             node, // not owned
-//             jn_options
-//         );
-//     }
-//
-//     /*
-//      *  If no hook return all hooks
-//      */
-//     json_t *childs = json_array();
-//     json_t *hooks = treedb_get_topic_hooks(priv->tranger, priv->treedb_name, topic_name);
-//     int idx; json_t *jn_hook;
-//     json_array_foreach(hooks, idx, jn_hook) {
-//         json_t *childs_ = treedb_list_childs( // Return MUST be decref
-//             priv->tranger,
-//             json_string_value(jn_hook), // must be a hook field
-//             node, // not owned
-//             json_incref(jn_options)
-//         );
-//         json_array_extend(childs, childs_);
-//         JSON_DECREF(childs_);
-//     }
-//     JSON_DECREF(hooks);
-//     JSON_DECREF(jn_options);
-//
-//     return childs;
+    json_t *node = fetch_node(gobj, topic_name, kw);
+    if(!node) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Node not found",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_filter);
+        JSON_DECREF(jn_options);
+        JSON_DECREF(kw);
+        return 0;
+    }
 
+    json_t *childs = json_array();
 
+    if(!empty_string(hook)) {
+        /*
+         *  Return a list of child nodes of the hook
+         */
+        json_t *iter = treedb_node_childs( // Return MUST be decref
+            priv->tranger,
+            hook, // must be a hook field
+            node, // not owned
+            json_incref(jn_filter),
+            json_incref(jn_options)
+        );
+        if(iter) {
+            int idx; json_t *node;
+            json_array_foreach(iter, idx, node) {
+                json_array_append_new(
+                    childs,
+                    node_collapsed_view(
+                        priv->tranger,
+                        node,
+                        json_incref(jn_options)
+                    )
+                );
+            }
+            json_decref(iter);
+        }
+    } else {
+        /*
+         *  If no hook return all hooks
+         */
+        json_t *hooks = treedb_get_topic_hooks(priv->tranger, priv->treedb_name, topic_name);
+        int idx; json_t *jn_hook;
+        json_array_foreach(hooks, idx, jn_hook) {
+            json_t *iter = treedb_node_childs( // Return MUST be decref
+                priv->tranger,
+                json_string_value(jn_hook), // must be a hook field
+                node, // not owned
+                json_incref(jn_filter),
+                json_incref(jn_options)
+            );
 
+            if(iter) {
+                int idx; json_t *node;
+                json_array_foreach(iter, idx, node) {
+                    json_array_append_new(
+                        childs,
+                        node_collapsed_view(
+                            priv->tranger,
+                            node,
+                            json_incref(jn_options)
+                        )
+                    );
+                }
+                json_decref(iter);
+            }
+        }
+        JSON_DECREF(hooks);
+    }
 
-
-
-
-//     if(kw_get_bool(jn_options, "size", 0, KW_WILD_NUMBER)) {
-//         json_t *jn_size = json_array();
-//         json_array_append_new(jn_size, json_integer(json_size(field_data)));
-//         JSON_DECREF(jn_options);
-//         JSON_DECREF(cols);
-//         return jn_size;
-//     }
-//
-//     if(json_empty(field_data)) {
-//         JSON_DECREF(jn_options);
-//         JSON_DECREF(cols);
-//         return json_array();
-//     }
-//
-//     json_t *refs = get_hook_refs(field_data, original_node);
-//     json_t *childs = apply_child_ref_options(refs, jn_options);
-//     JSON_DECREF(refs);
-
-return 0;
+    JSON_DECREF(jn_filter);
+    JSON_DECREF(jn_options);
+    JSON_DECREF(kw);
+    return childs;
 }
 
 /***************************************************************************
@@ -1808,6 +1853,22 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
             gobj,
             -1,
             json_local_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    /*----------------------------------------*
+     *  Check authzs
+     *----------------------------------------*/
+    KW_INCREF(kw);
+    if(!gobj_user_has_authz(gobj, "write", kw, src)) {
+        json_decref(jn_options);
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("No permission to '%s'", "write"),
             0,
             0,
             kw  // owned
@@ -2473,7 +2534,7 @@ PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     json_t *parents = gobj_node_parents( // Return MUST be decref
         gobj,
         topic_name,
-        node_id,
+        json_pack("{s:s}", "id", node_id),
         link,
         jn_options,
         src
@@ -2497,15 +2558,25 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *node_id = kw_get_str(kw, "node_id", "", 0);
     const char *hook = kw_get_str(kw, "hook", "", 0);
+    json_t *_jn_filter = kw_get_dict_value(kw, "filter", 0, 0);
     json_t *_jn_options = kw_get_dict_value(kw, "options", 0, 0);
     json_t *jn_options = 0;
+    json_t *jn_filter = 0;
+
     if(json_is_string(_jn_options)) {
         jn_options = legalstring2json(json_string_value(_jn_options), TRUE);
     } else if(json_is_object(_jn_options)) {
         jn_options = json_incref(_jn_options);
     }
 
+    if(json_is_string(_jn_filter)) {
+        jn_filter = legalstring2json(json_string_value(_jn_filter), TRUE);
+    } else if(json_is_object(_jn_filter)) {
+        jn_filter = json_incref(_jn_filter);
+    }
+
     if(empty_string(topic_name)) {
+        json_decref(jn_filter);
         json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
@@ -2517,6 +2588,7 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         );
     }
     if(empty_string(node_id)) {
+        json_decref(jn_filter);
         json_decref(jn_options);
         return msg_iev_build_webix(
             gobj,
@@ -2531,8 +2603,9 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     json_t *childs = gobj_node_childs( // Return MUST be decref
         gobj,
         topic_name,
-        node_id,
+        json_pack("{s:s}", "id", node_id),
         hook,
+        jn_filter,
         jn_options,
         src
     );
@@ -2620,7 +2693,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
-    const char *id = kw_get_str(kw, "id", "", 0);
+    const char *id = kw_get_str(kw, "node_id", "", 0);
     json_t *_jn_options = kw_get_dict_value(kw, "options", 0, 0);
     json_t *jn_options = 0;
     if(json_is_string(_jn_options)) {
@@ -3385,7 +3458,7 @@ PRIVATE int export_treedb(hgobj gobj, const char *path, BOOL with_metadata, hgob
     FILE *file = fopen(path, "w");
     if(!file) {
         log_error(0,
-            "gobj",         "%s", __FILE__,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Cannot create file",

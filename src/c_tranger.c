@@ -84,7 +84,7 @@ SDATA_END()
 
 PRIVATE sdata_desc_t pm_print_tranger[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   SDF_AUTHZ_P,    0,          "Topic name"), // TODO pon database
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"), // TODO pon database
 SDATAPM (ASN_BOOLEAN,   "expanded",     0,              0,          "No expanded (default) return [[size]]"),
 SDATAPM (ASN_UNSIGNED,  "lists_limit",  0,              0,          "Expand lists only if size < limit. 0 no limit"),
 SDATAPM (ASN_UNSIGNED,  "dicts_limit",  0,              0,          "Expand dicts only if size < limit. 0 no limit"),
@@ -99,13 +99,13 @@ SDATA_END()
 
 PRIVATE sdata_desc_t pm_desc[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   SDF_AUTHZ_P,    0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATA_END()
 };
 
 PRIVATE sdata_desc_t pm_create_topic[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   SDF_AUTHZ_P,    0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "pkey",         0,              "id",       "Primary Key"),
 SDATAPM (ASN_OCTET_STR, "tkey",         0,              "tm",       "Time Key"),
 SDATAPM (ASN_OCTET_STR, "system_flag",  0,              "sf_string_key|sf_t_ms", "System flag: sf_string_key|sf_rowid_key|sf_int_key|sf_t_ms|sf_tm_ms|sf_no_record_disk|sf_no_md_disk, future: sf_zip_record|sf_cipher_record"),
@@ -115,13 +115,13 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_delete_topic[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   SDF_AUTHZ_P,    0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_BOOLEAN,   "force",        0,              0,          "Force delete"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_add_record[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "topic_name",   SDF_AUTHZ_P,    0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_COUNTER64, "__t__",        0,              0,          "Time of record"),
 SDATAPM (ASN_UNSIGNED,  "user_flag",    0,              0,          "User flag of record"),
 SDATAPM (ASN_JSON,      "record",       0,              0,          "Record json"),
@@ -132,7 +132,7 @@ PRIVATE sdata_desc_t pm_open_list[] = {
 /*-PM----type-----------name--------------------flag--------default-description---------- */
 SDATAPM (ASN_OCTET_STR, "list_id",              0,          0,      "Id of list"),
 SDATAPM (ASN_BOOLEAN,   "return_data",          0,          0,      "True for return list data"),
-SDATAPM (ASN_OCTET_STR, "topic_name",           SDF_AUTHZ_P,0,      "Topic name"),
+SDATAPM (ASN_OCTET_STR, "topic_name",           0,          0,      "Topic name"),
 SDATAPM (ASN_OCTET_STR, "fields",               0,          0,      "match_cond: Only this fields"),
 SDATAPM (ASN_BOOLEAN,   "backward",             0,          0,      "match_cond:"),
 SDATAPM (ASN_BOOLEAN,   "only_md",              0,          0,      "match_cond: don't load jn_record on loading disk"),
@@ -191,8 +191,8 @@ SDATA_END()
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag----------------default---------description---------- */
 SDATA (ASN_POINTER,     "tranger",          SDF_RD,             0,              "Tranger handler"),
-SDATA (ASN_OCTET_STR,   "path",             SDF_RD|SDF_REQUIRED|SDF_AUTHZ_P,"", "Path of database"),
-SDATA (ASN_OCTET_STR,   "database",         SDF_RD|SDF_REQUIRED|SDF_AUTHZ_P,"", "Database name"),
+SDATA (ASN_OCTET_STR,   "path",             SDF_RD|SDF_REQUIRED,"", "Path of database"),
+SDATA (ASN_OCTET_STR,   "database",         SDF_RD|SDF_REQUIRED,"", "Database name"),
 SDATA (ASN_OCTET_STR,   "filename_mask",    SDF_RD|SDF_REQUIRED,"%Y-%m-%d",    "Organization of tables (file name format, see strftime())"),
 
 SDATA (ASN_INTEGER,     "xpermission",      SDF_RD,             02770,          "Use in creation, default 02770"),
