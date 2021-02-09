@@ -30,6 +30,7 @@ extern "C"{
 /*
  *  Services
  */
+#include "c_treedb.h"
 #include "c_tranger.h"
 #include "c_node.h"
 #include "c_resource.h"

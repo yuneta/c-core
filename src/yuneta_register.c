@@ -25,8 +25,9 @@ PUBLIC int yuneta_register_c_core(void)
     /*
      *  Services
      */
-    gobj_register_gclass(GCLASS_TRANGER);
+    gobj_register_gclass(GCLASS_TREEDB);
     gobj_register_gclass(GCLASS_NODE);
+    gobj_register_gclass(GCLASS_TRANGER);
     gobj_register_gclass(GCLASS_RESOURCE);
     gobj_register_gclass(GCLASS_IEVENT_SRV);
     gobj_register_gclass(GCLASS_IEVENT_CLI);

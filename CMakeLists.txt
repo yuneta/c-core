@@ -53,9 +53,10 @@ set (SRCS
     src/c_yuno.c            # the grandmother
 
     # Services          # service, gotter or spider or gateway.
-    src/c_resource.c
-    src/c_tranger.c
+    src/c_treedb.c
     src/c_node.c
+    src/c_tranger.c
+    src/c_resource.c
     src/c_ievent_srv.c
     src/c_ievent_cli.c
 #     src/c_store.c
@@ -113,6 +114,7 @@ set (HDRS
     src/c_yuno.h            # the grandmother
 
     # Services          # service, gotter or spider or gateway.
+    src/c_treedb.h
     src/c_node.h
     src/c_tranger.h
     src/c_resource.h
