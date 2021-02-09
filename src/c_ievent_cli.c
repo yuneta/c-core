@@ -692,7 +692,7 @@ PRIVATE int ac_identity_card_ack(hgobj gobj, const char *event, json_t *kw, hgob
     const char *src_yuno = kw_get_str(jn_ievent_id, "src_yuno", "", 0);
     const char *src_role = kw_get_str(jn_ievent_id, "src_role", "", 0);
     const char *src_service = kw_get_str(jn_ievent_id, "src_service", "", 0);
-    const char *username = kw_get_str(jn_ievent_id, "username", "", 0);
+    const char *username = kw_get_str(kw, "username", "", KW_REQUIRED);
     gobj_write_str_attr(gobj, "remote_yuno_name", src_yuno);
     gobj_write_str_attr(gobj, "remote_yuno_role", src_role);
     gobj_write_str_attr(gobj, "remote_yuno_service", src_service);
