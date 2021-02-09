@@ -95,7 +95,7 @@ PRIVATE sdata_desc_t pm_create_node[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Node content in base64"),
 SDATAPM (ASN_JSON,      "record",       0,              0,          "Node content in json"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: fkey,hook options"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: refs, hook_refs, fkey_refs, only_id, hook_only_id, fkey_only_id, list_dict, hook_list_dict, fkey_list_dict, size, hook_size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_update_node[] = {
@@ -103,7 +103,7 @@ PRIVATE sdata_desc_t pm_update_node[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "content64",    0,              0,          "Node content in base64"),
 SDATAPM (ASN_JSON,      "record",       0,              0,          "Node content in json"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: 'create' 'autolink' 'volatil' fkey,hook options"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: create, autolink, volatil, refs, hook_refs, fkey_refs, only_id, hook_only_id, fkey_only_id, list_dict, hook_list_dict, fkey_list_dict, size, hook_size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_delete_node[] = {
@@ -1768,7 +1768,7 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What content?"),
+            json_local_sprintf("What record?"),
             0,
             0,
             kw  // owned
@@ -1902,7 +1902,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What content?"),
+            json_local_sprintf("What record?"),
             0,
             0,
             kw  // owned
