@@ -140,7 +140,6 @@ PRIVATE void mt_create(hgobj gobj)
      *  Do copy of heavy used parameters, for quick access.
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
-    SET_PRIV(tranger,                   gobj_read_pointer_attr)
     SET_PRIV(exit_on_error,             gobj_read_int32_attr)
 }
 
@@ -149,10 +148,6 @@ PRIVATE void mt_create(hgobj gobj)
  ***************************************************************************/
 PRIVATE void mt_writing(hgobj gobj, const char *path)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    IF_EQ_SET_PRIV(tranger,             gobj_read_pointer_attr)
-    END_EQ_SET_PRIV()
 }
 
 /***************************************************************************
