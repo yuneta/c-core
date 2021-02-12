@@ -9,7 +9,12 @@
  ****************************************************************************/
 #pragma once
 
-#include <yuneta.h>
+#include <ginsfsm.h>
+#include "yuneta_environment.h"
+#include "c_yuno.h"
+#include "c_node.h"
+#include "msglog_yuneta.h"
+
 
 #ifdef __cplusplus
 extern "C"{

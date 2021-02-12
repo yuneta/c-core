@@ -68,6 +68,7 @@ configurations
 #include "yuneta_environment.h"
 #include "c_timer.h"
 #include "c_yuno.h"
+#include "c_tranger.h"
 #include "msglog_yuneta.h"
 
 #ifdef __cplusplus

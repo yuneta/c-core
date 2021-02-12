@@ -190,7 +190,7 @@ SDATA_END()
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag----------------default---------description---------- */
-SDATA (ASN_POINTER,     "tranger",          SDF_RD,             0,              "Tranger handler"),
+SDATA (ASN_POINTER,     "tranger",          0,                  0,              "Tranger handler"),
 SDATA (ASN_OCTET_STR,   "path",             SDF_RD|SDF_REQUIRED,"", "Path of database"),
 SDATA (ASN_OCTET_STR,   "database",         SDF_RD|SDF_REQUIRED,"", "Database name"),
 SDATA (ASN_OCTET_STR,   "filename_mask",    SDF_RD|SDF_REQUIRED,"%Y-%m-%d",    "Organization of tables (file name format, see strftime())"),

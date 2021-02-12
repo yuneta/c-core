@@ -57,7 +57,7 @@ SDATA_END()
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag------------------------default---------description---------- */
-SDATA (ASN_INTEGER,     "timeout",          SDF_RD,                     2*1000,         "Timeout"),
+SDATA (ASN_INTEGER,     "exit_on_error",    0,                  LOG_OPT_EXIT_ZERO,"exit on error"),
 SDATA (ASN_POINTER,     "user_data",        0,                          0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                          0,              "more user data"),
 SDATA (ASN_POINTER,     "subscriber",       0,                          0,              "subscriber of output-events. Not a child gobj."),
@@ -81,15 +81,25 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
 /*---------------------------------------------*
  *      GClass authz levels
  *---------------------------------------------*/
-PRIVATE sdata_desc_t pm_authz_sample[] = {
+PRIVATE sdata_desc_t pm_authz_create[] = {
 /*-PM-----type--------------name----------------flag--------authpath--------description-- */
-SDATAPM0 (ASN_OCTET_STR,    "param sample",     0,          "",             "Param ..."),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_authz_read[] = {
+/*-PM-----type--------------name----------------flag--------authpath--------description-- */
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_authz_delete[] = {
+/*-PM-----type--------------name----------------flag--------authpath--------description-- */
 SDATA_END()
 };
 
+
 PRIVATE sdata_desc_t authz_table[] = {
 /*-AUTHZ-- type---------name------------flag----alias---items---------------description--*/
-SDATAAUTHZ (ASN_SCHEMA, "sample",       0,      0,      pm_authz_sample,    "Permission to ..."),
+SDATAAUTHZ (ASN_SCHEMA, "create",       0,      0,      pm_authz_create,    "Permission to create treedb"),
+SDATAAUTHZ (ASN_SCHEMA, "read",         0,      0,      pm_authz_read,      "Permission to read treedb"),
+SDATAAUTHZ (ASN_SCHEMA, "delete",       0,      0,      pm_authz_delete,    "Permission to delete treedb"),
 SDATA_END()
 };
 
@@ -97,9 +107,8 @@ SDATA_END()
  *              Private data
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
-    int32_t timeout;
-
-    hgobj timer;
+    json_t *tranger;
+    int32_t exit_on_error;
 } PRIVATE_DATA;
 
 
@@ -119,8 +128,6 @@ PRIVATE void mt_create(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    priv->timer = gobj_create(gobj_name(gobj), GCLASS_TIMER, 0, gobj);
-
     /*
      *  SERVICE subscription model
      */
@@ -133,7 +140,8 @@ PRIVATE void mt_create(hgobj gobj)
      *  Do copy of heavy used parameters, for quick access.
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
-    SET_PRIV(timeout,               gobj_read_int32_attr)
+    SET_PRIV(tranger,                   gobj_read_pointer_attr)
+    SET_PRIV(exit_on_error,             gobj_read_int32_attr)
 }
 
 /***************************************************************************
@@ -143,7 +151,7 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    IF_EQ_SET_PRIV(timeout,             gobj_read_int32_attr)
+    IF_EQ_SET_PRIV(tranger,             gobj_read_pointer_attr)
     END_EQ_SET_PRIV()
 }
 
@@ -161,8 +169,20 @@ PRIVATE int mt_start(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    gobj_start(priv->timer);
-    set_timeout_periodic(priv->timer, priv->timeout);
+    /*
+     *  HACK pipe inheritance
+     */
+    priv->tranger = gobj_read_pointer_attr(gobj, "tranger");
+
+    if(!priv->tranger) {
+        log_critical(priv->exit_on_error,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "tranger NULL",
+            NULL
+        );
+    }
     return 0;
 }
 
@@ -173,9 +193,41 @@ PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    clear_timeout(priv->timer);
-    gobj_stop(priv->timer);
+    priv->tranger = 0;
+
     return 0;
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE json_t *mt_treedbs(
+    hgobj gobj,
+    json_t *kw,
+    hgobj src
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    const char *permission = "read";
+    if(!gobj_user_has_authz(gobj, permission, json_incref(kw), src)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("No permission to '%s'", permission),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    return treedb_list_treedb(
+        priv->tranger,
+        kw
+    );
 }
 
 
@@ -241,24 +293,12 @@ PRIVATE int ac_sample(hgobj gobj, const char *event, json_t *kw, hgobj src)
 }
 
 /***************************************************************************
- *
- ***************************************************************************/
-PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
-{
-
-    KW_DECREF(kw);
-    return 0;
-}
-
-
-/***************************************************************************
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
     // top input
     {"EV_SAMPLE",       0,  0,  "Description of resource"},
     // bottom input
-    {"EV_TIMEOUT",      0,  0,  ""},
     {"EV_STOPPED",      0,  0,  ""},
     // internal
     {NULL, 0, 0, ""}
@@ -275,7 +315,6 @@ PRIVATE const char *state_names[] = {
 
 PRIVATE EV_ACTION ST_IDLE[] = {
     {"EV_SAMPLE",               ac_sample,              0},
-    {"EV_TIMEOUT",              ac_timeout,             0},
     {"EV_STOPPED",              0,                      0},
     {0,0,0}
 };
@@ -361,7 +400,7 @@ PRIVATE GCLASS _gclass = {
         0, //mt_shoot_snap,
         0, //mt_activate_snap,
         0, //mt_list_snaps,
-        0, //mt_treedbs,
+        mt_treedbs,
         0, //mt_treedb_topics,
         0, //mt_topic_desc,
         0, //mt_topic_links,
