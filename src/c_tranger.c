@@ -222,6 +222,35 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
 /*---------------------------------------------*
  *      GClass authz levels
  *---------------------------------------------*/
+PRIVATE sdata_desc_t pm_authz_create[] = {
+/*-PM-----type--------------name----------------flag--------authpath--------description-- */
+SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,          "",             "Topic name"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_authz_write[] = {
+/*-PM-----type--------------name----------------flag--------authpath--------description-- */
+SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,          "",             "Topic name"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_authz_read[] = {
+/*-PM-----type--------------name----------------flag--------authpath--------description-- */
+SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,          "",             "Topic name"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_authz_delete[] = {
+/*-PM-----type--------------name----------------flag--------authpath--------description-- */
+SDATAPM0 (ASN_OCTET_STR,    "topic_name",       0,          "",             "Topic name"),
+SDATA_END()
+};
+
+PRIVATE sdata_desc_t authz_table[] = {
+/*-AUTHZ-- type---------name------------flag----alias---items---------------description--*/
+SDATAAUTHZ (ASN_SCHEMA, "create",       0,      0,      pm_authz_create,    "Permission to create topics"),
+SDATAAUTHZ (ASN_SCHEMA, "write",        0,      0,      pm_authz_write,     "Permission to write topics"),
+SDATAAUTHZ (ASN_SCHEMA, "read",         0,      0,      pm_authz_read,      "Permission to read topics"),
+SDATAAUTHZ (ASN_SCHEMA, "delete",       0,      0,      pm_authz_delete,    "Permission to delete topics"),
+SDATA_END()
+};
 
 /*---------------------------------------------*
  *              Private data
@@ -466,18 +495,16 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    BOOL forbidden = FALSE;
-
-    forbidden |= !gobj_user_has_authz(
-        gobj,
-        "read",
-        json_incref(kw),
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    const char *permission = "read";
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
+        KW_DECREF(kw);
+        return msg_iev_build_webix(
+            gobj,
             -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
+            json_local_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -554,17 +581,16 @@ PRIVATE json_t *cmd_create_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_user_has_authz(
-        gobj,
-        "create",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    const char *permission = "create";
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
+        KW_DECREF(kw);
+        return msg_iev_build_webix(
+            gobj,
             -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
+            json_local_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -617,17 +643,16 @@ PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_user_has_authz(
-        gobj,
-        "delete",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    const char *permission = "delete";
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
+        KW_DECREF(kw);
+        return msg_iev_build_webix(
+            gobj,
             -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
+            json_local_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -691,17 +716,16 @@ PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_user_has_authz(
-        gobj,
-        "read",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    const char *permission = "read";
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
+        KW_DECREF(kw);
+        return msg_iev_build_webix(
+            gobj,
             -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
+            json_local_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -735,17 +759,16 @@ PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_user_has_authz(
-        gobj,
-        "read",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    const char *permission = "read";
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
+        KW_DECREF(kw);
+        return msg_iev_build_webix(
+            gobj,
             -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
+            json_local_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -793,17 +816,16 @@ PRIVATE json_t *cmd_open_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_user_has_authz(
-        gobj,
-        "read",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    const char *permission = "read";
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
+        KW_DECREF(kw);
+        return msg_iev_build_webix(
+            gobj,
             -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
+            json_local_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -983,17 +1005,16 @@ PRIVATE json_t *cmd_close_list(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_user_has_authz(
-        gobj,
-        "read",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    const char *permission = "read";
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
+        KW_DECREF(kw);
+        return msg_iev_build_webix(
+            gobj,
             -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
+            json_local_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -1044,17 +1065,16 @@ PRIVATE json_t *cmd_add_record(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_user_has_authz(
-        gobj,
-        "write",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    const char *permission = "write";
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
+        KW_DECREF(kw);
+        return msg_iev_build_webix(
+            gobj,
             -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
+            json_local_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -1064,17 +1084,7 @@ PRIVATE json_t *cmd_add_record(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
     int result = 0;
     json_t *jn_comment = 0;
 
-    //json_t *access_roles = kw_get_dict(jwt_payload, "access_roles", 0, KW_REQUIRED);
-    //json_t *fichajes_roles = kw_get_list(access_roles, "fichajes", 0, 0);
-
     do {
-        //if(!fichajes_roles || !json_str_in_list(fichajes_roles, "user", FALSE)) {
-        //    jn_data = kw_incref(kw);
-        //    jn_comment = json_string("User has not 'user' role");
-        //    result = -1;
-        //    break;
-        //}
-
         /*
          *  Get parameters
          */
@@ -1144,17 +1154,16 @@ PRIVATE json_t *cmd_get_list_data(hgobj gobj, const char *cmd, json_t *kw, hgobj
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_user_has_authz(
-        gobj,
-        "read",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return msg_iev_build_webix(gobj,
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    const char *permission = "read";
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
+        KW_DECREF(kw);
+        return msg_iev_build_webix(
+            gobj,
             -403,
-            json_sprintf("Forbidden: %s", log_last_message()),
+            json_local_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -1310,80 +1319,13 @@ PRIVATE int ac_tranger_add_record(hgobj gobj, const char *event, json_t *kw, hgo
     uint32_t user_flag = kw_get_int(kw, "user_flag", 0, 0);
     json_t *record = kw_get_dict(kw, "record", 0, 0);
 
-    BOOL forbidden = FALSE;
-    forbidden |= !gobj_user_has_authz(
-        gobj,
-        "read",
-        kw,
-        src
-    );
-    if(forbidden) {
-        return gobj_send_event( // TODO check, why EV_SEND_IEV below? what is better?
-            src,
-            event,
-            msg_iev_build_webix(gobj,
-                -403,
-                json_sprintf("Forbidden: %s", log_last_message()),
-                0,
-                0,
-                kw  // owned
-            ),
-            gobj
-        );
-    }
-
     json_t *__temp__ = kw_get_dict_value(kw, "__temp__", 0, KW_REQUIRED);
     JSON_INCREF(__temp__); // Save to __answer__
-
-    /*
-     *  Get user from jwt_payload TODO
-     */
-    //hgobj channel_gobj = (hgobj)(size_t)kw_get_int(kw, "__temp__`channel_gobj", 0, KW_REQUIRED);
-    //json_t *jwt_payload = gobj_read_user_data(channel_gobj, "jwt_payload");
 
     int result = 0;
     json_t *jn_comment = 0;
 
-    //json_t *access_roles = kw_get_dict(jwt_payload, "access_roles", 0, KW_REQUIRED);
-    //json_t *fichajes_roles = kw_get_list(access_roles, "fichajes", 0, 0);
-
     do {
-        //if(!fichajes_roles || !json_str_in_list(fichajes_roles, "user", FALSE)) {
-        //    jn_data = kw_incref(kw);
-        //    jn_comment = json_string("User has not 'user' role");
-        //    result = -1;
-        //    break;
-        //}
-
-        // TODO AUTHZ Require "attrs" "write" authz
-//         hsdata hs = gobj_hsdata2(gobj, path, FALSE);
-//         if(hs) {
-//             const sdata_desc_t *it = sdata_it_desc(sdata_schema(hs), path);
-//         }
-
-        BOOL forbidden = FALSE;
-        forbidden |= !gobj_user_has_authz(
-            gobj,
-            "write",
-            json_pack("{s:s}",
-                "attribute", "database"
-            ),
-            src
-        );
-        forbidden |= !gobj_user_has_authz(
-            gobj,
-            "execute",
-            json_pack("{s:s}",
-                "action", event
-            ),
-            src
-        );
-        if(forbidden) {
-           jn_comment = json_sprintf("Forbidden: %s", log_last_message());
-           result = -403;
-           break;
-        }
-
         /*
          *  Check parameters
          */
@@ -1561,7 +1503,7 @@ PRIVATE GCLASS _gclass = {
     0,  // lmt
     tattr_desc,
     sizeof(PRIVATE_DATA),
-    0,  // acl
+    authz_table,  // acl
     s_user_trace_level,
     command_table,  // command_table
     0,  // gcflag

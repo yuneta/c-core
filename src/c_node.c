@@ -284,6 +284,10 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
 {0, 0},
 };
 
+/*---------------------------------------------*
+ *      GClass authz levels
+ *---------------------------------------------*/
+
 PRIVATE sdata_desc_t pm_authz_create[] = {
 /*-PM-----type--------------name----------------flag--------authpath--------description-- */
 SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,          "",             "Treedb name"),
@@ -320,7 +324,6 @@ SDATAAUTHZ (ASN_SCHEMA, "read",         0,      0,      pm_authz_read,      "Per
 SDATAAUTHZ (ASN_SCHEMA, "delete",       0,      0,      pm_authz_delete,    "Permission to delete nodes"),
 SDATA_END()
 };
-
 
 /*---------------------------------------------*
  *              Private data
@@ -1739,13 +1742,12 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     /*----------------------------------------*
      *  Check AUTHZS
      *----------------------------------------*/
-    KW_INCREF(kw);
     const char *permission = "create";
-    if(!gobj_user_has_authz(gobj, permission, kw, src)) {
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
         json_decref(jn_content);
         return msg_iev_build_webix(
             gobj,
-            -1,
+            -403,
             json_local_sprintf("No permission to '%s'", permission),
             0,
             0,
@@ -1834,13 +1836,12 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     /*----------------------------------------*
      *  Check AUTHZS
      *----------------------------------------*/
-    KW_INCREF(kw);
     const char *permission = "update";
-    if(!gobj_user_has_authz(gobj, permission, kw, src)) {
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
         json_decref(jn_content);
         return msg_iev_build_webix(
             gobj,
-            -1,
+            -403,
             json_local_sprintf("No permission to '%s'", permission),
             0,
             0,
@@ -1899,12 +1900,11 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     /*----------------------------------------*
      *  Check AUTHZS
      *----------------------------------------*/
-    KW_INCREF(kw);
     const char *permission = "delete";
-    if(!gobj_user_has_authz(gobj, permission, kw, src)) {
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
         return msg_iev_build_webix(
             gobj,
-            -1,
+            -403,
             json_local_sprintf("No permission to '%s'", permission),
             0,
             0,
