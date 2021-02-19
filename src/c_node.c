@@ -59,6 +59,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_treedbs(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_jtree(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_hooks(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -90,6 +91,16 @@ SDATAPM (ASN_OCTET_STR, "authz",        0,              0,          "authz about
 SDATA_END()
 };
 
+PRIVATE sdata_desc_t pm_jtree[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATAPM (ASN_OCTET_STR, "hook",         0,              0,          "Hook to build the tree"),
+SDATAPM (ASN_OCTET_STR, "rename_hook",  0,              0,          "Rename the hook field in the response"),
+SDATAPM (ASN_JSON,      "fields",       0,              0,          "Fields to include"),
+SDATAPM (ASN_JSON,      "filter",       0,              0,          "Filter to childs"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: refs, hook_refs, fkey_refs, only_id, hook_only_id, fkey_only_id, list_dict, hook_list_dict, fkey_list_dict, size, hook_size"),
+SDATA_END()
+};
 PRIVATE sdata_desc_t pm_create_node[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
@@ -115,7 +126,7 @@ SDATA_END()
 PRIVATE sdata_desc_t pm_link_nodes[] = {
 SDATAPM (ASN_OCTET_STR, "parent_ref",   0,              0,          "Parent node ref (parent_topic_name^parent_id^hook_name)"),
 SDATAPM (ASN_OCTET_STR, "child_ref",    0,              0,          "Child node ref (child_topic_name^child_id)"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: fkey,hook options"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: create, autolink, volatil, refs, hook_refs, fkey_refs, only_id, hook_only_id, fkey_only_id, list_dict, hook_list_dict, fkey_list_dict, size, hook_size"),
 SDATA_END()
 };
 
@@ -232,6 +243,7 @@ SDATACM (ASN_SCHEMA,    "authzs",           0,          pm_authzs,  cmd_authzs, 
 /*-CMD2---type----------name------------flag------------ali-items-----------json_fn-------------description--*/
 SDATACM2 (ASN_SCHEMA,   "treedbs",      SDF_AUTHZ_X,    0,  0,              cmd_treedbs,        "List treedb's"),
 SDATACM2 (ASN_SCHEMA,   "topics",       SDF_AUTHZ_X,    0,  pm_topics,      cmd_topics,         "List topics"),
+SDATACM2 (ASN_SCHEMA,   "tree",         SDF_AUTHZ_X,    0,  pm_jtree,       cmd_jtree,          "List hierarchical tree (topic with self-link"),
 SDATACM2 (ASN_SCHEMA,   "create-node",  SDF_AUTHZ_X,    a_create, pm_create_node, cmd_create_node, "Create node"),
 SDATACM2 (ASN_SCHEMA,   "update-node",  SDF_AUTHZ_X,    a_update, pm_update_node, cmd_update_node, "Update node"),
 SDATACM2 (ASN_SCHEMA,   "delete-node",  SDF_AUTHZ_X,    a_delete, pm_delete_node, cmd_delete_node, "Delete node"),
@@ -1583,6 +1595,103 @@ PRIVATE json_t *mt_node_childs(
 /***************************************************************************
  *      Framework Method
  ***************************************************************************/
+PRIVATE json_t *mt_topic_jtree(
+    hgobj gobj,
+    const char *topic_name,
+    const char *hook,   // hook to build the hierarchical tree
+    const char *rename_hook, // change the hook name in the tree response
+    json_t *kw,         // 'id' and topic_pkey2s fields are used to find the node
+    json_t *jn_fields,  // fields of topic_name to include
+    json_t *jn_filter,  // filter to match records
+    json_t *jn_options, // fkey,hook options
+    hgobj src
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name
+    )) {
+        log_warning(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_filter);
+        JSON_DECREF(jn_options);
+        JSON_DECREF(kw);
+        return 0;
+    }
+
+    json_t *node = fetch_node(gobj, topic_name, kw);
+    if(!node) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Node not found",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_filter);
+        JSON_DECREF(jn_options);
+        JSON_DECREF(kw);
+        return 0;
+    }
+
+    /*
+     *  Return a list of child nodes of the hook
+     */
+    json_t *iter = treedb_node_childs( // Return MUST be decref
+        priv->tranger,
+        hook, // must be a hook field
+        node, // not owned
+        json_incref(jn_filter),
+        json_incref(jn_options)
+    );
+
+    if(!iter) {
+        // Error already logged
+        JSON_DECREF(jn_filter);
+        JSON_DECREF(jn_options);
+        JSON_DECREF(kw);
+        return 0;
+    }
+
+    json_t *childs = json_array();
+
+    int idx; json_t *child;
+    json_array_foreach(iter, idx, child) {
+        json_array_append_new(
+            childs,
+            node_collapsed_view(
+                priv->tranger,
+                child,
+                json_incref(jn_options)
+            )
+        );
+    }
+    json_decref(iter);
+
+    JSON_DECREF(jn_filter);
+    JSON_DECREF(jn_options);
+    JSON_DECREF(kw);
+    return childs;
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
 PRIVATE int mt_shoot_snap(
     hgobj gobj,
     const char *name,
@@ -2274,6 +2383,60 @@ PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         topics?0:json_string(log_last_message()),
         0,
         topics,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_jtree(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    const char *hook = kw_get_str(kw, "hook", "", 0);
+    const char *rename_hook = kw_get_str(kw, "rename_hook", "", 0);
+    json_t *_jn_fields = kw_get_list(kw, "fields", 0, 0);
+    json_t *_jn_filter = kw_get_dict(kw, "filter", 0, 0);
+    json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
+
+    if(empty_string(topic_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    if(empty_string(hook)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What hook?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *jtree = gobj_topic_jtree(
+        gobj,
+        topic_name,
+        hook,                       // hook to build the hierarchical tree
+        rename_hook,                // change the hook name in the tree response
+        kw,                         // 'id' and topic_pkey2s fields are used to find the node
+        json_incref(_jn_fields),    // fields of topic_name to include
+        json_incref(_jn_filter),    // filter to match records
+        json_incref(_jn_options),   // fkey,hook options
+        src
+    );
+
+    return msg_iev_build_webix(gobj,
+        jtree?0:-1,
+        jtree?0:json_string(log_last_message()),
+        0,
+        jtree,
         kw  // owned
     );
 }
@@ -3452,7 +3615,7 @@ PRIVATE GCLASS _gclass = {
         mt_link_nodes,
         0, //mt_future44,
         mt_unlink_nodes,
-        0, //mt_future46,
+        mt_topic_jtree,
         mt_get_node,
         mt_list_nodes,
         mt_shoot_snap,
