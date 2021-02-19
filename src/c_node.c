@@ -98,7 +98,7 @@ SDATAPM (ASN_OCTET_STR, "hook",         0,              0,          "Hook to bui
 SDATAPM (ASN_OCTET_STR, "rename_hook",  0,              0,          "Rename the hook field in the response"),
 SDATAPM (ASN_JSON,      "fields",       0,              0,          "Fields to include"),
 SDATAPM (ASN_JSON,      "filter",       0,              0,          "Filter to childs"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: refs, hook_refs, fkey_refs, only_id, hook_only_id, fkey_only_id, list_dict, hook_list_dict, fkey_list_dict, size, hook_size"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: 'webix', refs, hook_refs, fkey_refs, only_id, hook_only_id, fkey_only_id, list_dict, hook_list_dict, fkey_list_dict, size, hook_size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_create_node[] = {
@@ -1506,7 +1506,7 @@ PRIVATE json_t *mt_node_childs(
     json_t *kw,         // 'id' and topic_pkey2s fields are used to find the node
     const char *hook,
     json_t *jn_filter,  // filter to childs tree
-    json_t *jn_options, // hook options
+    json_t *jn_options, // fkey,hook options
     hgobj src
 )
 {
@@ -1603,7 +1603,7 @@ PRIVATE json_t *mt_topic_jtree(
     json_t *kw,         // 'id' and topic_pkey2s fields are used to find the node
     json_t *jn_fields,  // fields of topic_name to include
     json_t *jn_filter,  // filter to match records
-    json_t *jn_options, // fkey,hook options
+    json_t *jn_options, // fkey,hook options, "webix"
     hgobj src
 )
 {
@@ -2388,7 +2388,8 @@ PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 }
 
 /***************************************************************************
- *
+ *  Return a hierarchical tree of the self-link topic
+ *  If "webix" option is true return webix style, else list-dict with __path__ field
  ***************************************************************************/
 PRIVATE json_t *cmd_jtree(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
@@ -2428,7 +2429,7 @@ PRIVATE json_t *cmd_jtree(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         kw,                         // 'id' and topic_pkey2s fields are used to find the node
         json_incref(_jn_fields),    // fields of topic_name to include
         json_incref(_jn_filter),    // filter to match records
-        json_incref(_jn_options),   // fkey,hook options
+        json_incref(_jn_options),   // "webix", fkey,hook options
         src
     );
 
