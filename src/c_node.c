@@ -96,7 +96,6 @@ PRIVATE sdata_desc_t pm_jtree[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "hook",         0,              0,          "Hook to build the tree"),
 SDATAPM (ASN_OCTET_STR, "rename_hook",  0,              0,          "Rename the hook field in the response"),
-SDATAPM (ASN_JSON,      "fields",       0,              0,          "Fields to include"),
 SDATAPM (ASN_JSON,      "filter",       0,              0,          "Filter to childs"),
 SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: 'webix', refs, hook_refs, fkey_refs, only_id, hook_only_id, fkey_only_id, list_dict, hook_list_dict, fkey_list_dict, size, hook_size"),
 SDATA_END()
@@ -1600,8 +1599,7 @@ PRIVATE json_t *mt_topic_jtree(
     const char *topic_name,
     const char *hook,   // hook to build the hierarchical tree
     const char *rename_hook, // change the hook name in the tree response
-    json_t *kw,         // 'id' and topic_pkey2s fields are used to find the node
-    json_t *jn_fields,  // fields of topic_name to include
+    json_t *kw,         // 'id' and topic_pkey2s fields are used to find the root node
     json_t *jn_filter,  // filter to match records
     json_t *jn_options, // fkey,hook options, "webix"
     hgobj src
@@ -1632,6 +1630,9 @@ PRIVATE json_t *mt_topic_jtree(
         return 0;
     }
 
+    /*
+     *  If root node is not specified then the first with no parent is used
+     */
     json_t *node = fetch_node(gobj, topic_name, kw);
     if(!node) {
         log_error(0,
@@ -2390,13 +2391,13 @@ PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 /***************************************************************************
  *  Return a hierarchical tree of the self-link topic
  *  If "webix" option is true return webix style, else list-dict with __path__ field
+ *  If root node is not specified then the first with no parent is used
  ***************************************************************************/
 PRIVATE json_t *cmd_jtree(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *hook = kw_get_str(kw, "hook", "", 0);
     const char *rename_hook = kw_get_str(kw, "rename_hook", "", 0);
-    json_t *_jn_fields = kw_get_list(kw, "fields", 0, 0);
     json_t *_jn_filter = kw_get_dict(kw, "filter", 0, 0);
     json_t *_jn_options = kw_get_dict(kw, "options", 0, 0);
 
@@ -2427,7 +2428,6 @@ PRIVATE json_t *cmd_jtree(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         hook,                       // hook to build the hierarchical tree
         rename_hook,                // change the hook name in the tree response
         kw,                         // 'id' and topic_pkey2s fields are used to find the node
-        json_incref(_jn_fields),    // fields of topic_name to include
         json_incref(_jn_filter),    // filter to match records
         json_incref(_jn_options),   // "webix", fkey,hook options
         src
