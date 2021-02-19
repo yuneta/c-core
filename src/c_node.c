@@ -1506,7 +1506,7 @@ PRIVATE json_t *mt_node_childs(
     json_t *kw,         // 'id' and topic_pkey2s fields are used to find the node
     const char *hook,
     json_t *jn_filter,  // filter to childs tree
-    json_t *jn_options, // fkey,hook options
+    json_t *jn_options, // fkey,hook options, "recursive"
     hgobj src
 )
 {
