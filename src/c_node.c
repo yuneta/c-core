@@ -2391,6 +2391,8 @@ PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE json_t *cmd_jtree(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
     const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
     const char *node_id = kw_get_str(kw, "node_id", "", 0);
     const char *hook = kw_get_str(kw, "hook", "", 0);
@@ -2419,14 +2421,51 @@ PRIVATE json_t *cmd_jtree(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         );
     }
     if(empty_string(node_id)) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_local_sprintf("What node_id?"),
-            0,
-            0,
-            kw  // owned
-        );
+        do {
+            // Search the first "fkey" field
+            json_t *links = gobj_topic_links(
+                gobj,
+                priv->treedb_name,
+                topic_name,
+                0,
+                src
+            );
+            if(json_array_size(links)==0) {
+                json_decref(links);
+                break;
+            }
+
+            const char *link = json_string_value(json_array_get(links, 0));
+            // Search the first "root" node (without parents);
+            json_t *nodes = gobj_list_nodes(
+                gobj,
+                topic_name,
+                0, // filter
+                0, // options
+                src
+            );
+            int idx; json_t *node;
+            json_array_foreach(nodes, idx, node) {
+                json_t *jn_hook = kw_get_list(node, link, 0, KW_REQUIRED);
+                if(json_array_size(jn_hook)==0) {
+                    node_id = kw_get_str(node, "id", "", KW_REQUIRED);
+                    break;
+                }
+            }
+            json_decref(nodes);
+            json_decref(links);
+        } while(0);
+
+        if(empty_string(node_id)) {
+            return msg_iev_build_webix(
+                gobj,
+                -1,
+                json_local_sprintf("What node_id?"),
+                0,
+                0,
+                kw  // owned
+            );
+        }
     }
 
     json_t *jtree = gobj_topic_jtree(
