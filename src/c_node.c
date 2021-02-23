@@ -98,7 +98,7 @@ SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_OCTET_STR, "hook",         0,              0,          "Hook to build the tree"),
 SDATAPM (ASN_OCTET_STR, "rename_hook",  0,              0,          "Rename the hook field in the response (only with webix option)"),
 SDATAPM (ASN_JSON,      "filter",       0,              0,          "Filter to childs"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: 'webix', refs, hook_refs, fkey_refs, only_id, hook_only_id, fkey_only_id, list_dict, hook_list_dict, fkey_list_dict, size, hook_size"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: 'webix','expand_childs' refs, hook_refs, fkey_refs, only_id, hook_only_id, fkey_only_id, list_dict, hook_list_dict, fkey_list_dict, size, hook_size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_create_node[] = {
@@ -1602,7 +1602,7 @@ PRIVATE json_t *mt_topic_jtree(
     const char *rename_hook, // change the hook name in the tree response
     json_t *kw,         // 'id' and topic_pkey2s fields are used to find the root node
     json_t *jn_filter,  // filter to match records
-    json_t *jn_options, // fkey,hook options, "webix"
+    json_t *jn_options, // fkey,hook options, "webix", "expand_childs"
     hgobj src
 )
 {
