@@ -56,11 +56,16 @@ SDATA_END()
  *      Attributes - order affect to oid's
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
-/*-ATTR-type------------name----------------flag------------------------default---------description---------- */
+/*-ATTR-type------------name----------------flag----------------default---------description---------- */
+SDATA (ASN_OCTET_STR,   "filename_mask",    SDF_RD|SDF_REQUIRED,"%Y-%m",        "Organization of tables (file name format, see strftime())"),
+
+SDATA (ASN_INTEGER,     "xpermission",      SDF_RD,             02770,          "Use in creation, default 02770"),
+SDATA (ASN_INTEGER,     "rpermission",      SDF_RD,             0660,           "Use in creation, default 0660"),
 SDATA (ASN_INTEGER,     "exit_on_error",    0,                  LOG_OPT_EXIT_ZERO,"exit on error"),
-SDATA (ASN_POINTER,     "user_data",        0,                          0,              "user data"),
-SDATA (ASN_POINTER,     "user_data2",       0,                          0,              "more user data"),
-SDATA (ASN_POINTER,     "subscriber",       0,                          0,              "subscriber of output-events. Not a child gobj."),
+SDATA (ASN_BOOLEAN,     "master",           SDF_RD,             FALSE,          "the master is the only that can write"),
+SDATA (ASN_POINTER,     "user_data",        0,                  0,              "user data"),
+SDATA (ASN_POINTER,     "user_data2",       0,                  0,              "more user data"),
+SDATA (ASN_POINTER,     "subscriber",       0,                  0,              "subscriber of output-events. Not a child gobj."),
 SDATA_END()
 };
 
@@ -107,7 +112,8 @@ SDATA_END()
  *              Private data
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
-    json_t *tranger;
+    hgobj gobj_tranger_system;
+    json_t *tranger_system;
     int32_t exit_on_error;
 } PRIVATE_DATA;
 
@@ -127,6 +133,70 @@ typedef struct _PRIVATE_DATA {
 PRIVATE void mt_create(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    /*---------------------------*
+     *  Create Timeranger
+     *---------------------------*/
+    const char *filename_mask = gobj_read_str_attr(gobj, "filename_mask");
+    BOOL master = gobj_read_bool_attr(gobj, "master");
+    int exit_on_error = gobj_read_int32_attr(gobj, "exit_on_error");
+    int xpermission = gobj_read_int32_attr(gobj, "xpermission");
+    int rpermission = gobj_read_int32_attr(gobj, "rpermission");
+
+    char path[PATH_MAX];
+    yuneta_realm_store_dir(
+        path,
+        sizeof(path),
+        "treedbs",
+        gobj_yuno_realm_owner(),
+        gobj_yuno_realm_id(),
+        "__system__",
+        TRUE
+    );
+
+    json_t *kw_tranger = json_pack("{s:s, s:s, s:b, s:i, s:i, s:i}",
+        "path", path,
+        "filename_mask", filename_mask,
+        "master", master,
+        "on_critical_error", exit_on_error,
+        "xpermission", xpermission,
+        "rpermission", rpermission
+    );
+    priv->gobj_tranger_system = gobj_create_service(
+        "tranger_treedb",
+        GCLASS_TRANGER,
+        kw_tranger,
+        gobj
+    );
+
+    /*
+     *  HACK pipe inheritance
+     */
+    gobj_set_bottom_gobj(gobj, priv->gobj_tranger_system);
+
+    /*----------------------*
+     *  Create Treedbs
+     *----------------------*/
+//     const char *treedb_name = kw_get_str(
+//         jn_treedb_schema_controlcenter,
+//         "id",
+//         "treedb_controlcenter",
+//         KW_REQUIRED
+//     );
+//     json_t *kw_resource = json_pack("{s:s, s:o, s:i}",
+//         "treedb_name", treedb_name,
+//         "treedb_schema", jn_treedb_schema_controlcenter,
+//         "exit_on_error", LOG_OPT_EXIT_ZERO
+//     );
+//
+//     priv->treedb_controlcenter = gobj_create_service(
+//         treedb_name,
+//         GCLASS_NODE,
+//         kw_resource,
+//         gobj
+//     );
+
+
 
     /*
      *  SERVICE subscription model
@@ -167,9 +237,8 @@ PRIVATE int mt_start(hgobj gobj)
     /*
      *  HACK pipe inheritance
      */
-    priv->tranger = gobj_read_pointer_attr(gobj, "tranger");
-
-    if(!priv->tranger) {
+    priv->tranger_system = gobj_read_pointer_attr(gobj, "tranger");
+    if(!priv->tranger_system) {
         log_critical(priv->exit_on_error,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
@@ -188,7 +257,7 @@ PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    priv->tranger = 0;
+    priv->tranger_system = 0;
 
     return 0;
 }
@@ -220,7 +289,7 @@ PRIVATE json_t *mt_treedbs(
     }
 
     return treedb_list_treedb(
-        priv->tranger,
+        priv->tranger_system,
         kw
     );
 }
