@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include "c_treedb.h"
 
+#include "treedb_schema_treedb.c"
+
 /***************************************************************************
  *              Constants
  ***************************************************************************/
@@ -156,6 +158,7 @@ SDATA_END()
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
     hgobj gobj_tranger_system;
+    hgobj gobj_treedb_system;
     json_t *tranger_system;
     int32_t exit_on_error;
 } PRIVATE_DATA;
@@ -212,10 +215,40 @@ PRIVATE void mt_create(hgobj gobj)
         gobj
     );
 
+    /*-----------------------------*
+     *      Open System Treedb
+     *-----------------------------*/
+    helper_quote2doublequote(treedb_schema_treedb);
+    json_t *jn_treedb_schema_treedb;
+    jn_treedb_schema_treedb = legalstring2json(treedb_schema_treedb, TRUE);
+    if(!jn_treedb_schema_treedb) {
+        exit(-1);
+    }
+
+    const char *treedb_name = kw_get_str(
+        jn_treedb_schema_treedb,
+        "id",
+        "treedb_treedb",
+        KW_REQUIRED
+    );
+    json_t *kw_resource = json_pack("{s:s, s:o, s:i}",
+        "treedb_name", treedb_name,
+        "treedb_schema", jn_treedb_schema_treedb,
+        "exit_on_error", LOG_OPT_EXIT_ZERO
+    );
+
+    priv->gobj_treedb_system = gobj_create_service(
+        treedb_name,
+        GCLASS_NODE,
+        kw_resource,
+        gobj
+    );
+
     /*
      *  HACK pipe inheritance
      */
-    gobj_set_bottom_gobj(gobj, priv->gobj_tranger_system);
+    gobj_set_bottom_gobj(priv->gobj_treedb_system, priv->gobj_tranger_system);
+    gobj_set_bottom_gobj(gobj, priv->gobj_treedb_system);
 
     /*
      *  SERVICE subscription model
@@ -353,9 +386,6 @@ PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *filename_mask = kw_get_str(kw, "filename_mask", "", 0);
-    BOOL master = kw_get_bool(kw, "master", 0, 0);
-    int exit_on_error = kw_get_int(kw, "exit_on_error", 0, 0);
     const char *treedb_name = kw_get_str(kw, "treedb_name", "", 0);
     json_t *_jn_treedb_schema = kw_get_dict(kw, "treedb_schema", 0, 0);
     BOOL create = kw_get_bool(kw, "create", 0, 0);
@@ -406,12 +436,10 @@ PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     /*----------------------*
      *  Create gclass Node
      *----------------------*/
-    json_t *kw_resource = json_pack("{s:s, s:s, s:b, s:O, s:i}",
+    json_t *kw_resource = json_pack("{s:s,s:O, s:i}",
         "treedb_name", treedb_name,
-        "filename_mask", filename_mask,
-        "master", master,
         "treedb_schema", _jn_treedb_schema,
-        "exit_on_error", exit_on_error
+        "exit_on_error", 0  // node is our client, it not must exit
     );
 
     hgobj gobj_node = gobj_create_service(
