@@ -29,6 +29,8 @@
  ***************************************************************************/
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_close_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE sdata_desc_t pm_help[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
@@ -42,12 +44,33 @@ SDATAPM (ASN_OCTET_STR, "authz",        0,              0,          "authz about
 SDATA_END()
 };
 
+PRIVATE sdata_desc_t pm_open_treedb[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "filename_mask",0,              "%Y-%m-%d",    "Organization of tables (file name format, see strftime())"),
+SDATAPM (ASN_BOOLEAN,   "master",       0,              FALSE,      "the master is the only that can write"),
+SDATAPM (ASN_INTEGER,   "exit_on_error",0,              0,          "exit on error"),
+SDATAPM (ASN_OCTET_STR, "treedb_name",  0,              0,          "Treedb name"),
+SDATAPM (ASN_JSON,      "treedb_schema",0,              0,          "Initial treedb schema"),
+SDATAPM (ASN_BOOLEAN,   "create",       0,              FALSE,      "Create it not exist (only master)"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_close_treedb[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "treedb_name",  0,              0,          "Treedb name"),
+SDATA_END()
+};
+
 PRIVATE const char *a_help[] = {"h", "?", 0};
 
 PRIVATE sdata_desc_t command_table[] = {
 /*-CMD---type-----------name----------------alias-------items-----------json_fn---------description---------- */
 SDATACM (ASN_SCHEMA,    "help",             a_help,     pm_help,        cmd_help,       "Command's help"),
 SDATACM (ASN_SCHEMA,    "authzs",           0,          pm_authzs,      cmd_authzs,     "Authorization's help"),
+
+/*-CMD2---type----------name------------flag------------ali-items-----------json_fn-------------description--*/
+SDATACM2 (ASN_SCHEMA,   "open-treedb",  SDF_AUTHZ_X,    0, pm_open_treedb,  cmd_open_treedb, "Open treedb"),
+SDATACM2 (ASN_SCHEMA,   "close-treedb", SDF_AUTHZ_X,    0, pm_close_treedb, cmd_close_treedb, "Close treedb"),
+
 SDATA_END()
 };
 
@@ -90,12 +113,29 @@ PRIVATE sdata_desc_t pm_authz_create[] = {
 /*-PM-----type--------------name----------------flag--------authpath--------description-- */
 SDATA_END()
 };
+PRIVATE sdata_desc_t pm_authz_open[] = {
+/*-PM-----type--------------name----------------flag--------authpath--------description-- */
+SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,          "",             "Treedb name"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_authz_write[] = {
+/*-PM-----type--------------name----------------flag--------authpath--------description-- */
+SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,          "",             "Treedb name"),
+SDATA_END()
+};
 PRIVATE sdata_desc_t pm_authz_read[] = {
 /*-PM-----type--------------name----------------flag--------authpath--------description-- */
+SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,          "",             "Treedb name"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_authz_delete[] = {
 /*-PM-----type--------------name----------------flag--------authpath--------description-- */
+SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,          "",             "Treedb name"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_authz_close[] = {
+/*-PM-----type--------------name----------------flag--------authpath--------description-- */
+SDATAPM0 (ASN_OCTET_STR,    "treedb_name",      0,          "",             "Treedb name"),
 SDATA_END()
 };
 
@@ -103,8 +143,11 @@ SDATA_END()
 PRIVATE sdata_desc_t authz_table[] = {
 /*-AUTHZ-- type---------name------------flag----alias---items---------------description--*/
 SDATAAUTHZ (ASN_SCHEMA, "create",       0,      0,      pm_authz_create,    "Permission to create treedb"),
+SDATAAUTHZ (ASN_SCHEMA, "open",         0,      0,      pm_authz_open,      "Permission to open treedb"),
+SDATAAUTHZ (ASN_SCHEMA, "update",       0,      0,      pm_authz_write,     "Permission to update treedb"),
 SDATAAUTHZ (ASN_SCHEMA, "read",         0,      0,      pm_authz_read,      "Permission to read treedb"),
 SDATAAUTHZ (ASN_SCHEMA, "delete",       0,      0,      pm_authz_delete,    "Permission to delete treedb"),
+SDATAAUTHZ (ASN_SCHEMA, "close",        0,      0,      pm_authz_close,     "Permission to close treedb"),
 SDATA_END()
 };
 
@@ -173,30 +216,6 @@ PRIVATE void mt_create(hgobj gobj)
      *  HACK pipe inheritance
      */
     gobj_set_bottom_gobj(gobj, priv->gobj_tranger_system);
-
-    /*----------------------*
-     *  Create Treedbs
-     *----------------------*/
-//     const char *treedb_name = kw_get_str(
-//         jn_treedb_schema_controlcenter,
-//         "id",
-//         "treedb_controlcenter",
-//         KW_REQUIRED
-//     );
-//     json_t *kw_resource = json_pack("{s:s, s:o, s:i}",
-//         "treedb_name", treedb_name,
-//         "treedb_schema", jn_treedb_schema_controlcenter,
-//         "exit_on_error", LOG_OPT_EXIT_ZERO
-//     );
-//
-//     priv->treedb_controlcenter = gobj_create_service(
-//         treedb_name,
-//         GCLASS_NODE,
-//         kw_resource,
-//         gobj
-//     );
-
-
 
     /*
      *  SERVICE subscription model
@@ -329,6 +348,153 @@ PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     return gobj_build_authzs_doc(gobj, cmd, kw, src);
 }
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    const char *filename_mask = kw_get_str(kw, "filename_mask", "", 0);
+    BOOL master = kw_get_bool(kw, "master", 0, 0);
+    int exit_on_error = kw_get_int(kw, "exit_on_error", 0, 0);
+    const char *treedb_name = kw_get_str(kw, "treedb_name", "", 0);
+    json_t *_jn_treedb_schema = kw_get_dict(kw, "treedb_schema", 0, 0);
+    BOOL create = kw_get_bool(kw, "create", 0, 0);
+
+    /*-----------------------------------*
+     *      Check parameters
+     *-----------------------------------*/
+    if(empty_string(treedb_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What treedb_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    if(create) {
+        const char *permission = "create";
+        if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
+            return msg_iev_build_webix(
+                gobj,
+                -403,
+                json_local_sprintf("No permission to '%s'", permission),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+    } else {
+        const char *permission = "open";
+        if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
+            return msg_iev_build_webix(
+                gobj,
+                -403,
+                json_local_sprintf("No permission to '%s'", permission),
+                0,
+                0,
+                kw  // owned
+            );
+        }
+    }
+
+    /*----------------------*
+     *  Create gclass Node
+     *----------------------*/
+    json_t *kw_resource = json_pack("{s:s, s:s, s:b, s:O, s:i}",
+        "treedb_name", treedb_name,
+        "filename_mask", filename_mask,
+        "master", master,
+        "treedb_schema", _jn_treedb_schema,
+        "exit_on_error", exit_on_error
+    );
+
+    hgobj gobj_node = gobj_create_service(
+        treedb_name,
+        GCLASS_NODE,
+        kw_resource,
+        gobj
+    );
+
+    return msg_iev_build_webix(gobj,
+        gobj_node?0:-1,
+        json_local_sprintf(gobj_node?"Treedb opened!":log_last_message()),
+        0,
+        0,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_close_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    const char *treedb_name = kw_get_str(kw, "treedb_name", "", 0);
+
+    /*-----------------------------------*
+     *      Check parameters
+     *-----------------------------------*/
+    if(empty_string(treedb_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What treedb_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    const char *permission = "open";
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
+        return msg_iev_build_webix(
+            gobj,
+            -403,
+            json_local_sprintf("No permission to '%s'", permission),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    /*----------------------*
+     *  Close gclass Node
+     *----------------------*/
+    hgobj gobj_node = gobj_find_service(treedb_name, FALSE);
+    if(!gobj_node) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("Treedb_name not found: '%s'", treedb_name),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    if(gobj_is_running(gobj_node)) {
+        gobj_stop(gobj_node);
+    }
+    gobj_destroy(gobj_node);
+
+    return msg_iev_build_webix(gobj,
+        0,
+        json_local_sprintf("Treedb closed!"),
+        0,
+        0,
+        kw  // owned
+    );
+}
+
 
 
 
@@ -349,9 +515,19 @@ PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int ac_sample(hgobj gobj, const char *event, json_t *kw, hgobj src)
+PRIVATE int ac_open_treedb(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
+    // TODO
+    KW_DECREF(kw);
+    return 0;
+}
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int ac_close_treedb(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    // TODO
     KW_DECREF(kw);
     return 0;
 }
@@ -361,15 +537,14 @@ PRIVATE int ac_sample(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
     // top input
-    {"EV_SAMPLE",       0,  0,  "Description of resource"},
+    {"EV_OPEN_TREEDB",      EVF_PUBLIC_EVENT,   0,      0},
+    {"EV_CLOSE_TREEDB",     EVF_PUBLIC_EVENT,   0,      0},
     // bottom input
     {"EV_STOPPED",      0,  0,  ""},
     // internal
     {NULL, 0, 0, ""}
 };
 PRIVATE const EVENT output_events[] = {
-    {"EV_ON_SAMPLE1",       0,  0,  "Sample1"},
-    {"EV_ON_SAMPLE2",       0,  0,  "Sample2"},
     {NULL, 0, 0, ""}
 };
 PRIVATE const char *state_names[] = {
@@ -378,7 +553,8 @@ PRIVATE const char *state_names[] = {
 };
 
 PRIVATE EV_ACTION ST_IDLE[] = {
-    {"EV_SAMPLE",               ac_sample,              0},
+    {"EV_OPEN_TREEDB",          ac_open_treedb,         0},
+    {"EV_CLOSE_TREEDB",         ac_close_treedb,        0},
     {"EV_STOPPED",              0,                      0},
     {0,0,0}
 };
