@@ -251,11 +251,11 @@ static char treedb_schema_treedb[]= "\
                     'enum': [                                       \n\
                         'string',                                   \n\
                         'integer',                                  \n\
-                        'object'                                    \n\
+                        'object',                                   \n\
                         'dict',                                     \n\
                         'array',                                    \n\
                         'list',                                     \n\
-                        'real'                                      \n\
+                        'real',                                     \n\
                         'boolean',                                  \n\
                         'blob'                                      \n\
                     ],                                              \n\
@@ -274,11 +274,11 @@ static char treedb_schema_treedb[]= "\
                     'enum': [                                       \n\
                         'persistent',                               \n\
                         'required',                                 \n\
-                        'fkey'                                      \n\
+                        'fkey',                                     \n\
                         'hook',                                     \n\
                         'uuid',                                     \n\
                         'notnull',                                  \n\
-                        'wild'                                      \n\
+                        'wild',                                     \n\
                         'rowid',                                    \n\
                         'inherit',                                  \n\
                         'readable',                                 \n\

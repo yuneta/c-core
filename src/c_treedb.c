@@ -82,12 +82,13 @@ SDATA_END()
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag----------------default---------description---------- */
+SDATA (ASN_POINTER,     "tranger",          0,                  0,              "Tranger handler"),
+SDATA (ASN_OCTET_STR,   "path",             SDF_RD|SDF_REQUIRED,"",             "Path of treedbs"),
 SDATA (ASN_OCTET_STR,   "filename_mask",    SDF_RD|SDF_REQUIRED,"%Y-%m",        "Organization of tables (file name format, see strftime())"),
-
+SDATA (ASN_BOOLEAN,     "master",           SDF_RD,             FALSE,          "the master is the only that can write"),
 SDATA (ASN_INTEGER,     "xpermission",      SDF_RD,             02770,          "Use in creation, default 02770"),
 SDATA (ASN_INTEGER,     "rpermission",      SDF_RD,             0660,           "Use in creation, default 0660"),
 SDATA (ASN_INTEGER,     "exit_on_error",    0,                  LOG_OPT_EXIT_ZERO,"exit on error"),
-SDATA (ASN_BOOLEAN,     "master",           SDF_RD,             FALSE,          "the master is the only that can write"),
 SDATA (ASN_POINTER,     "user_data",        0,                  0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                  0,              "more user data"),
 SDATA (ASN_POINTER,     "subscriber",       0,                  0,              "subscriber of output-events. Not a child gobj."),
@@ -158,8 +159,8 @@ SDATA_END()
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
     hgobj gobj_tranger_system;
-    hgobj gobj_treedb_system;
-    json_t *tranger_system;
+    hgobj gobj_node_system;
+    json_t *tranger_system_;
     int32_t exit_on_error;
 } PRIVATE_DATA;
 
@@ -180,9 +181,9 @@ PRIVATE void mt_create(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    /*---------------------------*
-     *  Create Timeranger
-     *---------------------------*/
+    /*----------------------------*
+     *      Create Timeranger
+     *----------------------------*/
     const char *filename_mask = gobj_read_str_attr(gobj, "filename_mask");
     BOOL master = gobj_read_bool_attr(gobj, "master");
     int exit_on_error = gobj_read_int32_attr(gobj, "exit_on_error");
@@ -190,14 +191,11 @@ PRIVATE void mt_create(hgobj gobj)
     int rpermission = gobj_read_int32_attr(gobj, "rpermission");
 
     char path[PATH_MAX];
-    yuneta_realm_store_dir(
+    build_path2(
         path,
         sizeof(path),
-        "treedbs",
-        gobj_yuno_realm_owner(),
-        gobj_yuno_realm_id(),
-        "__system__",
-        TRUE
+        gobj_read_str_attr(gobj, "path"),
+        "__system__"
     );
 
     json_t *kw_tranger = json_pack("{s:s, s:s, s:b, s:i, s:i, s:i}",
@@ -215,6 +213,17 @@ PRIVATE void mt_create(hgobj gobj)
         gobj
     );
 
+    priv->tranger_system_ = gobj_read_pointer_attr(priv->gobj_tranger_system, "tranger");
+    if(!priv->tranger_system_) {
+        log_critical(priv->exit_on_error,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "tranger NULL",
+            NULL
+        );
+    }
+
     /*-----------------------------*
      *      Open System Treedb
      *-----------------------------*/
@@ -231,13 +240,14 @@ PRIVATE void mt_create(hgobj gobj)
         "treedb_treedb",
         KW_REQUIRED
     );
-    json_t *kw_resource = json_pack("{s:s, s:o, s:i}",
+    json_t *kw_resource = json_pack("{s:I, s:s, s:o, s:i}",
+        "tranger", (json_int_t)(size_t)priv->tranger_system_,
         "treedb_name", treedb_name,
         "treedb_schema", jn_treedb_schema_treedb,
         "exit_on_error", LOG_OPT_EXIT_ZERO
     );
 
-    priv->gobj_treedb_system = gobj_create_service(
+    priv->gobj_node_system = gobj_create_service(
         treedb_name,
         GCLASS_NODE,
         kw_resource,
@@ -247,8 +257,8 @@ PRIVATE void mt_create(hgobj gobj)
     /*
      *  HACK pipe inheritance
      */
-    gobj_set_bottom_gobj(priv->gobj_treedb_system, priv->gobj_tranger_system);
-    gobj_set_bottom_gobj(gobj, priv->gobj_treedb_system);
+    gobj_set_bottom_gobj(priv->gobj_node_system, priv->gobj_tranger_system);
+    gobj_set_bottom_gobj(gobj, priv->gobj_node_system);
 
     /*
      *  SERVICE subscription model
@@ -284,21 +294,8 @@ PRIVATE void mt_destroy(hgobj gobj)
  ***************************************************************************/
 PRIVATE int mt_start(hgobj gobj)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    /*
-     *  HACK pipe inheritance
-     */
-    priv->tranger_system = gobj_read_pointer_attr(gobj, "tranger");
-    if(!priv->tranger_system) {
-        log_critical(priv->exit_on_error,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "tranger NULL",
-            NULL
-        );
-    }
     return 0;
 }
 
@@ -307,9 +304,7 @@ PRIVATE int mt_start(hgobj gobj)
  ***************************************************************************/
 PRIVATE int mt_stop(hgobj gobj)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    priv->tranger_system = 0;
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     return 0;
 }
@@ -341,7 +336,7 @@ PRIVATE json_t *mt_treedbs(
     }
 
     return treedb_list_treedb(
-        priv->tranger_system,
+        priv->tranger_system_,
         kw
     );
 }
@@ -386,6 +381,8 @@ PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
     const char *treedb_name = kw_get_str(kw, "treedb_name", "", 0);
     json_t *_jn_treedb_schema = kw_get_dict(kw, "treedb_schema", 0, 0);
     BOOL create = kw_get_bool(kw, "create", 0, 0);
@@ -436,7 +433,8 @@ PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     /*----------------------*
      *  Create gclass Node
      *----------------------*/
-    json_t *kw_resource = json_pack("{s:s,s:O, s:i}",
+    json_t *kw_resource = json_pack("{s:I, s:s, s:O, s:i}",
+        "tranger", (json_int_t)(size_t)priv->tranger_system_,
         "treedb_name", treedb_name,
         "treedb_schema", _jn_treedb_schema,
         "exit_on_error", 0  // node is our client, it not must exit
