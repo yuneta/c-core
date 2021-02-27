@@ -435,7 +435,7 @@ PRIVATE int mt_start(hgobj gobj)
         return -1;
     }
 
-    treedb_open_db( // Return IS NOT YOURS!
+    json_t *treedb = treedb_open_db( // Return IS NOT YOURS!
         priv->tranger,
         priv->treedb_name,
         json_incref(priv->treedb_schema),  // owned
@@ -449,7 +449,7 @@ PRIVATE int mt_start(hgobj gobj)
         gobj
     );
 
-    return 0;
+    return treedb?0:-1;
 }
 
 /***************************************************************************

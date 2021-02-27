@@ -55,7 +55,6 @@
             │* type                     │
             │  flag                     │
             │  default                  │
-            │  default                  │
             │  description              │
             │  properties               │
             │                           │
@@ -65,9 +64,9 @@
 
 */
 
-static char treedb_schema_treedb[]= "\
+static char treedb_system_schema[]= "\
 {                                                                   \n\
-    'id': 'treedb_treedb',                                          \n\
+    'id': 'treedb_system_schema',                                   \n\
     'schema_version': '1',                                          \n\
     'topics': [                                                     \n\
         {                                                           \n\
@@ -275,6 +274,7 @@ static char treedb_schema_treedb[]= "\
                         'persistent',                               \n\
                         'required',                                 \n\
                         'fkey',                                     \n\
+                        'enum',                                     \n\
                         'hook',                                     \n\
                         'uuid',                                     \n\
                         'notnull',                                  \n\
