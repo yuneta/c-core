@@ -26,6 +26,7 @@
  ***************************************************************************/
 PRIVATE json_t *get_client_treedb_schema(
     hgobj gobj,
+    const char *treedb_name,
     json_t *jn_client_treedb_schema // not owned
 );
 
@@ -417,12 +418,16 @@ PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     /*-----------------------------------*
      *      Get schema of __system__
      *-----------------------------------*/
-    json_t *jn_client_treedb_schema = get_client_treedb_schema(gobj, _jn_treedb_schema);
+    json_t *jn_client_treedb_schema = get_client_treedb_schema(
+        gobj,
+        treedb_name,
+        _jn_treedb_schema // not owned
+    );
     if(!jn_client_treedb_schema) {
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What treedb_schema?"),
+            json_local_sprintf("treedb_schema not found: '%s'", treedb_name),
             0,
             0,
             kw  // owned
@@ -600,10 +605,12 @@ PRIVATE json_t *cmd_close_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj 
  ***************************************************************************/
 PRIVATE json_t *get_client_treedb_schema(
     hgobj gobj,
+    const char *treedb_name,
     json_t *jn_client_treedb_schema // not owned
 )
 {
-    return 0;
+    // TODO
+    return json_incref(jn_client_treedb_schema);
 }
 
 
