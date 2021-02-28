@@ -1715,6 +1715,7 @@ PRIVATE json_t *mt_node_tree(
             "topic_name",   "%s", topic_name,
             NULL
         );
+        JSON_DECREF(jn_options);
         JSON_DECREF(kw);
         return 0;
     }
@@ -1734,6 +1735,7 @@ PRIVATE json_t *mt_node_tree(
             "kw",           "%j", kw,
             NULL
         );
+        JSON_DECREF(jn_options);
         JSON_DECREF(kw);
         return 0;
     }
@@ -1741,6 +1743,7 @@ PRIVATE json_t *mt_node_tree(
     /*
      *  Return the duplicated full node
      */
+    JSON_DECREF(jn_options);
     JSON_DECREF(kw);
 
     BOOL with_metadata = kw_get_bool(jn_options, "with_metatada", 0, KW_WILD_NUMBER);

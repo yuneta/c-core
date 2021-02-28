@@ -786,17 +786,65 @@ PRIVATE json_t *get_treedb_schema(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    json_t *tree = gobj_node_tree(
+    PRIVATE const char *topic_fieds[] = {
+        "id",
+        "pkey",
+        "system_flag",
+//         "tkey",
+        "topic_version",
+        0
+    };
+
+    json_t *treedb = gobj_node_tree(
         priv->gobj_node_system,
         "treedbs",
-        json_pack("{s:s}", "id", treedb_name),  // 'id' and topic_pkey2s fields
+        json_pack("{s:s}", "id", treedb_name),
         0,
         gobj
     );
+    if(!treedb) {
+        return 0;
+    }
 
-//print_json(tree); // TODO TEST
+    json_t *new_topics = json_array();
+    json_t *topics = kw_get_dict(treedb, "topics", 0, KW_EXTRACT|KW_REQUIRED);
+    json_object_set_new(treedb, "topics", new_topics);
 
-    return tree;
+    const char *topic_name; json_t *topic;
+    json_object_foreach(topics, topic_name, topic) {
+
+        json_t *new_topic = kw_clone_by_path(
+            json_incref(topic), // owned
+            topic_fieds
+        );
+        json_array_append_new(new_topics, new_topic);
+
+        json_t *cols = kw_get_dict(topic, "cols", 0, KW_EXTRACT|KW_REQUIRED);
+        if(!cols) {
+            continue;
+        }
+        json_object_del(topic, "treedbs");
+
+        json_t *new_cols = json_object();
+        const char *col_name; json_t *col;
+        json_object_foreach(cols, col_name, col) {
+            const char *_id_ = kw_get_str(col, "_id_", 0, KW_REQUIRED);
+            if(!_id_) {
+                continue;
+            }
+            json_object_set_new(col, "id", json_string(_id_));
+            json_object_del(col, "_id_");
+            json_object_del(col, "topics");
+            json_object_del(col, "description");
+            json_object_set(new_cols, _id_, col);
+        }
+
+        json_object_set_new(new_topic, "cols", new_cols);
+        json_decref(cols);
+    }
+    json_decref(topics);
+
+    return treedb;
 }
 
 /***************************************************************************
