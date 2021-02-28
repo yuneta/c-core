@@ -149,6 +149,15 @@ static char treedb_system_schema[]= "\
                         'required'                                  \n\
                     ]                                               \n\
                 },                                                  \n\
+                'topic_pkey2s': {                                   \n\
+                    'header': 'Secondary Keys',                     \n\
+                    'fillspace': 10,                                \n\
+                    'type': 'blob',                                 \n\
+                    'flag': [                                       \n\
+                        'writable',                                 \n\
+                        'persistent'                                \n\
+                    ]                                               \n\
+                },                                                  \n\
                 'system_flag': {                                    \n\
                     'header': 'System Flag',                        \n\
                     'fillspace': 10,                                \n\
@@ -218,7 +227,7 @@ static char treedb_system_schema[]= "\
                         'required'                                  \n\
                     ]                                               \n\
                 },                                                  \n\
-                '__id__': {                                         \n\
+                '_id_': {                                           \n\
                     'header': 'Column',                             \n\
                     'fillspace': 10,                                \n\
                     'type': 'string',                               \n\
