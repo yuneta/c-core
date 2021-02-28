@@ -1648,24 +1648,25 @@ PRIVATE json_t *mt_topic_jtree(
         return 0;
     }
 
-    if(!kw_match_simple(
-        node, // NOT owned
-        json_incref(jn_filter) // owned
-    )){
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Root Node not match filter",
-            "treedb_name",  "%s", priv->treedb_name,
-            "topic_name",   "%s", topic_name,
-            NULL
-        );
-        JSON_DECREF(jn_filter);
-        JSON_DECREF(jn_options);
-        JSON_DECREF(kw);
-        return 0;
-    }
+// TODO filter only in child by the moment
+//     if(!kw_match_simple(
+//         node, // NOT owned
+//         json_incref(jn_filter) // owned
+//     )){
+//         log_error(0,
+//             "gobj",         "%s", gobj_full_name(gobj),
+//             "function",     "%s", __FUNCTION__,
+//             "msgset",       "%s", MSGSET_TREEDB_ERROR,
+//             "msg",          "%s", "Root Node not match filter",
+//             "treedb_name",  "%s", priv->treedb_name,
+//             "topic_name",   "%s", topic_name,
+//             NULL
+//         );
+//         JSON_DECREF(jn_filter);
+//         JSON_DECREF(jn_options);
+//         JSON_DECREF(kw);
+//         return 0;
+//     }
 
     /*
      *  Return a tree of child nodes of the hook
@@ -1679,6 +1680,64 @@ PRIVATE json_t *mt_topic_jtree(
         jn_filter,
         jn_options
     );
+}
+
+/***************************************************************************
+ *      Framework Method
+ ***************************************************************************/
+PRIVATE json_t *mt_node_tree(
+    hgobj gobj,
+    const char *topic_name,
+    json_t *kw,         // 'id' and topic_pkey2s fields are used to find the root node
+    hgobj src
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(
+        priv->tranger,
+        priv->treedb_name,
+        topic_name
+    )) {
+        log_warning(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(kw);
+        return 0;
+    }
+
+    /*
+     *  If root node is not specified then the first with no parent is used
+     */
+    json_t *node = fetch_node(gobj, topic_name, kw);
+    if(!node) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Node not found",
+            "treedb_name",  "%s", priv->treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(kw);
+        return 0;
+    }
+
+    /*
+     *  Return the duplicated full node
+     */
+    JSON_DECREF(kw);
+    return json_deep_copy(node);
 }
 
 /***************************************************************************
@@ -3673,7 +3732,7 @@ PRIVATE GCLASS _gclass = {
         mt_node_parents,
         mt_node_childs,
         mt_list_instances,
-        0, //mt_future60,
+        mt_node_tree, //mt_future60,
         mt_topic_size,
         0, //mt_future62,
         0, //mt_future63,

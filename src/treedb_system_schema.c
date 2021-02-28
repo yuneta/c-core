@@ -70,7 +70,7 @@ static char treedb_system_schema[]= "\
     'schema_version': '1',                                          \n\
     'topics': [                                                     \n\
         {                                                           \n\
-            'topic_name': 'treedbs',                                \n\
+            'id': 'treedbs',                                        \n\
             'pkey': 'id',                                           \n\
             'system_flag': 'sf_string_key',                         \n\
             'topic_version': '1',                                   \n\
@@ -87,8 +87,9 @@ static char treedb_system_schema[]= "\
                 'schema_version': {                                 \n\
                     'header': 'Schema Version',                     \n\
                     'fillspace': 10,                                \n\
-                    'type': 'string',                               \n\
+                    'type': 'integer',                              \n\
                     'flag': [                                       \n\
+                        'wild',                                     \n\
                         'writable',                                 \n\
                         'persistent',                               \n\
                         'required'                                  \n\
@@ -115,7 +116,7 @@ static char treedb_system_schema[]= "\
         },                                                          \n\
                                                                     \n\
         {                                                           \n\
-            'topic_name': 'topics',                                 \n\
+            'id': 'topics',                                         \n\
             'pkey': 'id',                                           \n\
             'system_flag': 'sf_string_key',                         \n\
             'topic_version': '1',                                   \n\
@@ -173,8 +174,9 @@ static char treedb_system_schema[]= "\
                 'topic_version': {                                  \n\
                     'header': 'Topic Version',                      \n\
                     'fillspace': 10,                                \n\
-                    'type': 'string',                               \n\
+                    'type': 'integer',                              \n\
                     'flag': [                                       \n\
+                        'wild',                                     \n\
                         'writable',                                 \n\
                         'persistent',                               \n\
                         'required'                                  \n\
@@ -201,16 +203,27 @@ static char treedb_system_schema[]= "\
         },                                                          \n\
                                                                     \n\
         {                                                           \n\
-            'topic_name': 'cols',                                   \n\
+            'id': 'cols',                                           \n\
             'pkey': 'id',                                           \n\
             'system_flag': 'sf_string_key',                         \n\
             'topic_version': '1',                                   \n\
             'cols': {                                               \n\
                 'id': {                                             \n\
-                    'header': 'Column',                             \n\
+                    'header': 'rowid',                              \n\
                     'fillspace': 10,                                \n\
                     'type': 'string',                               \n\
                     'flag': [                                       \n\
+                        'persistent',                               \n\
+                        'rowid',                                    \n\
+                        'required'                                  \n\
+                    ]                                               \n\
+                },                                                  \n\
+                'name': {                                           \n\
+                    'header': 'Name',                               \n\
+                    'fillspace': 10,                                \n\
+                    'type': 'string',                               \n\
+                    'flag': [                                       \n\
+                        'writable',                                 \n\
                         'persistent',                               \n\
                         'required'                                  \n\
                     ]                                               \n\

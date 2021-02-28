@@ -197,7 +197,7 @@ PRIVATE void mt_create(hgobj gobj)
         "rpermission", rpermission
     );
     priv->gobj_tranger_system = gobj_create_service(
-        "tranger_treedb",
+        "tranger_system_schema",
         GCLASS_TRANGER,
         kw_tranger,
         gobj
@@ -457,8 +457,11 @@ PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         "xpermission", xpermission,
         "rpermission", rpermission
     );
-    hgobj gobj_client_tranger = gobj_create(
-        treedb_name,
+    // TODO crea como servicio hasta que se pueda integrar el bottom como propio
+    char tranger_name[NAME_MAX];
+    snprintf(tranger_name, sizeof(tranger_name), "tranger_%s", treedb_name);
+    hgobj gobj_client_tranger = gobj_create_service(
+        tranger_name,
         GCLASS_TRANGER,
         kw_client_tranger,
         gobj
@@ -601,6 +604,201 @@ PRIVATE json_t *cmd_close_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj 
 
 
 /***************************************************************************
+ *  Build new schema, it must not exist
+ ***************************************************************************/
+PRIVATE int build_new_treedb_schema(
+    hgobj gobj,
+    const char *treedb_name,
+    json_t *kw // not owned
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    json_int_t schema_version = kw_get_int(kw, "schema_version", 1, KW_WILD_NUMBER);
+
+    json_t *treedb = gobj_create_node(
+        priv->gobj_node_system,
+        "treedbs",
+        json_pack("{s:s, s:I}",
+            "id", treedb_name,
+            "schema_version", (json_int_t )schema_version
+        ),
+        json_pack("{s:b}", "refs", 1),          // fkey,hook options
+        gobj
+    );
+    if(!treedb) {
+        return -1;
+    }
+
+    json_t *jn_topics = kw_get_list(kw, "topics", 0, 0);
+    int idx; json_t *jn_topic;
+    json_array_foreach(jn_topics, idx, jn_topic) {
+        const char *topic_name = kw_get_str(jn_topic, "id", "", 0);
+        if(empty_string(topic_name)) {
+            topic_name = kw_get_str(jn_topic, "topic_name", "", KW_REQUIRED);
+        }
+        if(empty_string(topic_name)) {
+            continue;
+        }
+        const char *pkey = kw_get_str(jn_topic, "pkey", "id", 0);
+        const char *tkey = kw_get_str(jn_topic, "tkey", "", 0);
+        const char *system_flag = kw_get_str(jn_topic, "system_flag", "sf_string_key", 0);
+        json_int_t topic_version = kw_get_int(jn_topic, "topic_version", 1, KW_WILD_NUMBER);
+
+        json_t *topic = gobj_create_node(
+            priv->gobj_node_system,
+            "topics",
+            json_pack("{s:s, s:s, s:s, s:s, s:I}",
+                "id", topic_name,
+                "pkey", pkey,
+                "system_flag", system_flag,
+                "tkey", tkey,
+                "topic_version", (json_int_t )topic_version
+            ),
+            json_pack("{s:b}", "refs", 1),          // fkey,hook options
+            gobj
+        );
+        if(!topic) {
+            continue;
+        }
+
+        gobj_link_nodes(
+            priv->gobj_node_system,
+            "topics",               // hook
+            "treedbs",              // parent_topic_name,
+            json_incref(treedb),    // parent_record,owned
+            "topics",               // child_topic_name,
+            json_incref(topic),     // child_record,owned
+            gobj
+        );
+
+
+// treedb = gobj_get_node(
+//     priv->gobj_node_system,
+//     "treedbs",
+//     treedb,
+//     json_pack("{s:b}", "refs", 1),          // fkey,hook options
+//     gobj
+// );
+//
+// topic = gobj_get_node(
+//     priv->gobj_node_system,
+//     "topics",
+//     topic,
+//     json_pack("{s:b}", "refs", 1),          // fkey,hook options
+//     gobj
+// );
+//
+// print_json(treedb);
+// print_json(topic);
+
+        json_t *jn_cols = kwid_new_list("", jn_topic, "cols");
+        if(!jn_cols) {
+            json_decref(topic);
+            continue;
+        }
+
+        int idx2; json_t *jn_col;
+        json_array_foreach(jn_cols, idx2, jn_col) {
+            const char *col_name = kw_get_str(jn_col, "id", "", KW_REQUIRED);
+            if(empty_string(col_name)) {
+                continue;
+            }
+            const char *header = kw_get_str(jn_col, "header", col_name, 0);
+            json_int_t fillspace = kw_get_int(jn_col, "fillspace", 10, 0);
+            const char *type = kw_get_str(jn_col, "type", "", KW_REQUIRED);
+            if(empty_string(type)) {
+                continue;
+            }
+            json_t *flag_ = kw_get_list(jn_col, "flag", json_array(), 0);
+            json_t *default_ = kw_get_dict_value(jn_col, "default", 0, 0);
+            const char *description = kw_get_str(jn_col, "description", 0, 0);
+            json_t *properties_ = kw_get_dict_value(jn_col, "properties", 0, 0);
+
+            json_t *kw_col = json_pack("{s:s, s:s, s:I, s:s, s:O}",
+                "name", col_name,
+                "header", header,
+                "fillspace", fillspace,
+                "type", type,
+                "flag", flag_
+            );
+            if(default_) {
+                json_object_set(kw_col, "default", default_);
+            }
+            if(description) {
+                json_object_set_new(kw_col, "description", json_string(description));
+            }
+            if(properties_) {
+                json_object_set(kw_col, "properties", properties_);
+            }
+
+            json_t *col = gobj_create_node(
+                priv->gobj_node_system,
+                "cols",
+                kw_col,
+                json_pack("{s:b}", "refs", 1),  // fkey,hook options
+                gobj
+            );
+            if(!col) {
+                continue;
+            }
+
+            gobj_link_nodes(
+                priv->gobj_node_system,
+                "cols",                 // hook
+                "topics",               // parent_topic_name,
+                json_incref(topic),     // parent_record,owned
+                "cols",                 // child_topic_name,
+                json_incref(col),       // child_record,owned
+                gobj
+            );
+
+            /*
+             *  free
+             */
+            json_decref(col);
+        }
+
+        /*
+         *  free
+         */
+        json_decref(jn_cols);
+        json_decref(topic);
+    }
+
+// print_json(treedb); // TODO TEST
+
+    /*
+     *  free
+     */
+    json_decref(treedb);
+
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *get_treedb_schema(
+    hgobj gobj,
+    const char *treedb_name
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    json_t *tree = gobj_node_tree(
+        priv->gobj_node_system,
+        "treedbs",
+        json_pack("{s:s}", "id", treedb_name),  // 'id' and topic_pkey2s fields
+        gobj
+    );
+
+//print_json(tree); // TODO TEST
+
+    return tree;
+}
+
+/***************************************************************************
  *
  ***************************************************************************/
 PRIVATE json_t *get_client_treedb_schema(
@@ -609,8 +807,32 @@ PRIVATE json_t *get_client_treedb_schema(
     json_t *jn_client_treedb_schema // not owned
 )
 {
-    // TODO
-    return json_incref(jn_client_treedb_schema);
+    /*
+     *  Get the current schema
+     */
+    json_t *client_treedb_schema = get_treedb_schema(gobj, treedb_name);
+    if(client_treedb_schema) {
+        return client_treedb_schema;
+    } else {
+        /*
+         *  Build new schema
+         */
+        build_new_treedb_schema(
+            gobj,
+            treedb_name,
+            jn_client_treedb_schema
+        );
+
+        client_treedb_schema = get_treedb_schema(gobj, treedb_name);
+        if(client_treedb_schema) {
+            return client_treedb_schema;
+        }
+
+        /*
+         *  All fails, return input parameter
+         */
+        return json_incref(jn_client_treedb_schema);
+    }
 }
 
 
