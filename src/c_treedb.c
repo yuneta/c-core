@@ -716,7 +716,7 @@ PRIVATE int build_new_treedb_schema(
             json_t *properties_ = kw_get_dict_value(jn_col, "properties", 0, 0);
 
             json_t *kw_col = json_pack("{s:s, s:s, s:I, s:s, s:O}",
-                "name", col_name,
+                "__id__", col_name,
                 "header", header,
                 "fillspace", fillspace,
                 "type", type,
@@ -790,6 +790,7 @@ PRIVATE json_t *get_treedb_schema(
         priv->gobj_node_system,
         "treedbs",
         json_pack("{s:s}", "id", treedb_name),  // 'id' and topic_pkey2s fields
+        0,
         gobj
     );
 
@@ -825,6 +826,11 @@ PRIVATE json_t *get_client_treedb_schema(
 
         client_treedb_schema = get_treedb_schema(gobj, treedb_name);
         if(client_treedb_schema) {
+
+
+print_json2("builded", client_treedb_schema);
+print_json2("native", jn_client_treedb_schema);
+
             return client_treedb_schema;
         }
 

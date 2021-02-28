@@ -222,7 +222,7 @@ PRIVATE sdata_desc_t pm_export_db[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "filename",     0,              0,          "Filename to save db"),
 SDATAPM (ASN_BOOLEAN,   "overwrite",    0,              0,          "Overwrite the file if it exits"),
-SDATAPM (ASN_BOOLEAN,   "with-metatada",0,              0,          "Write metadata"),
+SDATAPM (ASN_BOOLEAN,   "with_metatada",0,              0,          "Write metadata"),
 SDATA_END()
 };
 
@@ -1451,6 +1451,7 @@ PRIVATE json_t *mt_node_parents(
             "msg",          "%s", "Node not found",
             "treedb_name",  "%s", priv->treedb_name,
             "topic_name",   "%s", topic_name,
+            "kw",           "%j", kw,
             NULL
         );
         JSON_DECREF(jn_options);
@@ -1541,6 +1542,7 @@ PRIVATE json_t *mt_node_childs(
             "msg",          "%s", "Node not found",
             "treedb_name",  "%s", priv->treedb_name,
             "topic_name",   "%s", topic_name,
+            "kw",           "%j", kw,
             NULL
         );
         JSON_DECREF(jn_filter);
@@ -1640,6 +1642,7 @@ PRIVATE json_t *mt_topic_jtree(
             "msg",          "%s", "Node not found",
             "treedb_name",  "%s", priv->treedb_name,
             "topic_name",   "%s", topic_name,
+            "kw",           "%j", kw,
             NULL
         );
         JSON_DECREF(jn_filter);
@@ -1689,6 +1692,7 @@ PRIVATE json_t *mt_node_tree(
     hgobj gobj,
     const char *topic_name,
     json_t *kw,         // 'id' and topic_pkey2s fields are used to find the root node
+    json_t *jn_options,
     hgobj src
 )
 {
@@ -1727,6 +1731,7 @@ PRIVATE json_t *mt_node_tree(
             "msg",          "%s", "Node not found",
             "treedb_name",  "%s", priv->treedb_name,
             "topic_name",   "%s", topic_name,
+            "kw",           "%j", kw,
             NULL
         );
         JSON_DECREF(kw);
@@ -1737,7 +1742,14 @@ PRIVATE json_t *mt_node_tree(
      *  Return the duplicated full node
      */
     JSON_DECREF(kw);
-    return json_deep_copy(node);
+
+    BOOL with_metadata = kw_get_bool(jn_options, "with_metatada", 0, KW_WILD_NUMBER);
+
+    if(with_metadata) {
+        return json_deep_copy(node);
+    } else {
+        return kw_filter_metadata(node);
+    }
 }
 
 /***************************************************************************
@@ -3128,7 +3140,7 @@ PRIVATE json_t *cmd_export_db(hgobj gobj, const char *event, json_t *kw, hgobj s
 
     const char *filename = kw_get_str(kw, "filename", "", 0);
     BOOL overwrite = kw_get_bool(kw, "overwrite", 0, KW_WILD_NUMBER);
-    BOOL with_metadata = kw_get_bool(kw, "with-metatada", 0, KW_WILD_NUMBER);
+    BOOL with_metadata = kw_get_bool(kw, "with_metatada", 0, KW_WILD_NUMBER);
 
     char path[PATH_MAX];
     char name[NAME_MAX];

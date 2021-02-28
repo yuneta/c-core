@@ -218,8 +218,8 @@ static char treedb_system_schema[]= "\
                         'required'                                  \n\
                     ]                                               \n\
                 },                                                  \n\
-                'name': {                                           \n\
-                    'header': 'Name',                               \n\
+                '__id__': {                                         \n\
+                    'header': 'Column',                             \n\
                     'fillspace': 10,                                \n\
                     'type': 'string',                               \n\
                     'flag': [                                       \n\
