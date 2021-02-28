@@ -32,8 +32,9 @@
             │               treedbs [↖] │ ──┘n
             │                           │
             │* pkey                     │
+            │  topic_pkey2s             │
             │* system_flag              │
-            │* tkey                     │
+            │  tkey                     │
             │* topic_version            │
             │                           │
             │                           │
@@ -54,6 +55,7 @@
             │  fillspace                │
             │* type                     │
             │  flag                     │
+            │  hook                     │
             │  default                  │
             │  description              │
             │  properties               │
@@ -176,8 +178,7 @@ static char treedb_system_schema[]= "\
                     'default': '',                                  \n\
                     'flag': [                                       \n\
                         'writable',                                 \n\
-                        'persistent',                               \n\
-                        'required'                                  \n\
+                        'persistent'                                \n\
                     ]                                               \n\
                 },                                                  \n\
                 'topic_version': {                                  \n\
@@ -318,6 +319,15 @@ static char treedb_system_schema[]= "\
                         'enum',                                     \n\
                         'persistent',                               \n\
                         'writable'                                  \n\
+                    ]                                               \n\
+                },                                                  \n\
+                'hook': {                                           \n\
+                    'header': 'Hook',                               \n\
+                    'fillspace': 8,                                 \n\
+                    'type': 'blob',                                 \n\
+                    'flag': [                                       \n\
+                        'writable',                                 \n\
+                        'persistent'                                \n\
                     ]                                               \n\
                 },                                                  \n\
                 'default': {                                        \n\

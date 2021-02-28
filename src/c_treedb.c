@@ -644,6 +644,7 @@ PRIVATE int build_new_treedb_schema(
         const char *tkey = kw_get_str(jn_topic, "tkey", "", 0);
         const char *system_flag = kw_get_str(jn_topic, "system_flag", "sf_string_key", 0);
         json_int_t topic_version = kw_get_int(jn_topic, "topic_version", 1, KW_WILD_NUMBER);
+        json_t *topic_pkey2s_ = kw_get_dict_value(jn_topic, "topic_pkey2s", 0, 0);
 
         json_t *topic = gobj_create_node(
             priv->gobj_node_system,
@@ -661,6 +662,9 @@ PRIVATE int build_new_treedb_schema(
         if(!topic) {
             continue;
         }
+        if(topic_pkey2s_) {
+            json_object_set(topic, "topic_pkey2s", topic_pkey2s_);
+        }
 
         gobj_link_nodes(
             priv->gobj_node_system,
@@ -671,26 +675,6 @@ PRIVATE int build_new_treedb_schema(
             json_incref(topic),     // child_record,owned
             gobj
         );
-
-
-// treedb = gobj_get_node(
-//     priv->gobj_node_system,
-//     "treedbs",
-//     treedb,
-//     json_pack("{s:b}", "refs", 1),          // fkey,hook options
-//     gobj
-// );
-//
-// topic = gobj_get_node(
-//     priv->gobj_node_system,
-//     "topics",
-//     topic,
-//     json_pack("{s:b}", "refs", 1),          // fkey,hook options
-//     gobj
-// );
-//
-// print_json(treedb);
-// print_json(topic);
 
         json_t *jn_cols = kwid_new_list("", jn_topic, "cols");
         if(!jn_cols) {
@@ -711,6 +695,7 @@ PRIVATE int build_new_treedb_schema(
                 continue;
             }
             json_t *flag_ = kw_get_list(jn_col, "flag", json_array(), 0);
+            json_t *hook_ = kw_get_dict_value(jn_col, "hook", 0, 0);
             json_t *default_ = kw_get_dict_value(jn_col, "default", 0, 0);
             const char *description = kw_get_str(jn_col, "description", 0, 0);
             json_t *properties_ = kw_get_dict_value(jn_col, "properties", 0, 0);
@@ -722,6 +707,9 @@ PRIVATE int build_new_treedb_schema(
                 "type", type,
                 "flag", flag_
             );
+            if(hook_) {
+                json_object_set(kw_col, "hook", hook_);
+            }
             if(default_) {
                 json_object_set(kw_col, "default", default_);
             }
@@ -766,8 +754,6 @@ PRIVATE int build_new_treedb_schema(
         json_decref(topic);
     }
 
-// print_json(treedb); // TODO TEST
-
     /*
      *  free
      */
@@ -786,15 +772,6 @@ PRIVATE json_t *get_treedb_schema(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    PRIVATE const char *topic_fieds[] = {
-        "id",
-        "pkey",
-        "system_flag",
-//         "tkey",
-        "topic_version",
-        0
-    };
-
     json_t *treedb = gobj_node_tree(
         priv->gobj_node_system,
         "treedbs",
@@ -806,19 +783,9 @@ PRIVATE json_t *get_treedb_schema(
         return 0;
     }
 
-    json_t *new_topics = json_array();
-    json_t *topics = kw_get_dict(treedb, "topics", 0, KW_EXTRACT|KW_REQUIRED);
-    json_object_set_new(treedb, "topics", new_topics);
-
+    json_t *topics = kw_get_dict(treedb, "topics", 0, 0);
     const char *topic_name; json_t *topic;
     json_object_foreach(topics, topic_name, topic) {
-
-        json_t *new_topic = kw_clone_by_path(
-            json_incref(topic), // owned
-            topic_fieds
-        );
-        json_array_append_new(new_topics, new_topic);
-
         json_t *cols = kw_get_dict(topic, "cols", 0, KW_EXTRACT|KW_REQUIRED);
         if(!cols) {
             continue;
@@ -835,14 +802,12 @@ PRIVATE json_t *get_treedb_schema(
             json_object_set_new(col, "id", json_string(_id_));
             json_object_del(col, "_id_");
             json_object_del(col, "topics");
-            json_object_del(col, "description");
             json_object_set(new_cols, _id_, col);
         }
 
-        json_object_set_new(new_topic, "cols", new_cols);
+        json_object_set_new(topic, "cols", new_cols);
         json_decref(cols);
     }
-    json_decref(topics);
 
     return treedb;
 }
@@ -874,10 +839,6 @@ PRIVATE json_t *get_client_treedb_schema(
 
         client_treedb_schema = get_treedb_schema(gobj, treedb_name);
         if(client_treedb_schema) {
-
-print_json2("builded", client_treedb_schema);
-print_json2("native", jn_client_treedb_schema);
-
             return client_treedb_schema;
         }
 
