@@ -46,7 +46,8 @@
                                             │
                        cols                 │
             ┌───────────────────────────┐   │
-            │* id                       │   │
+            │  id (rowid)               │   │
+            │* value (2)                │   │
             │                           │   │
             │                topics [↖] │ ──┘n
             │                           │
@@ -151,7 +152,7 @@ static char treedb_system_schema[]= "\
                         'required'                                  \n\
                     ]                                               \n\
                 },                                                  \n\
-                'pkey2s': {                                   \n\
+                'pkey2s': {                                         \n\
                     'header': 'Secondary Keys',                     \n\
                     'fillspace': 10,                                \n\
                     'type': 'blob',                                 \n\
@@ -217,19 +218,18 @@ static char treedb_system_schema[]= "\
             'pkey': 'id',                                           \n\
             'system_flag': 'sf_string_key',                         \n\
             'topic_version': '1',                                   \n\
-            'pkey2s': '_id_',                                 \n\
+            'pkey2s': 'value',                                      \n\
             'cols': {                                               \n\
                 'id': {                                             \n\
                     'header': 'rowid',                              \n\
-                    'fillspace': 10,                                \n\
+                    'fillspace': 4,                                 \n\
                     'type': 'string',                               \n\
                     'flag': [                                       \n\
                         'persistent',                               \n\
-                        'rowid',                                    \n\
-                        'required'                                  \n\
+                        'rowid'                                     \n\
                     ]                                               \n\
                 },                                                  \n\
-                '_id_': {                                           \n\
+                'value': {                                          \n\
                     'header': 'Column',                             \n\
                     'fillspace': 10,                                \n\
                     'type': 'string',                               \n\

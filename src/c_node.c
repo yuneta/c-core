@@ -460,7 +460,6 @@ PRIVATE int mt_stop(hgobj gobj)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     treedb_close_db(priv->tranger, priv->treedb_name);
-    priv->tranger = 0;
 
     return 0;
 }
@@ -3592,7 +3591,10 @@ PRIVATE int export_treedb(hgobj gobj, const char *path, BOOL with_metadata, hgob
             gobj,
             topic_name,
             0,
-            json_pack("{s:b}", "with_metadata", with_metadata),
+            json_pack("{s:b, s:b}",
+                "with_metadata", with_metadata,
+                "without_rowid", true
+            ),
             src
         );
         json_object_set_new(jn_db, topic_name, nodes);

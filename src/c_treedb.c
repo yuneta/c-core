@@ -869,6 +869,9 @@ PRIVATE json_t *get_client_treedb_schema(
     json_t *jn_client_treedb_schema // not owned
 )
 {
+return json_incref(jn_client_treedb_schema); // TODO déjalo hasta que pruebe el _id_
+
+
     /*
      *  Get the current schema
      */
