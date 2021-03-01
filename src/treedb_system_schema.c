@@ -217,6 +217,7 @@ static char treedb_system_schema[]= "\
             'pkey': 'id',                                           \n\
             'system_flag': 'sf_string_key',                         \n\
             'topic_version': '1',                                   \n\
+            'topic_pkey2s': '_id_',                                 \n\
             'cols': {                                               \n\
                 'id': {                                             \n\
                     'header': 'rowid',                              \n\

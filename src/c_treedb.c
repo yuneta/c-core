@@ -720,7 +720,29 @@ PRIVATE int build_new_treedb_schema(
                 json_object_set(kw_col, "properties", properties_);
             }
 
-            json_t *col = gobj_create_node(
+            // TODO comprueba que no existe la row, solo tienes la pkey2!
+            json_t *col;
+//             col = gobj_get_node(
+//                 priv->gobj_node_system,
+//                 "cols",
+//                 kw_col,
+//                 json_pack("{s:b}", "refs", 1),  // fkey,hook options
+//                 gobj
+//             );
+//             if(col) {
+//                 log_error(0,
+//                     "gobj",         "%s", gobj_full_name(gobj),
+//                     "function",     "%s", __FUNCTION__,
+//                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
+//                     "msg",          "%s", "Column alreade defined",
+//                     "topic_name",   "%s", topic_name,
+//                     NULL
+//                 );
+//                 json_decref(col);
+//                 continue;
+//             }
+
+            col = gobj_create_node(
                 priv->gobj_node_system,
                 "cols",
                 kw_col,
@@ -790,22 +812,48 @@ PRIVATE json_t *get_treedb_schema(
         if(!cols) {
             continue;
         }
+        /*
+         *  TODO delete fkey's
+         */
         json_object_del(topic, "treedbs");
 
+        /*
+         *  HACK It's a topic with rowid and pkey2
+         *  TODO en este tipo de tablas en el frontend
+         *      tienen que salvar sin "id" (porque es rowid)
+         *
+         */
         json_t *new_cols = json_object();
         const char *col_name; json_t *col;
         json_object_foreach(cols, col_name, col) {
+            /*
+             *  TODO get pkey2 and interchange pkey by pkey2
+             *
+             *  HACK The id of a rowid record is his pkey2
+             */
             const char *_id_ = kw_get_str(col, "_id_", 0, KW_REQUIRED);
             if(!_id_) {
                 continue;
             }
             json_object_set_new(col, "id", json_string(_id_));
             json_object_del(col, "_id_");
+
+            /*
+             *  TODO delete fkey's
+             */
             json_object_del(col, "topics");
+
+            /*
+             *  Add new column, by pkey2
+             */
             json_object_set(new_cols, _id_, col);
         }
 
+        /*
+         *  Set new checked cols
+         */
         json_object_set_new(topic, "cols", new_cols);
+
         json_decref(cols);
     }
 
