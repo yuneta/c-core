@@ -44,6 +44,7 @@ PRIVATE int export_treedb(
     hgobj gobj,
     const char *path,
     BOOL with_metadata,
+    BOOL without_rowid,
     hgobj src
 );
 
@@ -222,7 +223,8 @@ PRIVATE sdata_desc_t pm_export_db[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "filename",     0,              0,          "Filename to save db"),
 SDATAPM (ASN_BOOLEAN,   "overwrite",    0,              0,          "Overwrite the file if it exits"),
-SDATAPM (ASN_BOOLEAN,   "with_metatada",0,              0,          "Write metadata"),
+SDATAPM (ASN_BOOLEAN,   "with_metadata",0,              0,          "Write metadata"),
+SDATAPM (ASN_BOOLEAN,   "without_rowid",0,              "1",        "Without id in records with rowid id"),
 SDATA_END()
 };
 
@@ -1745,7 +1747,7 @@ PRIVATE json_t *mt_node_tree(
     JSON_DECREF(jn_options);
     JSON_DECREF(kw);
 
-    BOOL with_metadata = kw_get_bool(jn_options, "with_metatada", 0, KW_WILD_NUMBER);
+    BOOL with_metadata = kw_get_bool(jn_options, "with_metadata", 0, KW_WILD_NUMBER);
 
     if(with_metadata) {
         return json_deep_copy(node);
@@ -3142,7 +3144,8 @@ PRIVATE json_t *cmd_export_db(hgobj gobj, const char *event, json_t *kw, hgobj s
 
     const char *filename = kw_get_str(kw, "filename", "", 0);
     BOOL overwrite = kw_get_bool(kw, "overwrite", 0, KW_WILD_NUMBER);
-    BOOL with_metadata = kw_get_bool(kw, "with_metatada", 0, KW_WILD_NUMBER);
+    BOOL with_metadata = kw_get_bool(kw, "with_metadata", 0, KW_WILD_NUMBER);
+    BOOL without_rowid = kw_get_bool(kw, "without_rowid", 0, KW_WILD_NUMBER);
 
     char path[PATH_MAX];
     char name[NAME_MAX];
@@ -3186,7 +3189,7 @@ PRIVATE json_t *cmd_export_db(hgobj gobj, const char *event, json_t *kw, hgobj s
         }
     }
 
-    int ret = export_treedb(gobj, path, with_metadata, src);
+    int ret = export_treedb(gobj, path, with_metadata, without_rowid, src);
 
     /*
      *  Inform
@@ -3559,7 +3562,13 @@ PRIVATE json_t *fetch_node(
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int export_treedb(hgobj gobj, const char *path, BOOL with_metadata, hgobj src)
+PRIVATE int export_treedb(
+    hgobj gobj,
+    const char *path,
+    BOOL with_metadata,
+    BOOL without_rowid,
+    hgobj src
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
@@ -3593,7 +3602,7 @@ PRIVATE int export_treedb(hgobj gobj, const char *path, BOOL with_metadata, hgob
             0,
             json_pack("{s:b, s:b}",
                 "with_metadata", with_metadata,
-                "without_rowid", true
+                "without_rowid", without_rowid
             ),
             src
         );
