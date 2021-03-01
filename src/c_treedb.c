@@ -644,7 +644,7 @@ PRIVATE int build_new_treedb_schema(
         const char *tkey = kw_get_str(jn_topic, "tkey", "", 0);
         const char *system_flag = kw_get_str(jn_topic, "system_flag", "sf_string_key", 0);
         json_int_t topic_version = kw_get_int(jn_topic, "topic_version", 1, KW_WILD_NUMBER);
-        json_t *topic_pkey2s_ = kw_get_dict_value(jn_topic, "topic_pkey2s", 0, 0);
+        json_t *topic_pkey2s_ = kw_get_dict_value(jn_topic, "pkey2s", 0, 0);
 
         json_t *topic = gobj_create_node(
             priv->gobj_node_system,
@@ -663,7 +663,7 @@ PRIVATE int build_new_treedb_schema(
             continue;
         }
         if(topic_pkey2s_) {
-            json_object_set(topic, "topic_pkey2s", topic_pkey2s_);
+            json_object_set(topic, "pkey2s", topic_pkey2s_);
         }
 
         gobj_link_nodes(

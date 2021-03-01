@@ -37,7 +37,7 @@ PRIVATE int treedb_callback(
 PRIVATE json_t *fetch_node(  // WARNING Return is NOT YOURS, pure node
     hgobj gobj,
     const char *topic_name,
-    json_t *kw  // NOT owned, 'id' and topic_pkey2s fields are used to find the node
+    json_t *kw  // NOT owned, 'id' and pkey2s fields are used to find the node
 );
 
 PRIVATE int export_treedb(
@@ -766,7 +766,7 @@ PRIVATE size_t mt_topic_size(
 PRIVATE json_t *mt_update_node( // Return is YOURS
     hgobj gobj,
     const char *topic_name,
-    json_t *kw,         // 'id' and topic_pkey2s fields are used to find the node
+    json_t *kw,         // 'id' and pkey2s fields are used to find the node
     json_t *jn_options, // "create" "autolink" "volatil" fkey,hook options
     hgobj src
 )
@@ -865,7 +865,7 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
 PRIVATE int mt_delete_node(
     hgobj gobj,
     const char *topic_name,
-    json_t *kw,         // 'id' and topic_pkey2s fields are used to find the node
+    json_t *kw,         // 'id' and pkey2s fields are used to find the node
     json_t *jn_options, // "force"
     hgobj src
 )
@@ -1203,7 +1203,7 @@ PRIVATE int mt_unlink_nodes(
 PRIVATE json_t *mt_get_node(
     hgobj gobj,
     const char *topic_name,
-    json_t *kw,         // id' and topic_pkey2s fields are used to find the node
+    json_t *kw,         // id' and pkey2s fields are used to find the node
     json_t *jn_options, // fkey,hook options
     hgobj src
 )
@@ -1412,7 +1412,7 @@ PRIVATE json_t *mt_list_instances(
 PRIVATE json_t *mt_node_parents(
     hgobj gobj,
     const char *topic_name,
-    json_t *kw,         // 'id' and topic_pkey2s fields are used to find the node
+    json_t *kw,         // 'id' and pkey2s fields are used to find the node
     const char *link,   // fkey
     json_t *jn_options, // owned , fkey options
     hgobj src
@@ -1501,7 +1501,7 @@ PRIVATE json_t *mt_node_parents(
 PRIVATE json_t *mt_node_childs(
     hgobj gobj,
     const char *topic_name,
-    json_t *kw,         // 'id' and topic_pkey2s fields are used to find the node
+    json_t *kw,         // 'id' and pkey2s fields are used to find the node
     const char *hook,
     json_t *jn_filter,  // filter to childs tree
     json_t *jn_options, // fkey,hook options, "recursive"
@@ -1599,7 +1599,7 @@ PRIVATE json_t *mt_topic_jtree(
     const char *topic_name,
     const char *hook,   // hook to build the hierarchical tree
     const char *rename_hook, // change the hook name in the tree response
-    json_t *kw,         // 'id' and topic_pkey2s fields are used to find the root node
+    json_t *kw,         // 'id' and pkey2s fields are used to find the root node
     json_t *jn_filter,  // filter to match records
     json_t *jn_options, // fkey,hook options, "webix", "expand_childs"
     hgobj src
@@ -1691,7 +1691,7 @@ PRIVATE json_t *mt_topic_jtree(
 PRIVATE json_t *mt_node_tree(
     hgobj gobj,
     const char *topic_name,
-    json_t *kw,         // 'id' and topic_pkey2s fields are used to find the root node
+    json_t *kw,         // 'id' and pkey2s fields are used to find the root node
     json_t *jn_options,
     hgobj src
 )
@@ -3489,7 +3489,7 @@ PRIVATE int treedb_callback(
 PRIVATE json_t *fetch_node(
     hgobj gobj,
     const char *topic_name,
-    json_t *kw  // NOT owned, 'id' and topic_pkey2s fields are used to find the node
+    json_t *kw  // NOT owned, 'id' and pkey2s fields are used to find the node
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
