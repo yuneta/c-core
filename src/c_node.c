@@ -1750,7 +1750,7 @@ PRIVATE json_t *mt_node_tree(
     BOOL with_metadata = kw_get_bool(jn_options, "with_metadata", 0, KW_WILD_NUMBER);
 
     if(with_metadata) {
-        return json_incref(node);
+        return json_deep_copy(node);
     } else {
         return kw_filter_metadata(json_incref(node));
     }
