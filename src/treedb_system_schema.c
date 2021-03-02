@@ -32,7 +32,7 @@
             │               treedbs [↖] │ ──┘n
             │                           │
             │* pkey                     │
-            │  pkey2s             │
+            │  pkey2s                   │
             │* system_flag              │
             │  tkey                     │
             │* topic_version            │
@@ -234,7 +234,6 @@ static char treedb_system_schema[]= "\
                     'fillspace': 10,                                \n\
                     'type': 'string',                               \n\
                     'flag': [                                       \n\
-                        'writable',                                 \n\
                         'persistent',                               \n\
                         'required'                                  \n\
                     ]                                               \n\
