@@ -835,7 +835,7 @@ PRIVATE int build_new_treedb_schema(
             json_t *properties_ = kw_get_dict_value(jn_col, "properties", 0, 0);
 
             json_t *kw_col = json_pack("{s:s, s:s, s:I, s:s, s:O}",
-                "_id_", col_name,
+                "value", col_name,
                 "header", header,
                 "fillspace", (json_int_t)fillspace,
                 "type", type,
@@ -965,12 +965,10 @@ PRIVATE json_t *get_treedb_schema(
              *
              *  HACK The id of a rowid record is his pkey2
              */
-            const char *_id_ = kw_get_str(col, "_id_", 0, KW_REQUIRED);
-            if(!_id_) {
+            const char *value = kw_get_str(col, "value", 0, KW_REQUIRED);
+            if(empty_string(value)) {
                 continue;
             }
-            json_object_set_new(col, "id", json_string(_id_));
-            json_object_del(col, "_id_");
 
             /*
              *  TODO delete fkey's
@@ -980,7 +978,9 @@ PRIVATE json_t *get_treedb_schema(
             /*
              *  Add new column, by pkey2
              */
-            json_object_set(new_cols, _id_, col);
+            json_object_set(new_cols, value, col);
+            json_object_set_new(col, "id", json_string(value));
+            json_object_del(col, "value");
         }
 
         /*

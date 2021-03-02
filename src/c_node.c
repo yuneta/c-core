@@ -224,7 +224,7 @@ PRIVATE sdata_desc_t pm_export_db[] = {
 SDATAPM (ASN_OCTET_STR, "filename",     0,              0,          "Filename to save db"),
 SDATAPM (ASN_BOOLEAN,   "overwrite",    0,              0,          "Overwrite the file if it exits"),
 SDATAPM (ASN_BOOLEAN,   "with_metadata",0,              0,          "Write metadata"),
-SDATAPM (ASN_BOOLEAN,   "without_rowid",0,              "1",        "Without id in records with rowid id"),
+SDATAPM (ASN_BOOLEAN,   "without_rowid",0,              "0",        "Without id in records with rowid id"),
 SDATA_END()
 };
 
@@ -3596,6 +3596,9 @@ PRIVATE int export_treedb(
     int idx; json_t *jn_topic_name;
     json_array_foreach(topics_list, idx, jn_topic_name) {
         const char *topic_name = json_string_value(jn_topic_name);
+        if(strcmp(topic_name, "__snaps__")==0) {
+            continue;
+        }
         json_t *nodes = gobj_list_nodes( // Return MUST be decref
             gobj,
             topic_name,
