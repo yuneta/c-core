@@ -38,6 +38,9 @@ PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_close_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_create_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+
 
 PRIVATE sdata_desc_t pm_help[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
@@ -65,6 +68,24 @@ SDATAPM (ASN_OCTET_STR, "treedb_name",  0,              0,          "Treedb name
 SDATA_END()
 };
 
+PRIVATE sdata_desc_t pm_create_topic[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "treedb_name",  0,              0,          "Treedb name"),
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+
+SDATAPM (ASN_INTEGER,   "topic_version",0,              "1",        "topic version"),
+SDATAPM (ASN_OCTET_STR, "topic_tkey",   0,              "",         "Time key"),
+SDATAPM (ASN_JSON,      "pkey2s",       0,              0,          "Secondary keys: string or dict of string or [strings]"),
+SDATAPM (ASN_JSON,      "cols",         0,              0,          "Columns"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_delete_topic[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "treedb_name",  0,              0,          "Treedb name"),
+SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
+SDATA_END()
+};
+
 PRIVATE const char *a_help[] = {"h", "?", 0};
 
 PRIVATE sdata_desc_t command_table[] = {
@@ -75,7 +96,8 @@ SDATACM (ASN_SCHEMA,    "authzs",           0,          pm_authzs,      cmd_auth
 /*-CMD2---type----------name------------flag------------ali-items-----------json_fn-------------description--*/
 SDATACM2 (ASN_SCHEMA,   "open-treedb",  SDF_AUTHZ_X,    0, pm_open_treedb,  cmd_open_treedb, "Open treedb"),
 SDATACM2 (ASN_SCHEMA,   "close-treedb", SDF_AUTHZ_X,    0, pm_close_treedb, cmd_close_treedb, "Close treedb"),
-
+SDATACM2 (ASN_SCHEMA,   "create-topic", SDF_AUTHZ_X,    0, pm_create_topic, cmd_create_topic, "Create new topic"),
+SDATACM2 (ASN_SCHEMA,   "delete-topic", SDF_AUTHZ_X,    0, pm_delete_topic, cmd_delete_topic, "Delete topic"),
 SDATA_END()
 };
 
@@ -372,7 +394,7 @@ PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     const char *filename_mask = kw_get_str(kw, "filename_mask", "", 0);
-    int exit_on_error = kw_get_int(kw, "exit_on_error", 0, 0);
+    int exit_on_error = kw_get_int(kw, "exit_on_error", 0, KW_WILD_NUMBER);
     const char *treedb_name = kw_get_str(kw, "treedb_name", "", 0);
     json_t *_jn_treedb_schema = kw_get_dict(kw, "treedb_schema", 0, 0);
 
@@ -587,6 +609,118 @@ PRIVATE json_t *cmd_close_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj 
     return msg_iev_build_webix(gobj,
         0,
         json_local_sprintf("Treedb closed!"),
+        0,
+        0,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_create_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    const char *treedb_name = kw_get_str(kw, "treedb_name", "", 0);
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+    int topic_version = kw_get_int(kw, "topic_version", 1, KW_WILD_NUMBER);
+    const char *topic_tkey = kw_get_str(kw, "topic_tkey", "", 0);
+    json_t *pkey2s_ = kw_get_dict_value(kw, "pkey2s", 0, 0);
+    json_t *cols_ = kw_get_dict_value(kw, "cols", 0, 0);
+
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    const char *permission = "create-delete";
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
+        return msg_iev_build_webix(
+            gobj,
+            -403,
+            json_local_sprintf("No permission to '%s'", permission),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    hgobj gobj_client_node = gobj_find_service(treedb_name, FALSE);
+    if(!gobj_client_node) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("Treedb_name not found: '%s'", treedb_name),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *tranger = gobj_read_pointer_attr(gobj_client_node, "tranger");
+
+    json_t *topic = treedb_create_topic( // WARNING Return is NOT YOURS
+        tranger,
+        treedb_name,
+        topic_name,
+        topic_version,
+        topic_tkey,
+        json_incref(pkey2s_), // owned, string or dict of string | [strings]
+        json_incref(cols_), // owned
+        0,          // snap_tag
+        FALSE       // create_schema
+    );
+
+    return msg_iev_build_webix(gobj,
+        topic?0:-1,
+        topic?json_local_sprintf("Topic created!"):json_local_sprintf("Cannot create new topic"),
+        0,
+        0,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    const char *treedb_name = kw_get_str(kw, "treedb_name", "", 0);
+    const char *topic_name = kw_get_str(kw, "topic_name", "", 0);
+
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    const char *permission = "create-delete";
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
+        return msg_iev_build_webix(
+            gobj,
+            -403,
+            json_local_sprintf("No permission to '%s'", permission),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    hgobj gobj_client_node = gobj_find_service(treedb_name, FALSE);
+    if(!gobj_client_node) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("Treedb_name not found: '%s'", treedb_name),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    int ret = treedb_delete_topic(
+        gobj_read_pointer_attr(gobj_client_node, "tranger"),
+        treedb_name,
+        topic_name
+    );
+
+    return msg_iev_build_webix(gobj,
+        ret,
+        ret<0?json_local_sprintf("Cannot delete topic"):json_local_sprintf("Topic deleted!"),
         0,
         0,
         kw  // owned
