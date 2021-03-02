@@ -780,19 +780,25 @@ PRIVATE int build_new_treedb_schema(
         json_int_t topic_version = kw_get_int(jn_topic, "topic_version", 1, KW_WILD_NUMBER);
         json_t *topic_pkey2s_ = kw_get_dict_value(jn_topic, "pkey2s", 0, 0);
 
+        json_t *kw_topic = json_pack("{s:s, s:s, s:s, s:s, s:I}",
+            "id", topic_name,
+            "pkey", pkey,
+            "system_flag", system_flag,
+            "tkey", tkey,
+            "topic_version", (json_int_t )topic_version
+        );
+        if(topic_pkey2s_) {
+            json_object_set(kw_topic, "pkey2s", topic_pkey2s_);
+        }
+
         json_t *topic = gobj_create_node(
             priv->gobj_node_system,
             "topics",
-            json_pack("{s:s, s:s, s:s, s:s, s:I}",
-                "id", topic_name,
-                "pkey", pkey,
-                "system_flag", system_flag,
-                "tkey", tkey,
-                "topic_version", (json_int_t )topic_version
-            ),
+            kw_topic,
             json_pack("{s:b}", "refs", 1),          // fkey,hook options
             gobj
         );
+
         if(!topic) {
             continue;
         }
