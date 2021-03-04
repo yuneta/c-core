@@ -1010,11 +1010,41 @@ PRIVATE json_t *get_client_treedb_schema(
 )
 {
     /*
-     *  Get the current schema
+     *  Check input schema althoug is not used
+     */
+    if(parse_schema(jn_client_treedb_schema)<0) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Input Schema fails",
+            NULL
+        );
+        log_debug_json(0, jn_client_treedb_schema, "Input Schema fails");
+    }
+
+    /*
+     *  Get the current schema of treedbs
      */
     json_t *client_treedb_schema = get_treedb_schema(gobj, treedb_name);
     if(client_treedb_schema) {
-        return client_treedb_schema;
+        if(parse_schema(client_treedb_schema)==0) {
+            /*
+             *  Use current last treedbs schema
+             */
+            return client_treedb_schema;
+        } else {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Last treedb schema fails",
+                NULL
+            );
+            log_debug_json(0, client_treedb_schema, "Last treedb schema fails");
+            JSON_DECREF(client_treedb_schema);
+            // continue below
+        }
     } else {
         /*
          *  Build new schema
@@ -1026,15 +1056,42 @@ PRIVATE json_t *get_client_treedb_schema(
         );
 
         client_treedb_schema = get_treedb_schema(gobj, treedb_name);
-        if(client_treedb_schema) {
-            return client_treedb_schema;
-        }
 
-        /*
-         *  All fails, return input parameter
-         */
-        return json_incref(jn_client_treedb_schema);
+        if(parse_schema(client_treedb_schema)==0) {
+            /*
+             *  Use new treedbs schema
+             */
+            return client_treedb_schema;
+        } else {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "New treedb schema fails",
+                NULL
+            );
+            log_debug_json(0, client_treedb_schema, "New treedb schema fails");
+            JSON_DECREF(client_treedb_schema);
+            // continue below
+        }
     }
+
+    client_treedb_schema = json_incref(jn_client_treedb_schema);
+
+    if(parse_schema(client_treedb_schema)<0) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Schema fails",
+            NULL
+        );
+        log_debug_json(0, client_treedb_schema, "Schema fails");
+        json_decref(client_treedb_schema);
+        return 0;
+    }
+
+    return client_treedb_schema;
 }
 
 
