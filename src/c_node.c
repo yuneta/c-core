@@ -955,9 +955,10 @@ PRIVATE int mt_delete_node(
         );
         if(node && node != main_node) {
             json_object_set_new(jn_filter, pkey2_name, json_string(key2));
-            ret += treedb_delete_node(
+            ret += treedb_delete_instance(
                 priv->tranger,
                 node,
+                pkey2_name,
                 json_incref(jn_options)
             );
         }

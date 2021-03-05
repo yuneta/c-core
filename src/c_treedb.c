@@ -27,9 +27,13 @@
 PRIVATE json_t *get_client_treedb_schema(
     hgobj gobj,
     const char *treedb_name,
-    json_t *jn_client_treedb_schema // not owned
+    json_t *jn_client_treedb_schema, // not owned
+    BOOL use_internal_schema
 );
-
+PRIVATE int delete_client_treedb_schema(
+    hgobj gobj,
+    const char *treedb_name
+);
 
 /***************************************************************************
  *          Data: config, public data, private data
@@ -38,6 +42,7 @@ PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_close_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_delete_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_create_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
@@ -60,11 +65,18 @@ SDATAPM (ASN_OCTET_STR, "filename_mask",0,              "%Y-%m-%d",    "Organiza
 SDATAPM (ASN_INTEGER,   "exit_on_error",0,              0,          "exit on error"),
 SDATAPM (ASN_OCTET_STR, "treedb_name",  0,              0,          "Treedb name"),
 SDATAPM (ASN_JSON,      "treedb_schema",0,              0,          "Initial treedb schema"),
+SDATAPM (ASN_BOOLEAN,   "use_internal_schema",0,        0,          "Use internal (harcoded) schema"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_close_treedb[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "treedb_name",  0,              0,          "Treedb name"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_delete_treedb[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "treedb_name",  0,              0,          "Treedb name"),
+SDATAPM (ASN_BOOLEAN,   "force",        0,              0,          "Force delete treedb"),
 SDATA_END()
 };
 
@@ -94,8 +106,9 @@ SDATACM (ASN_SCHEMA,    "help",             a_help,     pm_help,        cmd_help
 SDATACM (ASN_SCHEMA,    "authzs",           0,          pm_authzs,      cmd_authzs,     "Authorization's help"),
 
 /*-CMD2---type----------name------------flag------------ali-items-----------json_fn-------------description--*/
-SDATACM2 (ASN_SCHEMA,   "open-treedb",  SDF_AUTHZ_X,    0, pm_open_treedb,  cmd_open_treedb, "Open treedb"),
+SDATACM2 (ASN_SCHEMA,   "open-treedb",  SDF_AUTHZ_X,    0, pm_open_treedb,  cmd_open_treedb, "Open treedb (auto create if not exist)"),
 SDATACM2 (ASN_SCHEMA,   "close-treedb", SDF_AUTHZ_X,    0, pm_close_treedb, cmd_close_treedb, "Close treedb"),
+SDATACM2 (ASN_SCHEMA,   "delete-treedb",SDF_AUTHZ_X,    0, pm_delete_treedb,cmd_delete_treedb, "Delete treedb"),
 SDATACM2 (ASN_SCHEMA,   "create-topic", SDF_AUTHZ_X,    0, pm_create_topic, cmd_create_topic, "Create new topic"),
 SDATACM2 (ASN_SCHEMA,   "delete-topic", SDF_AUTHZ_X,    0, pm_delete_topic, cmd_delete_topic, "Delete topic"),
 SDATA_END()
@@ -397,6 +410,7 @@ PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     int exit_on_error = kw_get_int(kw, "exit_on_error", 0, KW_WILD_NUMBER);
     const char *treedb_name = kw_get_str(kw, "treedb_name", "", 0);
     json_t *_jn_treedb_schema = kw_get_dict(kw, "treedb_schema", 0, 0);
+    BOOL use_internal_schema = kw_get_bool(kw, "use_internal_schema", 0, 0);
 
     /*----------------------------------------*
      *  Check AUTHZS
@@ -443,7 +457,8 @@ PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     json_t *jn_client_treedb_schema = get_client_treedb_schema(
         gobj,
         treedb_name,
-        _jn_treedb_schema // not owned
+        _jn_treedb_schema, // not owned
+        use_internal_schema
     );
     if(!jn_client_treedb_schema) {
         return msg_iev_build_webix(
@@ -609,6 +624,64 @@ PRIVATE json_t *cmd_close_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj 
     return msg_iev_build_webix(gobj,
         0,
         json_local_sprintf("Treedb closed!"),
+        0,
+        0,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_delete_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    const char *treedb_name = kw_get_str(kw, "treedb_name", "", 0);
+    BOOL force = kw_get_bool(kw, "force", 0, KW_WILD_NUMBER);
+
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    const char *permission = "open-close";
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
+        return msg_iev_build_webix(
+            gobj,
+            -403,
+            json_local_sprintf("No permission to '%s'", permission),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    /*-----------------------------------*
+     *      Check parameters
+     *-----------------------------------*/
+    if(empty_string(treedb_name)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What treedb_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    if(!force) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("This command must be use with force"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    int ret = delete_client_treedb_schema(gobj, treedb_name);
+
+    return msg_iev_build_webix(gobj,
+        ret,
+        json_local_sprintf(ret<0?log_last_message():"Treedb deleted!"),
         0,
         0,
         kw  // owned
@@ -1006,7 +1079,8 @@ PRIVATE json_t *get_treedb_schema(
 PRIVATE json_t *get_client_treedb_schema(
     hgobj gobj,
     const char *treedb_name,
-    json_t *jn_client_treedb_schema // not owned
+    json_t *jn_client_treedb_schema, // not owned
+    BOOL use_internal_schema
 )
 {
     /*
@@ -1021,6 +1095,29 @@ PRIVATE json_t *get_client_treedb_schema(
             NULL
         );
         log_debug_json(0, jn_client_treedb_schema, "Input Schema fails");
+        if(use_internal_schema) {
+            return 0;
+        }
+    }
+
+    if(use_internal_schema) {
+        /*
+         *  Recrea external schema
+         */
+        return json_incref(jn_client_treedb_schema); // TODO
+
+        json_t *client_treedb_schema = get_treedb_schema(gobj, treedb_name);
+        if(client_treedb_schema) {
+            delete_client_treedb_schema(gobj, treedb_name);
+            json_decref(client_treedb_schema);
+        }
+        build_new_treedb_schema(
+            gobj,
+            treedb_name,
+            jn_client_treedb_schema
+        );
+
+        return json_incref(jn_client_treedb_schema);
     }
 
     /*
@@ -1092,6 +1189,68 @@ PRIVATE json_t *get_client_treedb_schema(
     }
 
     return client_treedb_schema;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int delete_client_treedb_schema(
+    hgobj gobj,
+    const char *treedb_name
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    json_t *treedb = gobj_node_tree(
+        priv->gobj_node_system,
+        "treedbs",
+        json_pack("{s:s}", "id", treedb_name),
+        0,
+        gobj
+    );
+    if(!treedb) {
+        return -1;
+    }
+
+    int ret = 0;
+
+    ret += gobj_delete_node(
+        priv->gobj_node_system,
+        "treedbs",
+        json_incref(treedb),
+        json_pack("{s:b}", "force", 1),
+        gobj
+    );
+
+    json_t *topics = kw_get_dict(treedb, "topics", 0, 0);
+    const char *topic_name; json_t *topic;
+    json_object_foreach(topics, topic_name, topic) {
+        ret += gobj_delete_node(
+            priv->gobj_node_system,
+            "topics",
+            json_incref(topic),
+            json_pack("{s:b}", "force", 1),
+            gobj
+        );
+        json_t *cols = kw_get_dict(topic, "cols", 0, KW_REQUIRED);
+        if(!cols) {
+            continue;
+        }
+        const char *col_name; json_t *col;
+        json_object_foreach(cols, col_name, col) {
+            ret += gobj_delete_node(
+                priv->gobj_node_system,
+                "cols",
+                json_incref(col),
+                json_pack("{s:b}", "force", 1),
+                gobj
+            );
+        }
+    }
+
+    json_decref(treedb);
+
+    return ret;
 }
 
 
