@@ -1214,6 +1214,8 @@ PRIVATE int delete_client_treedb_schema(
 
     int ret = 0;
 
+// TODO falla, hay que revisar
+
     ret += gobj_delete_node(
         priv->gobj_node_system,
         "treedbs",

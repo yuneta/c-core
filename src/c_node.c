@@ -97,9 +97,9 @@ PRIVATE sdata_desc_t pm_jtree[] = {
 SDATAPM (ASN_OCTET_STR, "topic_name",   0,              0,          "Topic name"),
 SDATAPM (ASN_OCTET_STR, "node_id",      0,              0,          "Node id"),
 SDATAPM (ASN_OCTET_STR, "hook",         0,              0,          "Hook to build the tree"),
-SDATAPM (ASN_OCTET_STR, "rename_hook",  0,              0,          "Rename the hook field in the response (only with webix option)"),
+SDATAPM (ASN_OCTET_STR, "rename_hook",  0,              0,          "Rename the hook field in the response"),
 SDATAPM (ASN_JSON,      "filter",       0,              0,          "Filter to childs"),
-SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: 'webix','expand_childs' refs, hook_refs, fkey_refs, only_id, hook_only_id, fkey_only_id, list_dict, hook_list_dict, fkey_list_dict, size, hook_size"),
+SDATAPM (ASN_JSON,      "options",      0,              0,          "Options: refs, hook_refs, fkey_refs, only_id, hook_only_id, fkey_only_id, list_dict, hook_list_dict, fkey_list_dict, size, hook_size"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_create_node[] = {
@@ -1603,7 +1603,7 @@ PRIVATE json_t *mt_topic_jtree(
     const char *rename_hook, // change the hook name in the tree response
     json_t *kw,         // 'id' and pkey2s fields are used to find the root node
     json_t *jn_filter,  // filter to match records
-    json_t *jn_options, // fkey,hook options, "webix", "expand_childs"
+    json_t *jn_options, // fkey,hook options
     hgobj src
 )
 {
@@ -1653,26 +1653,6 @@ PRIVATE json_t *mt_topic_jtree(
         return 0;
     }
 
-// TODO filter only in child by the moment
-//     if(!kw_match_simple(
-//         node, // NOT owned
-//         json_incref(jn_filter) // owned
-//     )){
-//         log_error(0,
-//             "gobj",         "%s", gobj_full_name(gobj),
-//             "function",     "%s", __FUNCTION__,
-//             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-//             "msg",          "%s", "Root Node not match filter",
-//             "treedb_name",  "%s", priv->treedb_name,
-//             "topic_name",   "%s", topic_name,
-//             NULL
-//         );
-//         JSON_DECREF(jn_filter);
-//         JSON_DECREF(jn_options);
-//         JSON_DECREF(kw);
-//         return 0;
-//     }
-
     /*
      *  Return a tree of child nodes of the hook
      */
@@ -1694,7 +1674,7 @@ PRIVATE json_t *mt_node_tree(
     hgobj gobj,
     const char *topic_name,
     json_t *kw,         // 'id' and pkey2s fields are used to find the root node
-    json_t *jn_options,
+    json_t *jn_options, // "with_metatada"
     hgobj src
 )
 {
