@@ -825,6 +825,11 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
             KW_DECREF(kw);
             return 0;
         }
+    } else {
+        /*
+         *  If node exists then it's an update
+         */
+        create = 0;
     }
 
     if(volatil) {
