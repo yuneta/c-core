@@ -37,7 +37,7 @@ PUBLIC int db_remove_persistent_attrs(hgobj gobj);
 /**rst**
    List persistent attributes from simple file db
 **rst**/
-PUBLIC json_t * db_list_persistent_attrs(void);
+PUBLIC json_t * db_list_persistent_attrs(hgobj gobj);
 
 #ifdef __cplusplus
 }

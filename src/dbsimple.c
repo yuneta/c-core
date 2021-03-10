@@ -161,7 +161,7 @@ PRIVATE BOOL read_json_cb(
     return TRUE; // to continue
 }
 
-PUBLIC json_t * db_list_persistent_attrs(void)
+PUBLIC json_t * db_list_persistent_attrs(hgobj gobj)
 {
     char path[PATH_MAX];
     yuneta_realm_dir(path, sizeof(path), "data", TRUE);

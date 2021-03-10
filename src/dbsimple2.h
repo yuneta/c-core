@@ -42,7 +42,7 @@ PUBLIC int dbattrs_remove_persistent(hgobj gobj);
 /**rst**
    List persistent attributes from simple tranger
 **rst**/
-PUBLIC json_t * dbattrs_list_persistent(void);
+PUBLIC json_t * dbattrs_list_persistent(hgobj gobj);
 
 
 #ifdef __cplusplus

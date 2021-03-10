@@ -33,7 +33,7 @@ PUBLIC int yuneta_set_gobj_startup_functions(
     int (*load_persistent_attrs)(hgobj gobj),
     int (*save_persistent_attrs)(hgobj gobj),
     int (*remove_persistent_attrs)(hgobj gobj),
-    json_t * (*list_persistent_attrs)(void),
+    json_t * (*list_persistent_attrs)(hgobj gobj),
     json_function_t global_command_parser,
     json_function_t global_stats_parser
 );
@@ -47,7 +47,7 @@ PUBLIC int yuneta_setup(
     int (*load_persistent_attrs)(hgobj gobj),
     int (*save_persistent_attrs)(hgobj gobj),
     int (*remove_persistent_attrs)(hgobj gobj),
-    json_t * (*list_persistent_attrs)(void),
+    json_t * (*list_persistent_attrs)(hgobj gobj),
     json_function_t global_command_parser,
     json_function_t global_stats_parser,
     authz_checker_fn global_authz_checker,
