@@ -148,18 +148,17 @@ PUBLIC int dbattrs_remove_persistent(hgobj gobj)
     }
 
 // TODO cambia a treedb
-//     const char *id = gobj_full_name(gobj);
-//     json_t *jn_attrs = json_object();
-//     json_object_set_new(jn_attrs, "id", json_string(id));
-//
-//     return trmsg_add_instance(
-//         tranger,
-//         "persistent_attrs",
-//         jn_attrs,  // owned
-//         0,
-//         0
-//     );
-    return -1;
+    const char *id = gobj_full_name(gobj);
+    json_t *jn_attrs = json_object();
+    json_object_set_new(jn_attrs, "id", json_string(id));
+
+    return trmsg_add_instance(
+        tranger,
+        "persistent_attrs",
+        jn_attrs,  // owned
+        0,
+        0
+    );
 }
 
 /***************************************************************************
