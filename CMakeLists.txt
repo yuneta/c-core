@@ -69,7 +69,7 @@ set (SRCS
     src/c_iogate.c
     src/c_channel.c
     src/c_counter.c
-#     src/c_task.c
+    src/c_task.c
     src/c_dynrule.c
     src/c_timetransition.c
     src/c_rstats.c
@@ -131,7 +131,7 @@ set (HDRS
     src/c_iogate.h
     src/c_channel.h
     src/c_counter.h
-#     src/c_task.h
+    src/c_task.h
     src/c_dynrule.h
     src/c_timetransition.h
     src/c_rstats.h

@@ -49,7 +49,7 @@ extern "C"{
 #include "c_iogate.h"
 #include "c_channel.h"
 #include "c_counter.h"
-// #include "c_task.h"
+#include "c_task.h"
 #include "c_dynrule.h"
 #include "c_timetransition.h"
 #include "c_rstats.h"

@@ -44,7 +44,7 @@ PUBLIC int yuneta_register_c_core(void)
     gobj_register_gclass(GCLASS_IOGATE);
     gobj_register_gclass(GCLASS_CHANNEL);
     gobj_register_gclass(GCLASS_COUNTER);
-//     gobj_register_gclass(GCLASS_TASK);
+    gobj_register_gclass(GCLASS_TASK);
     gobj_register_gclass(GCLASS_DYNRULE);
     gobj_register_gclass(GCLASS_TIMETRANSITION);
     gobj_register_gclass(GCLASS_RSTATS);
