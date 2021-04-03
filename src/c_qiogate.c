@@ -625,10 +625,10 @@ PRIVATE q_msg enqueue_message(
     json_t *kw_clean_clone;
 
     if(!priv->with_metadata) {
-        json_incref(kw);
+        kw_incref(kw);
         kw_clean_clone = kw_filter_metadata(kw);
     } else {
-        kw_clean_clone = json_incref(kw);
+        kw_clean_clone = kw_incref(kw);
     }
     q_msg msg = trq_append(
         priv->trq_msgs,
