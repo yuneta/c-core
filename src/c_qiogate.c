@@ -628,7 +628,7 @@ PRIVATE q_msg enqueue_message(
         KW_INCREF(kw);
         kw_clean_clone = kw_filter_metadata(kw);
     } else {
-        kw_clean_clone = kw;
+        kw_clean_clone = json_incref(kw);
     }
     q_msg msg = trq_append(
         priv->trq_msgs,
