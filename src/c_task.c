@@ -3,6 +3,16 @@
  *          Task GClass.
  *
  *          Tasks
+ *              - gobj_jobs: gobj defining the jobs (local methods)
+ *              - gobj_results: GObj executing the jobss, inform of results of the jobs
+ *                must be with api
+ *                  EV_ON_OPEN
+ *                  EV_ON_CLOSE
+ *                  EV_ON_RESULT ->
+ *                      {
+ *                          result: 0 or -1,
+ *                          data:
+ *                      }
  *
  *          Copyright (c) 2021 Niyamaka.
  *          All Rights Reserved.
@@ -22,6 +32,7 @@
 /***************************************************************************
  *              Prototypes
  ***************************************************************************/
+PRIVATE int execute_action(hgobj gobj);
 
 
 /***************************************************************************
@@ -56,11 +67,19 @@ SDATA_END()
  *      Attributes - order affect to oid's
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
-/*-ATTR-type------------name----------------flag------------------------default---------description---------- */
-SDATA (ASN_INTEGER,     "timeout",          SDF_RD,                     2*1000,         "Timeout"),
-SDATA (ASN_POINTER,     "user_data",        0,                          0,              "user data"),
-SDATA (ASN_POINTER,     "user_data2",       0,                          0,              "more user data"),
-SDATA (ASN_POINTER,     "subscriber",       0,                          0,              "subscriber of output-events. Not a child gobj."),
+/*-ATTR-type------------name----------------flag------------default---------description---------- */
+SDATA (ASN_POINTER,     "tranger",          0,              0,              "Tranger to create tasks"),
+SDATA (ASN_OCTET_STR,   "task_name",        SDF_RD,         "",             "Url"),
+SDATA (ASN_OCTET_STR,   "pkey",             SDF_RD,         "",             "trq_open pkey"),
+SDATA (ASN_OCTET_STR,   "tkey",             SDF_RD,         "",             "trq_open tkey"),
+SDATA (ASN_OCTET_STR,   "system_flag",      SDF_RD,         "",             "trq_open system_flag"),
+SDATA (ASN_UNSIGNED,    "on_critical_error",SDF_RD,         LOG_OPT_TRACE_STACK, "tranger parameter"),
+SDATA (ASN_POINTER,     "gobj_jobs",        0,              0,              "GObj defining the jobs"),
+SDATA (ASN_POINTER,     "gobj_results",     0,              0,              "GObj executing the jobss, inform of results of the jobs"),
+SDATA (ASN_INTEGER,     "timeout",          SDF_PERSIST|SDF_WR,10*1000,     "Action Timeout"),
+SDATA (ASN_POINTER,     "user_data",        0,              0,              "user data"),
+SDATA (ASN_POINTER,     "user_data2",       0,              0,              "more user data"),
+SDATA (ASN_POINTER,     "subscriber",       0,              0,              "subscriber of output-events. Not a child gobj."),
 SDATA_END()
 };
 
@@ -98,8 +117,13 @@ SDATA_END()
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
     int32_t timeout;
-
     hgobj timer;
+
+    tr_queue trq_jobs;
+    q_msg cur_job;
+
+    hgobj gobj_jobs;
+    hgobj gobj_results;
 } PRIVATE_DATA;
 
 
@@ -134,6 +158,7 @@ PRIVATE void mt_create(hgobj gobj)
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
     SET_PRIV(timeout,               gobj_read_int32_attr)
+    SET_PRIV(gobj_results,          gobj_read_pointer_attr)
 }
 
 /***************************************************************************
@@ -155,6 +180,19 @@ PRIVATE void mt_destroy(hgobj gobj)
 }
 
 /***************************************************************************
+ *      Framework Method reading
+ ***************************************************************************/
+PRIVATE SData_Value_t mt_reading(hgobj gobj, const char *name, int type, SData_Value_t data)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if(strcmp(name, "msgs_in_queue")==0) {
+        data.u32 = trq_size(priv->trq_jobs);
+    }
+    return data;
+}
+
+/***************************************************************************
  *      Framework Method start
  ***************************************************************************/
 PRIVATE int mt_start(hgobj gobj)
@@ -162,7 +200,35 @@ PRIVATE int mt_start(hgobj gobj)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     gobj_start(priv->timer);
-    set_timeout_periodic(priv->timer, priv->timeout);
+
+    /*
+     *  Subscribe to gobj_results events
+     */
+    gobj_subscribe_event(priv->gobj_results, NULL, NULL, gobj);
+
+    if(!gobj_read_bool_attr(priv->gobj_results, "opened")) {
+        // TODO by now, opened is required
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "gobj_results NOT OPENED",
+            "gobj_results",    "%s", gobj_short_name(priv->gobj_results),
+            NULL
+        );
+        return -1;
+    }
+
+    priv->trq_jobs = trq_open(
+        gobj_read_pointer_attr(gobj, "tranger"),
+        gobj_read_str_attr(gobj, "task_name"),
+        gobj_read_str_attr(gobj, "pkey"),
+        gobj_read_str_attr(gobj, "tkey"),
+        tranger_str2system_flag(gobj_read_str_attr(gobj, "system_flag")),
+        0
+    );
+    trq_load(priv->trq_jobs);
+
     return 0;
 }
 
@@ -173,8 +239,50 @@ PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    EXEC_AND_RESET(trq_close, priv->trq_jobs);
+
     clear_timeout(priv->timer);
     gobj_stop(priv->timer);
+    return 0;
+}
+
+/***************************************************************************
+ *      Framework Method play
+ *  Yuneta rule:
+ *  If service has mt_play then start only the service gobj.
+ *      (Let mt_play be responsible to start their tree)
+ *  If service has not mt_play then start the tree with gobj_start_tree().
+ ***************************************************************************/
+PRIVATE int mt_play(hgobj gobj)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    priv->cur_job = trq_first_msg(priv->trq_jobs);
+    if(priv->cur_job) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "No job messages",
+            NULL
+        );
+        return -1;
+    }
+
+    execute_action(gobj);
+
+    return 0;
+}
+
+/***************************************************************************
+ *      Framework Method pause
+ ***************************************************************************/
+PRIVATE int mt_pause(hgobj gobj)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    priv->cur_job = 0;
+
     return 0;
 }
 
@@ -223,6 +331,24 @@ PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
 
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int execute_action(hgobj gobj)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *action = kw_get_str(priv->cur_job, "action", "", KW_REQUIRED);
+
+
+    set_timeout(priv->timer, priv->timeout);
+
+    return 0;
+}
+
+
+
+
             /***************************
              *      Actions
              ***************************/
@@ -231,10 +357,51 @@ PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
 
 /***************************************************************************
+ *  Connected
+ ***************************************************************************/
+PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    // TODO by now, opened is required
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ *  Disconnected
+ ***************************************************************************/
+PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    // TODO by now, opened is required
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int ac_sample(hgobj gobj, const char *event, json_t *kw, hgobj src)
+PRIVATE int ac_on_result(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ * kw:
+    {
+        "action", "",
+        "result", ""
+    }
+ ***************************************************************************/
+PRIVATE int ac_add_job(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    trq_append(
+        priv->trq_jobs,
+        json_incref(kw)
+    );
 
     KW_DECREF(kw);
     return 0;
@@ -256,7 +423,10 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
     // top input
-    {"EV_SAMPLE",       0,  0,  "Description of resource"},
+    {"EV_ON_MESSAGE",   0,  0,  ""},
+    {"EV_ADD_JOB",      0,  0,  ""},
+    {"EV_ON_OPEN",      0,  0,  ""},
+    {"EV_ON_CLOSE",     0,  0,  ""},
     // bottom input
     {"EV_TIMEOUT",      0,  0,  ""},
     {"EV_STOPPED",      0,  0,  ""},
@@ -264,8 +434,6 @@ PRIVATE const EVENT input_events[] = {
     {NULL, 0, 0, ""}
 };
 PRIVATE const EVENT output_events[] = {
-    {"EV_ON_SAMPLE1",       0,  0,  "Sample1"},
-    {"EV_ON_SAMPLE2",       0,  0,  "Sample2"},
     {NULL, 0, 0, ""}
 };
 PRIVATE const char *state_names[] = {
@@ -274,7 +442,10 @@ PRIVATE const char *state_names[] = {
 };
 
 PRIVATE EV_ACTION ST_IDLE[] = {
-    {"EV_SAMPLE",               ac_sample,              0},
+    {"EV_ON_RESULT",            ac_on_result,           0},
+    {"EV_ON_OPEN",              ac_on_open,             0},
+    {"EV_ON_CLOSE",             ac_on_close,            0},
+    {"EV_ADD_JOB",              ac_add_job,             0},
     {"EV_TIMEOUT",              ac_timeout,             0},
     {"EV_STOPPED",              0,                      0},
     {0,0,0}
@@ -315,10 +486,10 @@ PRIVATE GCLASS _gclass = {
         mt_destroy,
         mt_start,
         mt_stop,
-        0, //mt_play,
-        0, //mt_pause,
+        mt_play,
+        mt_pause,
         mt_writing,
-        0, //mt_reading,
+        mt_reading,
         0, //mt_subscription_added,
         0, //mt_subscription_deleted,
         0, //mt_child_added,
