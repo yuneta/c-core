@@ -95,6 +95,7 @@ SDATA (ASN_INTEGER,     "alert_queue_size", SDF_WR|SDF_PERSIST, 2000,       "Lim
 SDATA (ASN_INTEGER,     "timeout_ack",      SDF_WR|SDF_PERSIST, 60,         "Timeout ack in seconds"),
 SDATA (ASN_BOOLEAN,     "drop_on_timeout_ack",SDF_WR|SDF_PERSIST, 1,        "On ack timeout drop connection"),
 
+SDATA (ASN_BOOLEAN,     "with_metadata",    SDF_RD,             0,          "Don't filter metadata"),
 SDATA (ASN_BOOLEAN,     "disable_alert",    SDF_WR|SDF_PERSIST, 0,          "Disable alert"),
 SDATA (ASN_OCTET_STR,   "alert_from",       SDF_WR,             "",         "Alert from"),
 SDATA (ASN_OCTET_STR,   "alert_to",         SDF_WR|SDF_PERSIST, "",         "Alert destination"),
@@ -131,6 +132,7 @@ typedef struct _PRIVATE_DATA {
     json_t *tranger;
     tr_queue trq_msgs;
     int32_t alert_queue_size;
+    BOOL with_metadata;
 
     hgobj gobj_bottom_side;
     BOOL bottom_side_opened;
@@ -186,6 +188,7 @@ PRIVATE void mt_create(hgobj gobj)
     SET_PRIV(debug_queue_prot,          gobj_read_bool_attr)
     SET_PRIV(timeout_poll,              gobj_read_int32_attr)
     SET_PRIV(timeout_ack,               gobj_read_int32_attr)
+    SET_PRIV(with_metadata,             gobj_read_bool_attr)
     SET_PRIV(alert_queue_size,          gobj_read_int32_attr)
     SET_PRIV(max_pending_acks,          gobj_read_uint32_attr)
 }
@@ -619,8 +622,14 @@ PRIVATE q_msg enqueue_message(
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    KW_INCREF(kw);
-    json_t *kw_clean_clone = kw_filter_metadata(kw);
+    json_t *kw_clean_clone;
+
+    if(!priv->with_metadata) {
+        KW_INCREF(kw);
+        kw_clean_clone = kw_filter_metadata(kw);
+    } else {
+        kw_clean_clone = kw;
+    }
     q_msg msg = trq_append(
         priv->trq_msgs,
         kw_clean_clone
