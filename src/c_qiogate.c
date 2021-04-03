@@ -91,6 +91,7 @@ SDATA (ASN_UNSIGNED,    "on_critical_error",SDF_RD,             LOG_OPT_TRACE_ST
 
 SDATA (ASN_UNSIGNED,    "max_pending_acks", SDF_WR|SDF_PERSIST, 1,          "Maximum messages pending of ack"),
 SDATA (ASN_UNSIGNED64,  "backup_queue_size",SDF_WR|SDF_PERSIST, 1*1000000,  "Do backup at this size"),
+SDATA (ASN_INTEGER,     "alert_queue_size", SDF_WR|SDF_PERSIST, 2000,       "Limit alert queue size"),
 SDATA (ASN_INTEGER,     "timeout_ack",      SDF_WR|SDF_PERSIST, 60,         "Timeout ack in seconds"),
 SDATA (ASN_BOOLEAN,     "drop_on_timeout_ack",SDF_WR|SDF_PERSIST, 1,        "On ack timeout drop connection"),
 
@@ -129,6 +130,7 @@ typedef struct _PRIVATE_DATA {
     hgobj gobj_tranger_queues;
     json_t *tranger;
     tr_queue trq_msgs;
+    int32_t alert_queue_size;
 
     hgobj gobj_bottom_side;
     BOOL bottom_side_opened;
@@ -184,6 +186,7 @@ PRIVATE void mt_create(hgobj gobj)
     SET_PRIV(debug_queue_prot,          gobj_read_bool_attr)
     SET_PRIV(timeout_poll,              gobj_read_int32_attr)
     SET_PRIV(timeout_ack,               gobj_read_int32_attr)
+    SET_PRIV(alert_queue_size,          gobj_read_int32_attr)
     SET_PRIV(max_pending_acks,          gobj_read_uint32_attr)
 }
 
@@ -196,6 +199,7 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
 
     IF_EQ_SET_PRIV(timeout_poll,            gobj_read_int32_attr)
     ELIF_EQ_SET_PRIV(timeout_ack,           gobj_read_int32_attr)
+    ELIF_EQ_SET_PRIV(alert_queue_size,      gobj_read_int32_attr)
     ELIF_EQ_SET_PRIV(max_pending_acks,      gobj_read_uint32_attr)
     ELIF_EQ_SET_PRIV(debug_queue_prot,      gobj_read_bool_attr)
     END_EQ_SET_PRIV()
@@ -632,10 +636,9 @@ PRIVATE q_msg enqueue_message(
         return 0;
     }
 
-    //gobj_incr_qs(QS_INTERNAL_QUEUE, 1); // TODO gestiona colas múltiples
     if(!gobj_read_bool_attr(gobj, "disable_alert")) {
-        if(trq_size(priv->trq_msgs) >= 2000) { // TODO deja configurable
-            if(trq_size(priv->trq_msgs) % 2000 == 0) {
+        if(trq_size(priv->trq_msgs) >= priv->alert_queue_size) {
+            if(trq_size(priv->trq_msgs) % priv->alert_queue_size == 0) {
                 char subject[280];
                 char alert[280];
                 snprintf(
