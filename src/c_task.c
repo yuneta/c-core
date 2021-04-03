@@ -258,12 +258,12 @@ PRIVATE int mt_play(hgobj gobj)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     priv->cur_job = trq_first_msg(priv->trq_jobs);
-    if(priv->cur_job) {
+    if(!priv->cur_job) {
         log_error(0,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "No job messages",
+            "msg",          "%s", "Task with no jobs",
             NULL
         );
         return -1;
@@ -339,7 +339,12 @@ PRIVATE int execute_action(hgobj gobj)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     const char *action = kw_get_str(priv->cur_job, "action", "", KW_REQUIRED);
+    json_t *kw_ = (json_t *)kw_get_int(priv->cur_job, "kw", 0, KW_REQUIRED);
 
+    if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
+        trace_msg("====> execute_action: %s", action);
+    }
+    gobj_exec_internal_method(priv->gobj_jobs, action, kw_);
 
     set_timeout(priv->timer, priv->timeout);
 
@@ -423,10 +428,10 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
     // top input
-    {"EV_ON_MESSAGE",   0,  0,  ""},
-    {"EV_ADD_JOB",      0,  0,  ""},
+    {"EV_ON_RESULT",    0,  0,  ""},
     {"EV_ON_OPEN",      0,  0,  ""},
     {"EV_ON_CLOSE",     0,  0,  ""},
+    {"EV_ADD_JOB",      0,  0,  ""},
     // bottom input
     {"EV_TIMEOUT",      0,  0,  ""},
     {"EV_STOPPED",      0,  0,  ""},
