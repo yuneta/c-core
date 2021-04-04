@@ -32,7 +32,10 @@
 /***************************************************************************
  *              Prototypes
  ***************************************************************************/
-PRIVATE int execute_action(hgobj gobj);
+PRIVATE int execute_action(
+    hgobj gobj,
+    json_t *kw  // not owned
+);
 
 
 /***************************************************************************
@@ -120,7 +123,7 @@ typedef struct _PRIVATE_DATA {
     hgobj timer;
 
     tr_queue trq_jobs;
-    q_msg cur_job;
+    q_msg cur_q_msg;
 
     hgobj gobj_jobs;
     hgobj gobj_results;
@@ -159,6 +162,7 @@ PRIVATE void mt_create(hgobj gobj)
      */
     SET_PRIV(timeout,               gobj_read_int32_attr)
     SET_PRIV(gobj_results,          gobj_read_pointer_attr)
+    SET_PRIV(gobj_jobs,             gobj_read_pointer_attr)
 }
 
 /***************************************************************************
@@ -257,8 +261,8 @@ PRIVATE int mt_play(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    priv->cur_job = trq_first_msg(priv->trq_jobs);
-    if(!priv->cur_job) {
+    priv->cur_q_msg = trq_first_msg(priv->trq_jobs);
+    if(!priv->cur_q_msg) {
         log_error(0,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
@@ -269,7 +273,11 @@ PRIVATE int mt_play(hgobj gobj)
         return -1;
     }
 
-    execute_action(gobj);
+
+    json_t *jn_job_ = trq_msg_json(priv->cur_q_msg);
+    json_t *kw_ = (json_t *)kw_get_dict(jn_job_, "kw", 0, KW_REQUIRED);
+
+    execute_action(gobj, kw_);
 
     return 0;
 }
@@ -281,7 +289,7 @@ PRIVATE int mt_pause(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    priv->cur_job = 0;
+    priv->cur_q_msg = 0;
 
     return 0;
 }
@@ -334,19 +342,43 @@ PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int execute_action(hgobj gobj)
+PRIVATE int stop_task(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    const char *action = kw_get_str(priv->cur_job, "action", "", KW_REQUIRED);
-    json_t *kw_ = (json_t *)kw_get_int(priv->cur_job, "kw", 0, KW_REQUIRED);
+    json_t *jn_job_ = trq_msg_json(priv->cur_q_msg);
+    priv->cur_q_msg = 0;
+
+    gobj_publish_event(gobj, "EV_END_TASK", json_incref(jn_job_));
+
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int execute_action(
+    hgobj gobj,
+    json_t *kw_  // not owned
+)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    json_t *jn_job_ = trq_msg_json(priv->cur_q_msg);
+
+    const char *action = kw_get_str(jn_job_, "exec_action", "", KW_REQUIRED);
 
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("====> execute_action: %s", action);
+        trace_msg("====> exec_action: %s", action);
+        log_debug_json(0, kw_, "====> exec_action");
     }
-    gobj_exec_internal_method(priv->gobj_jobs, action, kw_);
-
-    set_timeout(priv->timer, priv->timeout);
+    int ret = (int)gobj_exec_internal_method(priv->gobj_jobs, action, kw_);
+    if(ret < 0) {
+        json_object_set_new(jn_job_, "result", json_integer(-2));
+        stop_task(gobj);
+    } else {
+        set_timeout(priv->timer, priv->timeout);
+    }
 
     return 0;
 }
@@ -388,6 +420,28 @@ PRIVATE int ac_on_result(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    json_t *jn_job_ = trq_msg_json(priv->cur_q_msg);
+
+    const char *action = kw_get_str(jn_job_, "exec_result", "", KW_REQUIRED);
+
+    if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
+        trace_msg("====> exec_result: %s", action);
+        log_debug_json(0, kw, "====> exec_result");
+    }
+    int ret = (int)gobj_exec_internal_method(priv->gobj_jobs, action, kw);
+    if(ret < 0) {
+        json_object_set_new(jn_job_, "result", json_integer(-2));
+        stop_task(gobj);
+
+    } else {
+        priv->cur_q_msg = trq_next_msg(priv->cur_q_msg);
+        if(!priv->cur_q_msg) {
+            stop_task(gobj);
+        } else {
+            execute_action(gobj, kw);
+        }
+    }
+
     KW_DECREF(kw);
     return 0;
 }
@@ -395,8 +449,8 @@ PRIVATE int ac_on_result(hgobj gobj, const char *event, json_t *kw, hgobj src)
 /***************************************************************************
  * kw:
     {
-        "action", "",
-        "result", ""
+        "exec_action": "",
+        "exec_result": ""
     }
  ***************************************************************************/
 PRIVATE int ac_add_job(hgobj gobj, const char *event, json_t *kw, hgobj src)
@@ -415,10 +469,21 @@ PRIVATE int ac_add_job(hgobj gobj, const char *event, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
+PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
 
     KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ *  Timeout waiting result
+ ***************************************************************************/
+PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    KW_DECREF(kw);
+    stop_task(gobj);
+
     return 0;
 }
 
@@ -439,6 +504,7 @@ PRIVATE const EVENT input_events[] = {
     {NULL, 0, 0, ""}
 };
 PRIVATE const EVENT output_events[] = {
+    {"EV_END_TASK",         EVF_PUBLIC_EVENT,   0,  0},
     {NULL, 0, 0, ""}
 };
 PRIVATE const char *state_names[] = {
@@ -452,7 +518,7 @@ PRIVATE EV_ACTION ST_IDLE[] = {
     {"EV_ON_CLOSE",             ac_on_close,            0},
     {"EV_ADD_JOB",              ac_add_job,             0},
     {"EV_TIMEOUT",              ac_timeout,             0},
-    {"EV_STOPPED",              0,                      0},
+    {"EV_STOPPED",              ac_stopped,             0},
     {0,0,0}
 };
 
