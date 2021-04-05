@@ -203,8 +203,6 @@ PRIVATE int mt_start(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    gobj_start(priv->timer);
-
     /*
      *  Subscribe to gobj_results events
      */
@@ -232,6 +230,8 @@ PRIVATE int mt_start(hgobj gobj)
         0
     );
     trq_load(priv->trq_jobs);
+
+    gobj_start(priv->timer);
 
     return 0;
 }
@@ -346,10 +346,16 @@ PRIVATE int stop_task(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    json_t *jn_job_ = trq_msg_json(priv->cur_q_msg);
+    if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
+        trace_msg("================> stop task");
+    }
+
+    gobj_publish_event(gobj, "EV_END_TASK", 0);
+
     priv->cur_q_msg = 0;
 
-    gobj_publish_event(gobj, "EV_END_TASK", json_incref(jn_job_));
+    gobj_pause(gobj);
+    gobj_stop(gobj);
 
     return 0;
 }
@@ -369,10 +375,10 @@ PRIVATE int execute_action(
     const char *action = kw_get_str(jn_job_, "exec_action", "", KW_REQUIRED);
 
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("====> exec_action: %s", action);
+        trace_msg("================> exec_action: %s", action);
         log_debug_json(0, kw_, "====> exec_action");
     }
-    int ret = (int)gobj_exec_internal_method(priv->gobj_jobs, action, kw_);
+    int ret = (int)(size_t)gobj_exec_internal_method(priv->gobj_jobs, action, kw_);
     if(ret < 0) {
         json_object_set_new(jn_job_, "result", json_integer(-2));
         stop_task(gobj);
@@ -425,16 +431,19 @@ PRIVATE int ac_on_result(hgobj gobj, const char *event, json_t *kw, hgobj src)
     const char *action = kw_get_str(jn_job_, "exec_result", "", KW_REQUIRED);
 
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("====> exec_result: %s", action);
+        trace_msg("================> exec_result: %s", action);
         log_debug_json(0, kw, "====> exec_result");
     }
-    int ret = (int)gobj_exec_internal_method(priv->gobj_jobs, action, kw);
+    int ret = (int)(size_t)gobj_exec_internal_method(priv->gobj_jobs, action, kw);
     if(ret < 0) {
         json_object_set_new(jn_job_, "result", json_integer(-2));
         stop_task(gobj);
 
     } else {
         priv->cur_q_msg = trq_next_msg(priv->cur_q_msg);
+json_t *jn_job_ = trq_msg_json(priv->cur_q_msg);
+print_json(jn_job_);
+
         if(!priv->cur_q_msg) {
             stop_task(gobj);
         } else {
@@ -448,10 +457,17 @@ PRIVATE int ac_on_result(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
 /***************************************************************************
  * kw:
-    {
-        "exec_action": "",
-        "exec_result": ""
-    }
+        {
+            "id": "?",
+            "input_data": ?,
+            "output_data": null,
+            "jobs": [
+                {
+                    "exec_action": "?",
+                    "exec_result": "?"
+                },
+            ]
+        }
  ***************************************************************************/
 PRIVATE int ac_add_job(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
@@ -471,8 +487,8 @@ PRIVATE int ac_add_job(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-
     KW_DECREF(kw);
+    gobj_destroy(gobj);
     return 0;
 }
 
@@ -481,9 +497,41 @@ PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    log_error(0,
+        "gobj",         "%s", gobj_full_name(gobj),
+        "function",     "%s", __FUNCTION__,
+        "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+        "msg",          "%s", "Task failed by timeout",
+        NULL
+    );
+
+    json_t *jn_job_ = trq_msg_json(priv->cur_q_msg);
+
+    const char *action = kw_get_str(jn_job_, "exec_result", "", KW_REQUIRED);
+
+    if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
+        trace_msg("================> timeout -> exec_result: %s", action);
+        log_debug_json(0, kw, "====> timeout -> exec_result");
+    }
+    int ret = (int)(size_t)gobj_exec_internal_method(priv->gobj_jobs, action, jn_job_);
+    if(ret < 0) {
+        json_object_set_new(jn_job_, "result", json_integer(-2));
+        stop_task(gobj);
+
+    } else {
+        priv->cur_q_msg = trq_next_msg(priv->cur_q_msg);
+        if(!priv->cur_q_msg) {
+            stop_task(gobj);
+        } else {
+            execute_action(gobj, kw);
+        }
+    }
+
+
     KW_DECREF(kw);
     stop_task(gobj);
-
     return 0;
 }
 
