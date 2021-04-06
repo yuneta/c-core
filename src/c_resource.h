@@ -200,7 +200,7 @@ PUBLIC GCLASS *gclass_resource(void);
  *
  */
 #define RESOURCE_WEBIX_SCHEMA(gobj, resource)  \
-    (json_t *)gobj_exec_internal_method((gobj), "resource_webix_schema", (void *)(resource))
+    gobj_exec_internal_method((gobj), "resource_webix_schema", resource, 0)
 
 
 #ifdef __cplusplus

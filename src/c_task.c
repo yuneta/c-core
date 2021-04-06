@@ -2,17 +2,29 @@
  *          C_TASK.C
  *          Task GClass.
  *
+        "jobs": [
+            {
+                "exec_action", "?",
+                "exec_result", "?",
+            },
+            ...
+        ]
+
  *          Tasks
  *              - gobj_jobs: gobj defining the jobs (local methods)
- *              - gobj_results: GObj executing the jobss, inform of results of the jobs
- *                must be with api
- *                  EV_ON_OPEN
- *                  EV_ON_CLOSE
- *                  EV_ON_RESULT ->
- *                      {
- *                          result: 0 or -1,
- *                          data:
- *                      }
+ *              - gobj_results: GObj executing the jobs,
+ *                  - set as bottom gobj
+ *                  - inform of results of the jobs with the api
+ *                      EV_ON_OPEN
+ *                      EV_ON_CLOSE
+ *                      EV_ON_MESSAGE ->
+ *                          {
+ *                              result: 0 or -1,
+ *                              data:
+ *                          }
+
+ *
+ *          HACK if gobj is volatil then will self auto-destroy on stop
  *
  *          Copyright (c) 2021 Niyamaka.
  *          All Rights Reserved.
@@ -32,11 +44,7 @@
 /***************************************************************************
  *              Prototypes
  ***************************************************************************/
-PRIVATE int execute_action(
-    hgobj gobj,
-    json_t *kw  // not owned
-);
-
+PRIVATE int execute_action(hgobj gobj);
 
 /***************************************************************************
  *          Data: config, public data, private data
@@ -71,14 +79,11 @@ SDATA_END()
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag------------default---------description---------- */
-SDATA (ASN_POINTER,     "tranger",          0,              0,              "Tranger to create tasks"),
-SDATA (ASN_OCTET_STR,   "task_name",        SDF_RD,         "",             "Url"),
-SDATA (ASN_OCTET_STR,   "pkey",             SDF_RD,         "",             "trq_open pkey"),
-SDATA (ASN_OCTET_STR,   "tkey",             SDF_RD,         "",             "trq_open tkey"),
-SDATA (ASN_OCTET_STR,   "system_flag",      SDF_RD,         "",             "trq_open system_flag"),
-SDATA (ASN_UNSIGNED,    "on_critical_error",SDF_RD,         LOG_OPT_TRACE_STACK, "tranger parameter"),
+SDATA (ASN_JSON,        "jobs",             SDF_RD,         0,              "Jobs"),
+SDATA (ASN_JSON,        "input_data",       SDF_RD,         "{}",           "Input Jobs Data"),
+SDATA (ASN_JSON,        "output_data",      SDF_RD,         "{}",           "Output Jobs Data"),
 SDATA (ASN_POINTER,     "gobj_jobs",        0,              0,              "GObj defining the jobs"),
-SDATA (ASN_POINTER,     "gobj_results",     0,              0,              "GObj executing the jobss, inform of results of the jobs"),
+SDATA (ASN_POINTER,     "gobj_results",     0,              0,              "GObj executing the jobs"),
 SDATA (ASN_INTEGER,     "timeout",          SDF_PERSIST|SDF_WR,10*1000,     "Action Timeout"),
 SDATA (ASN_POINTER,     "user_data",        0,              0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,              0,              "more user data"),
@@ -122,8 +127,9 @@ typedef struct _PRIVATE_DATA {
     int32_t timeout;
     hgobj timer;
 
-    tr_queue trq_jobs;
-    q_msg cur_q_msg;
+    json_t *jobs;
+    int max_job;
+    int cur_job;
 
     hgobj gobj_jobs;
     hgobj gobj_results;
@@ -161,8 +167,12 @@ PRIVATE void mt_create(hgobj gobj)
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
     SET_PRIV(timeout,               gobj_read_int32_attr)
+    SET_PRIV(jobs,                  gobj_read_json_attr)
     SET_PRIV(gobj_results,          gobj_read_pointer_attr)
     SET_PRIV(gobj_jobs,             gobj_read_pointer_attr)
+
+    priv->max_job = json_array_size(priv->jobs);
+    gobj_set_bottom_gobj(gobj, priv->gobj_results);
 }
 
 /***************************************************************************
@@ -184,19 +194,6 @@ PRIVATE void mt_destroy(hgobj gobj)
 }
 
 /***************************************************************************
- *      Framework Method reading
- ***************************************************************************/
-PRIVATE SData_Value_t mt_reading(hgobj gobj, const char *name, int type, SData_Value_t data)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    if(strcmp(name, "msgs_in_queue")==0) {
-        data.u32 = trq_size(priv->trq_jobs);
-    }
-    return data;
-}
-
-/***************************************************************************
  *      Framework Method start
  ***************************************************************************/
 PRIVATE int mt_start(hgobj gobj)
@@ -208,30 +205,12 @@ PRIVATE int mt_start(hgobj gobj)
      */
     gobj_subscribe_event(priv->gobj_results, NULL, NULL, gobj);
 
-    if(!gobj_read_bool_attr(priv->gobj_results, "opened")) {
-        // TODO by now, opened is required
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "gobj_results NOT OPENED",
-            "gobj_results",    "%s", gobj_short_name(priv->gobj_results),
-            NULL
-        );
-        return -1;
-    }
-
-    priv->trq_jobs = trq_open(
-        gobj_read_pointer_attr(gobj, "tranger"),
-        gobj_read_str_attr(gobj, "task_name"),
-        gobj_read_str_attr(gobj, "pkey"),
-        gobj_read_str_attr(gobj, "tkey"),
-        tranger_str2system_flag(gobj_read_str_attr(gobj, "system_flag")),
-        0
-    );
-    trq_load(priv->trq_jobs);
-
     gobj_start(priv->timer);
+
+    priv->cur_job = 0; // First job at start
+    if(gobj_read_bool_attr(gobj, "opened")) {
+        execute_action(gobj);
+    }
 
     return 0;
 }
@@ -243,54 +222,8 @@ PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    EXEC_AND_RESET(trq_close, priv->trq_jobs);
-
     clear_timeout(priv->timer);
     gobj_stop(priv->timer);
-    return 0;
-}
-
-/***************************************************************************
- *      Framework Method play
- *  Yuneta rule:
- *  If service has mt_play then start only the service gobj.
- *      (Let mt_play be responsible to start their tree)
- *  If service has not mt_play then start the tree with gobj_start_tree().
- ***************************************************************************/
-PRIVATE int mt_play(hgobj gobj)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    priv->cur_q_msg = trq_first_msg(priv->trq_jobs);
-    if(!priv->cur_q_msg) {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "Task with no jobs",
-            NULL
-        );
-        return -1;
-    }
-
-
-    json_t *jn_job_ = trq_msg_json(priv->cur_q_msg);
-    json_t *kw_ = (json_t *)kw_get_dict(jn_job_, "kw", 0, KW_REQUIRED);
-
-    execute_action(gobj, kw_);
-
-    return 0;
-}
-
-/***************************************************************************
- *      Framework Method pause
- ***************************************************************************/
-PRIVATE int mt_pause(hgobj gobj)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    priv->cur_q_msg = 0;
-
     return 0;
 }
 
@@ -342,7 +275,7 @@ PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int stop_task(hgobj gobj)
+PRIVATE int stop_task(hgobj gobj, int result)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
@@ -350,11 +283,10 @@ PRIVATE int stop_task(hgobj gobj)
         trace_msg("================> stop task");
     }
 
-    gobj_publish_event(gobj, "EV_END_TASK", 0);
+    gobj_publish_event(gobj, "EV_END_TASK", json_pack("{s:i}", "result", result));
 
-    priv->cur_q_msg = 0;
+//     priv->cur_q_msg = 0;
 
-    gobj_pause(gobj);
     gobj_stop(gobj);
 
     return 0;
@@ -363,25 +295,30 @@ PRIVATE int stop_task(hgobj gobj)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int execute_action(
-    hgobj gobj,
-    json_t *kw_  // not owned
-)
+PRIVATE int execute_action(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    json_t *jn_job_ = trq_msg_json(priv->cur_q_msg);
+    json_t *jn_job_ = json_array_get(priv->jobs, priv->cur_job);
+    if(!jn_job_) {
+        stop_task(gobj, 0);
+        return 0;
+    }
 
     const char *action = kw_get_str(jn_job_, "exec_action", "", KW_REQUIRED);
 
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("================> exec_action: %s", action);
-        log_debug_json(0, kw_, "====> exec_action");
+        trace_msg("================> exec ACTION: %s", action);
     }
-    int ret = (int)(size_t)gobj_exec_internal_method(priv->gobj_jobs, action, kw_);
+
+    int ret = (int)(size_t)gobj_exec_internal_method(
+        priv->gobj_jobs,
+        action,
+        0,
+        gobj
+    );
     if(ret < 0) {
-        json_object_set_new(jn_job_, "result", json_integer(-2));
-        stop_task(gobj);
+        stop_task(gobj, ret);
     } else {
         set_timeout(priv->timer, priv->timeout);
     }
@@ -404,7 +341,8 @@ PRIVATE int execute_action(
  ***************************************************************************/
 PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    // TODO by now, opened is required
+    execute_action(gobj);
+
     KW_DECREF(kw);
     return 0;
 }
@@ -414,7 +352,6 @@ PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    // TODO by now, opened is required
     KW_DECREF(kw);
     return 0;
 }
@@ -422,61 +359,30 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int ac_on_result(hgobj gobj, const char *event, json_t *kw, hgobj src)
+PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    json_t *jn_job_ = trq_msg_json(priv->cur_q_msg);
+    json_t *jn_job_ = json_array_get(priv->jobs, priv->cur_job);
 
     const char *action = kw_get_str(jn_job_, "exec_result", "", KW_REQUIRED);
 
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("================> exec_result: %s", action);
-        log_debug_json(0, kw, "====> exec_result");
-    }
-    int ret = (int)(size_t)gobj_exec_internal_method(priv->gobj_jobs, action, kw);
-    if(ret < 0) {
-        json_object_set_new(jn_job_, "result", json_integer(-2));
-        stop_task(gobj);
-
-    } else {
-        priv->cur_q_msg = trq_next_msg(priv->cur_q_msg);
-json_t *jn_job_ = trq_msg_json(priv->cur_q_msg);
-print_json(jn_job_);
-
-        if(!priv->cur_q_msg) {
-            stop_task(gobj);
-        } else {
-            execute_action(gobj, kw);
-        }
+        log_debug_json(0, kw, "================> exec RESULT: %s", action);
     }
 
-    KW_DECREF(kw);
-    return 0;
-}
-
-/***************************************************************************
- * kw:
-        {
-            "id": "?",
-            "input_data": ?,
-            "output_data": null,
-            "jobs": [
-                {
-                    "exec_action": "?",
-                    "exec_result": "?"
-                },
-            ]
-        }
- ***************************************************************************/
-PRIVATE int ac_add_job(hgobj gobj, const char *event, json_t *kw, hgobj src)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    trq_append(
-        priv->trq_jobs,
-        json_incref(kw)
+    int ret = (int)(size_t)gobj_exec_internal_method(
+        priv->gobj_jobs,
+        action,
+        json_incref(kw),
+        gobj
     );
+    if(ret < 0) {
+        stop_task(gobj, ret);
+    } else {
+        priv->cur_job++;
+        execute_action(gobj);
+    }
 
     KW_DECREF(kw);
     return 0;
@@ -488,7 +394,9 @@ PRIVATE int ac_add_job(hgobj gobj, const char *event, json_t *kw, hgobj src)
 PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     KW_DECREF(kw);
-    gobj_destroy(gobj);
+    if(gobj_is_volatil(gobj)) {
+        gobj_destroy(gobj);
+    }
     return 0;
 }
 
@@ -507,31 +415,31 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
         NULL
     );
 
-    json_t *jn_job_ = trq_msg_json(priv->cur_q_msg);
-
-    const char *action = kw_get_str(jn_job_, "exec_result", "", KW_REQUIRED);
-
-    if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("================> timeout -> exec_result: %s", action);
-        log_debug_json(0, kw, "====> timeout -> exec_result");
-    }
-    int ret = (int)(size_t)gobj_exec_internal_method(priv->gobj_jobs, action, jn_job_);
-    if(ret < 0) {
-        json_object_set_new(jn_job_, "result", json_integer(-2));
-        stop_task(gobj);
-
-    } else {
-        priv->cur_q_msg = trq_next_msg(priv->cur_q_msg);
-        if(!priv->cur_q_msg) {
-            stop_task(gobj);
-        } else {
-            execute_action(gobj, kw);
-        }
-    }
+// TODO    json_t *jn_job_ = trq_msg_json(priv->cur_q_msg);
+//
+//     const char *action = kw_get_str(jn_job_, "exec_result", "", KW_REQUIRED);
+//
+//     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
+//         trace_msg("================> timeout -> exec_result: %s", action);
+//         log_debug_json(0, kw, "====> timeout -> exec_result");
+//     }
+//     int ret = (int)(size_t)gobj_exec_internal_method(priv->gobj_jobs, action, jn_job_);
+//     if(ret < 0) {
+//         json_object_set_new(jn_job_, "result", json_integer(-2));
+//         stop_task(gobj);
+//
+//     } else {
+//         priv->cur_q_msg = trq_next_msg(priv->cur_q_msg);
+//         if(!priv->cur_q_msg) {
+//             stop_task(gobj);
+//         } else {
+//             execute_action(gobj, kw);
+//         }
+//     }
 
 
     KW_DECREF(kw);
-    stop_task(gobj);
+    stop_task(gobj, -1);
     return 0;
 }
 
@@ -541,10 +449,9 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
     // top input
-    {"EV_ON_RESULT",    0,  0,  ""},
+    {"EV_ON_MESSAGE",   0,  0,  ""},
     {"EV_ON_OPEN",      0,  0,  ""},
     {"EV_ON_CLOSE",     0,  0,  ""},
-    {"EV_ADD_JOB",      0,  0,  ""},
     // bottom input
     {"EV_TIMEOUT",      0,  0,  ""},
     {"EV_STOPPED",      0,  0,  ""},
@@ -561,10 +468,9 @@ PRIVATE const char *state_names[] = {
 };
 
 PRIVATE EV_ACTION ST_IDLE[] = {
-    {"EV_ON_RESULT",            ac_on_result,           0},
+    {"EV_ON_MESSAGE",           ac_on_message,          0},
     {"EV_ON_OPEN",              ac_on_open,             0},
     {"EV_ON_CLOSE",             ac_on_close,            0},
-    {"EV_ADD_JOB",              ac_add_job,             0},
     {"EV_TIMEOUT",              ac_timeout,             0},
     {"EV_STOPPED",              ac_stopped,             0},
     {0,0,0}
@@ -605,10 +511,10 @@ PRIVATE GCLASS _gclass = {
         mt_destroy,
         mt_start,
         mt_stop,
-        mt_play,
-        mt_pause,
+        0, //mt_play,
+        0, //mt_pause,
         mt_writing,
-        mt_reading,
+        0, //mt_reading,
         0, //mt_subscription_added,
         0, //mt_subscription_deleted,
         0, //mt_child_added,
