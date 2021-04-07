@@ -199,8 +199,10 @@ PUBLIC GCLASS *gclass_resource(void);
  *      ]
  *
  */
-#define RESOURCE_WEBIX_SCHEMA(gobj, resource)  \
-    gobj_exec_internal_method((gobj), "resource_webix_schema", resource, 0)
+
+// TODO falla al cambiar el prototipo de gobj_exec_internal_method()
+// #define RESOURCE_WEBIX_SCHEMA(gobj, (json_t *)(_resource))
+//     gobj_exec_internal_method((gobj), "resource_webix_schema", _resource, 0)
 
 
 #ifdef __cplusplus

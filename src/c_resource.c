@@ -917,11 +917,16 @@ PRIVATE hsdata mt_get_resource(hgobj gobj, const char *resource, json_int_t pare
  *      ]
  *
  ***************************************************************************/
-PRIVATE void * resource_webix_schema(hgobj gobj, void *data)
+PUBLIC json_t *resource_webix_schema(
+    hgobj gobj,
+    const char *lmethod,
+    json_t *kw,
+    hgobj src
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    const char *resource = data;
+    char *resource = (char *)kw;
     const sdata_desc_t *it = resource_schema(priv->tb_resources, resource, 0);
     json_t *jn_list = json_array();
     if(!it) {

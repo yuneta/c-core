@@ -861,7 +861,7 @@ PRIVATE json_t *cmd_add_channel(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         gobj,
         0,
         0,
-        RESOURCE_WEBIX_SCHEMA(priv->resource, resource),
+        0, //RESOURCE_WEBIX_SCHEMA(priv->resource, resource),
         jn_data, // owned
         kw  // owned
     );
@@ -957,7 +957,7 @@ PRIVATE json_t *cmd_delete_channel(hgobj gobj, const char *cmd, json_t *kw, hgob
 PRIVATE json_t *cmd_list_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-    char *resource = "channels";
+    const char *resource = "channels";
 
     if(!priv->resource) {
         return msg_iev_build_webix(gobj,
@@ -987,7 +987,7 @@ PRIVATE json_t *cmd_list_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         gobj,
         0,
         json_local_sprintf(cmd),
-        RESOURCE_WEBIX_SCHEMA(priv->resource, resource),
+        0, //RESOURCE_WEBIX_SCHEMA(priv->resource, resource),
         jn_data, // owned
         kw  // owned
     );
