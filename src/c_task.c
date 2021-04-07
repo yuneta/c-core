@@ -279,15 +279,11 @@ PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int stop_task(hgobj gobj, int result)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
         trace_msg("================> stop task");
     }
 
     gobj_publish_event(gobj, "EV_END_TASK", json_pack("{s:i}", "result", result));
-
-//     priv->cur_q_msg = 0;
 
     gobj_stop(gobj);
 
@@ -407,8 +403,6 @@ PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
     log_error(0,
         "gobj",         "%s", gobj_full_name(gobj),
         "function",     "%s", __FUNCTION__,
