@@ -202,6 +202,8 @@ PRIVATE int mt_start(hgobj gobj)
 
     /*
      *  Subscribe to gobj_results events
+     *  TODO gobj_results puede dar soporte a varias tasks,
+     *  hay que suscribirse con algún tipo de id
      */
     gobj_subscribe_event(priv->gobj_results, NULL, NULL, gobj);
 
@@ -414,29 +416,6 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
         "msg",          "%s", "Task failed by timeout",
         NULL
     );
-
-// TODO    json_t *jn_job_ = trq_msg_json(priv->cur_q_msg);
-//
-//     const char *action = kw_get_str(jn_job_, "exec_result", "", KW_REQUIRED);
-//
-//     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-//         trace_msg("================> timeout -> exec_result: %s", action);
-//         log_debug_json(0, kw, "====> timeout -> exec_result");
-//     }
-//     int ret = (int)(size_t)gobj_exec_internal_method(priv->gobj_jobs, action, jn_job_);
-//     if(ret < 0) {
-//         json_object_set_new(jn_job_, "result", json_integer(-2));
-//         stop_task(gobj);
-//
-//     } else {
-//         priv->cur_q_msg = trq_next_msg(priv->cur_q_msg);
-//         if(!priv->cur_q_msg) {
-//             stop_task(gobj);
-//         } else {
-//             execute_action(gobj, kw);
-//         }
-//     }
-
 
     KW_DECREF(kw);
     stop_task(gobj, -1);
