@@ -1215,8 +1215,7 @@ PRIVATE json_t *cmd_enable_channels(hgobj gobj, const char *cmd, json_t *kw, hgo
     /*
      *  Get a iter of matched resources
      */
-    KW_INCREF(kw);
-    dl_list_t *iter = gobj_list_resource(priv->resource, resource, kw);
+    dl_list_t *iter = gobj_list_resource(priv->resource, resource, kw_incref(kw));
 
     hgobj hs; rc_instance_t *i_hs;
     i_hs = rc_first_instance(iter, (rc_resource_t **)&hs);
@@ -1265,8 +1264,7 @@ PRIVATE json_t *cmd_disable_channels(hgobj gobj, const char *cmd, json_t *kw, hg
     /*
      *  Get a iter of matched resources
      */
-    KW_INCREF(kw);
-    dl_list_t *iter = gobj_list_resource(priv->resource, resource, kw);
+    dl_list_t *iter = gobj_list_resource(priv->resource, resource, kw_incref(kw));
 
     hgobj hs; rc_instance_t *i_hs;
     i_hs = rc_first_instance(iter, (rc_resource_t **)&hs);
@@ -1296,7 +1294,7 @@ PRIVATE json_t *cmd_disable_channels(hgobj gobj, const char *cmd, json_t *kw, hg
  ***************************************************************************/
 PRIVATE json_t *cmd_trace_on_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    trace_on_channels(gobj, cmd, kw, src);
+    trace_on_channels(gobj, cmd, kw_incref(kw), src);
     return cmd_view_channels(gobj, cmd, kw, src);
 }
 
@@ -1305,7 +1303,7 @@ PRIVATE json_t *cmd_trace_on_channels(hgobj gobj, const char *cmd, json_t *kw, h
  ***************************************************************************/
 PRIVATE json_t *cmd_trace_off_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    trace_off_channels(gobj, cmd, kw, src);
+    trace_off_channels(gobj, cmd, kw_incref(kw), src);
     return cmd_view_channels(gobj, cmd, kw, src);
 }
 
@@ -1372,11 +1370,10 @@ PRIVATE int trace_on_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj src
     /*
      *  Get a iter of matched resources
      */
-    KW_INCREF(kw);
     dl_list_t *iter = gobj_list_resource(
         priv->resource,
         resource,
-        kw // owned
+        kw_incref(kw) // owned
     );
 
     hgobj hs; rc_instance_t *i_hs;
@@ -1418,11 +1415,10 @@ PRIVATE int trace_off_channels(hgobj gobj, const char* cmd, json_t* kw, hgobj sr
     /*
      *  Get a iter of matched resources
      */
-    KW_INCREF(kw);
     dl_list_t *iter = gobj_list_resource(
         priv->resource,
         resource,
-        kw
+        kw_incref(kw)
     );
 
     hgobj hs; rc_instance_t *i_hs;
