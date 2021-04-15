@@ -49,9 +49,11 @@ PRIVATE void on_close_cb(uv_handle_t* handle);
  *      Attributes - order affect to oid's
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
-SDATA (ASN_OCTET_STR,   "path",                 SDF_RD,  0, "Path to watch"),
-SDATA (ASN_BOOLEAN,     "recursive",            SDF_RD,  0, "Watch on all sub-directory tree"),
-SDATA (ASN_BOOLEAN,     "info",                 SDF_RD,  0, "Inform of found subdirectories"),
+/*-ATTR-type------------name------------flag--------default-----description---------- */
+SDATA (ASN_OCTET_STR,   "path",         SDF_RD,     0,          "Path to watch"),
+SDATA (ASN_BOOLEAN,     "recursive",    SDF_RD,     0,          "Watch on all sub-directory tree"),
+SDATA (ASN_BOOLEAN,     "info",         SDF_RD,     0,          "Inform of found subdirectories"),
+SDATA (ASN_COUNTER64,   "size_dl_watch",SDF_RD|SDF_STATS, 0,    "Current subdirs in dl watch"),
 SDATA_END()
 };
 
@@ -143,6 +145,19 @@ PRIVATE int mt_stop(hgobj gobj)
     return 0;
 }
 
+/***************************************************************************
+ *      Framework Method reading
+ ***************************************************************************/
+PRIVATE SData_Value_t mt_reading(hgobj gobj, const char *name, int type, SData_Value_t data)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if(strcmp(name, "size_dl_watch")==0) {
+        data.u64 = dl_size(&priv->dl_watches);
+    }
+    return data;
+}
+
 
 
 
@@ -222,6 +237,8 @@ PRIVATE SUBDIR_WATCH * create_subdir_watch(hgobj gobj, const char *path)
             "msg",          "%s", "uv_fs_event_start() FAILED",
             "uv_error",     "%s", uv_err_name(ret),
             "path",         "%s", path,
+            "size dl",      "%d", (int)dl_size(&priv->dl_watches),
+            "posible solution", "%s", "add fs.inotify.max_user_watches=524288 to /etc/sysctl.conf file and exec 'sysctl -p'",
             NULL
         );
     }
@@ -354,7 +371,7 @@ PRIVATE GCLASS _gclass = {
         0, //mt_play,
         0, //mt_pause,
         0, //mt_writing,
-        0, //mt_reading,
+        mt_reading,
         0, //mt_subscription_added,
         0, //mt_subscription_deleted,
         0, //mt_child_added,
