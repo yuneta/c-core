@@ -621,6 +621,16 @@ PRIVATE q_msg enqueue_message(
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+    if(!priv->trq_msgs) {
+        log_critical(LOG_OPT_ABORT|LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "trq_msgs NULL",
+            NULL
+        );
+        return 0;
+    }
 
     json_t *kw_clean_clone;
 
