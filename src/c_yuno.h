@@ -132,7 +132,9 @@ PUBLIC json_int_t default_service_decr_stat(const char *path, json_int_t value);
 PUBLIC json_int_t default_service_get_stat(const char *path);
 
 /*--------------------------------------------------*
- *  Allowed ips
+ *  Allowed ips for authz without jwt
+ *      (in addition to local ip with yuneta user)
+ *  Denied ips for authz without jwt
  *--------------------------------------------------*/
 PUBLIC BOOL is_ip_allowed(const char *peername);
 PUBLIC int add_allowed_ip(const char *ip, BOOL allowed); // allowed: TRUE to allow, FALSE to not allow

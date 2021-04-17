@@ -353,7 +353,6 @@ PRIVATE void on_close_cb(uv_handle_t* handle)
     hgobj gobj = handle->data;
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-
     if(gobj_trace_level(gobj) & TRACE_UV) {
         trace_msg("<<< on_close_cb tcp0 p=%p", &priv->uv_socket);
     }
@@ -372,12 +371,12 @@ PRIVATE void on_close_cb(uv_handle_t* handle)
 //             "msg",          "%s", "set_disconnected() NOT EXECUTED",
 //             NULL
 //         );
-        if(!empty_string(priv->disconnected_event_name)) {
-            gobj_publish_event(gobj, priv->disconnected_event_name, 0);
-        }
+        gobj_publish_event(gobj, priv->disconnected_event_name, 0);
     }
 
-    if(!empty_string(priv->stopped_event_name)) {
+    if(gobj_is_volatil(gobj)) {
+        gobj_destroy(gobj);
+    } else {
         gobj_publish_event(gobj, priv->stopped_event_name, 0);
     }
 }
@@ -447,15 +446,13 @@ PRIVATE void set_connected(hgobj gobj)
 
     try_write_all(gobj, FALSE);
 
-    if(!empty_string(priv->connected_event_name)) {
-        json_t *kw_ev = json_pack("{s:s, s:s}",
-            "peername", priv->peername,
-            "sockname", priv->sockname
-        );
-        // TODO error de diseño, si se cambia connected_event_name la publicación fallará
-        // porque el evento no estará en output_events list.
-        gobj_publish_event(gobj, priv->connected_event_name, kw_ev);
-    }
+    json_t *kw_ev = json_pack("{s:s, s:s}",
+        "peername", priv->peername,
+        "sockname", priv->sockname
+    );
+    // TODO error de diseño, si se cambia connected_event_name la publicación fallará
+    // porque el evento no estará en output_events list.
+    gobj_publish_event(gobj, priv->connected_event_name, kw_ev);
 }
 
 /***************************************************************************
@@ -484,9 +481,7 @@ PRIVATE void set_disconnected(hgobj gobj, const char *cause)
 
     if(priv->inform_disconnection) {
         priv->inform_disconnection = FALSE;
-        if(!empty_string(priv->disconnected_event_name)) {
-            gobj_publish_event(gobj, priv->disconnected_event_name, 0);
-        }
+        gobj_publish_event(gobj, priv->disconnected_event_name, 0);
     }
 
     if(gobj_read_bool_attr(gobj, "__clisrv__")) {
@@ -827,27 +822,25 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
         );
     }
 
-    if(!empty_string(priv->rx_data_event_name)) {
-        // TODO: check is nread is greater than maximum block, and create a overflowable buf
-        GBUFFER *gbuf = gbuf_create(nread, nread, 0,0);
+    // TODO: check is nread is greater than maximum block, and create a overflowable buf
+    GBUFFER *gbuf = gbuf_create(nread, nread, 0,0);
 
-        if(!gbuf) {
-            log_error(0,
-                "gobj",         "%s", gobj_full_name(gobj),
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_MEMORY_ERROR,
-                "msg",          "%s", "no memory for gbuf",
-                "size",         "%d", nread,
-                NULL);
-            return;
-        }
-        gbuf_append(gbuf, buf->base, nread);
-
-        json_t *kw = json_pack("{s:I}",
-            "gbuffer", (json_int_t)(size_t)gbuf
-        );
-        gobj_publish_event(gobj, priv->rx_data_event_name, kw);
+    if(!gbuf) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_MEMORY_ERROR,
+            "msg",          "%s", "no memory for gbuf",
+            "size",         "%d", nread,
+            NULL);
+        return;
     }
+    gbuf_append(gbuf, buf->base, nread);
+
+    json_t *kw = json_pack("{s:I}",
+        "gbuffer", (json_int_t)(size_t)gbuf
+    );
+    gobj_publish_event(gobj, priv->rx_data_event_name, kw);
 }
 
 /***************************************************************************
