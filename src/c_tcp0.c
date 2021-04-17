@@ -363,14 +363,6 @@ PRIVATE void on_close_cb(uv_handle_t* handle)
 
     if(priv->inform_disconnection) {
         priv->inform_disconnection = FALSE;
-// Esto ocurre cuando el agent no autoriza un identity-card y corta la conexión.
-//         log_error(0,
-//             "gobj",         "%s", gobj_full_name(gobj),
-//             "function",     "%s", __FUNCTION__,
-//             "msgset",       "%s", MSGSET_OPERATIONAL_ERROR,
-//             "msg",          "%s", "set_disconnected() NOT EXECUTED",
-//             NULL
-//         );
         gobj_publish_event(gobj, priv->disconnected_event_name, 0);
     }
 
