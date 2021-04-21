@@ -1287,7 +1287,7 @@ PRIVATE int load_record_callback(
             json_array_append(jn_data, jn_record);
         }
 
-        hgobj gobj = (hgobj)kw_get_int(list, "gobj", 0, KW_REQUIRED);
+        hgobj gobj = (hgobj)(size_t)kw_get_int(list, "gobj", 0, KW_REQUIRED);
         gobj_publish_event(gobj, "EV_TRANGER_RECORD_ADDED", jn_data);
     }
 
