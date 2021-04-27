@@ -286,7 +286,7 @@ PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 PRIVATE int stop_task(hgobj gobj, int result)
 {
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("================> stop task");
+        trace_msg("================> stop task, result %d", result);
     }
 
     gobj_publish_event(gobj, "EV_END_TASK", json_pack("{s:i}", "result", result));
