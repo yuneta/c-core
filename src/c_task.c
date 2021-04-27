@@ -4,11 +4,17 @@
  *
         "jobs": [
             {
-                "exec_action", "?",
-                "exec_result", "?",
+                "exec_action", "$local_method",
+                "exec_timeout", 10000,
+                "exec_result", "$local_method",
             },
             ...
         ]
+
+    being "$local_method" a local method of gobj_jobs
+    "exec_timeout" in miliseconds
+
+    if exec_action() or exec_result() return -1 then the job is stopped
 
  *          Tasks
  *              - gobj_jobs: gobj defining the jobs (local methods)
@@ -304,6 +310,7 @@ PRIVATE int execute_action(hgobj gobj)
     }
 
     const char *action = kw_get_str(jn_job_, "exec_action", "", KW_REQUIRED);
+    json_int_t exec_timeout = kw_get_int(jn_job_, "exec_timeout", priv->timeout, 0);
 
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
         trace_msg("================> exec ACTION: %s", action);
@@ -318,7 +325,7 @@ PRIVATE int execute_action(hgobj gobj)
     if(ret < 0) {
         stop_task(gobj, ret);
     } else {
-        set_timeout(priv->timer, priv->timeout);
+        set_timeout(priv->timer, exec_timeout);
     }
 
     return 0;
