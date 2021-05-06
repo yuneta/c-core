@@ -62,6 +62,7 @@ SDATA (ASN_BOOLEAN,     "disable_end_of_frame", SDF_RD|SDF_STATS, 0, "Disable nu
 SDATA (ASN_OCTET_STR,   "on_open_event_name",   SDF_RD,  "EV_ON_OPEN", "Must be empty if you don't want receive this event"),
 SDATA (ASN_OCTET_STR,   "on_close_event_name",  SDF_RD,  "EV_ON_CLOSE", "Must be empty if you don't want receive this event"),
 SDATA (ASN_OCTET_STR,   "on_message_event_name",SDF_RD,  "EV_ON_MESSAGE", "Must be empty if you don't want receive this event"),
+SDATA (ASN_OCTET_STR,   "__username__",         SDF_RD,  "",             "Username"),
 SDATA (ASN_POINTER,     "user_data",            0,  0, "user data"),
 SDATA (ASN_POINTER,     "user_data2",           0,  0, "more user data"),
 SDATA (ASN_POINTER,     "subscriber",           0,  0, "subscriber of output-events. Default if null is parent."),
