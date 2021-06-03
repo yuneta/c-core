@@ -82,6 +82,8 @@ set (SRCS
     src/c_prot_header4.c
     src/c_prot_raw.c
     src/c_prot_http.c
+    src/c_prot_http_srv.c
+    src/c_prot_http_cli.c
 
     # gossamer
     src/c_gss_udp_s0.c
@@ -144,6 +146,8 @@ set (HDRS
     src/c_prot_header4.h
     src/c_prot_raw.h
     src/c_prot_http.h
+    src/c_prot_http_srv.h
+    src/c_prot_http_cli.h
 
     # gossamer
     src/c_gss_udp_s0.h

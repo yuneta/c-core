@@ -1,16 +1,13 @@
 /****************************************************************************
- *          C_PROT_HTTP.H
- *          Prot_http GClass.
+ *          C_PROT_HTTP_SRV.H
+ *          Prot_http_srv GClass.
  *
- *          Protocol http 1.1
+ *          Protocol http as server
  *
- *          Copyright (c) 2018 Niyamaka.
+ *          Copyright (c) 2018-2021 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-#ifndef _C_PROT_HTTP_H
-#define _C_PROT_HTTP_H 1
-
-// WARNING OBSOLETE user prot_http_srv
+#pragma once
 
 #include <ginsfsm.h>
 #include "ghttp_parser.h"
@@ -24,16 +21,14 @@ extern "C"{
 /***************************************************************
  *              Constants
  ***************************************************************/
-#define GCLASS_PROT_HTTP_NAME "Prot_http"
-#define GCLASS_PROT_HTTP gclass_prot_http()
+#define GCLASS_PROT_HTTP_SRV_NAME "Prot_http_srv"
+#define GCLASS_PROT_HTTP_SRV gclass_prot_http_srv()
 
 /***************************************************************
  *              Prototypes
  ***************************************************************/
-PUBLIC GCLASS *gclass_prot_http(void);
+PUBLIC GCLASS *gclass_prot_http_srv(void);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

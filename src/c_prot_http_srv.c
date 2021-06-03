@@ -1,19 +1,18 @@
 /***********************************************************************
- *          C_PROT_HTTP.C
- *          Prot_http GClass.
+ *          C_PROT_HTTP_SRV.C
+ *          Prot_http_srv GClass.
  *
- *          Protocol http 1.1
+ *          Protocol http as server
  *
- *          Copyright (c) 2018 Niyamaka.
+ *          Copyright (c) 2018-2021 Niyamaka.
  *          All Rights Reserved.
  ***********************************************************************/
 #include <string.h>
-#include "c_prot_http.h"
+#include "c_prot_http_srv.h"
 
 /***************************************************************************
  *              Constants
  ***************************************************************************/
-// WARNING OBSOLETE user prot_http_srv
 
 /***************************************************************************
  *              Structures
@@ -33,7 +32,6 @@
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag------------default---------description---------- */
-SDATA (ASN_BOOLEAN,     "iamServer",        SDF_RD,         0,              "What side? server or client"),
 SDATA (ASN_BOOLEAN,     "send_event",       SDF_RD,         0,              "TRUE send_event, FALSE publish_event"),
 SDATA (ASN_OCTET_STR,   "resource",         SDF_RD,         "/",            "Resource when iam client"),
 SDATA (ASN_JSON,        "kw_connex",        SDF_RD,         0,              "Kw to create connex if client"),
@@ -42,6 +40,8 @@ SDATA (ASN_INTEGER,     "timeout_inactivity",SDF_WR,        1*60*1000,      "Tim
 SDATA (ASN_OCTET_STR,   "on_open_event_name",SDF_RD,        "EV_ON_OPEN",   "Must be empty if you don't want receive this event"),
 SDATA (ASN_OCTET_STR,   "on_close_event_name",SDF_RD,       "EV_ON_CLOSE",  "Must be empty if you don't want receive this event"),
 SDATA (ASN_OCTET_STR,   "on_message_event_name",SDF_RD,     "EV_ON_MESSAGE","Must be empty if you don't want receive this event"),
+SDATA (ASN_POINTER,     "tranger_frame",    0,              0,              "TimeRanger frames"),
+SDATA (ASN_POINTER,     "htopic_frame",     0,              0,              "TimeRanger frames topic"),
 SDATA (ASN_POINTER,     "user_data",        0,              0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,              0,              "more user data"),
 SDATA (ASN_POINTER,     "subscriber",       0,              0,              "subscriber of output-events. If it's null then subscriber is the parent."),
@@ -52,23 +52,23 @@ SDATA_END()
  *      GClass trace levels
  *---------------------------------------------*/
 enum {
-    TRACE_USER = 0x0001,
+    TRAFFIC         = 0x0001,
 };
 PRIVATE const trace_level_t s_user_trace_level[16] = {
-{"trace_user",        "Trace user description"},
+{"traffic",         "Trace input data"},
 {0, 0},
 };
-
 
 /*---------------------------------------------*
  *              Private data
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
     hgobj timer;
-    char iamServer;                     // What side? server or client
     TYPE_ASN_BOOLEAN *pconnected;
     GHTTP_PARSER *parsing_request;      // A request parser instance
-    GHTTP_PARSER *parsing_response;     // A response parser instance
+
+    json_t *tranger_frame;  // Broadcasted from parent
+    json_t *htopic_frame;   // Broadcasted from parent
 
     int timeout_inactivity;
     const char *on_open_event_name;
@@ -95,14 +95,10 @@ PRIVATE void mt_create(hgobj gobj)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     priv->pconnected = gobj_danger_attr_ptr(gobj, "connected");
-    priv->iamServer = gobj_read_bool_attr(gobj, "iamServer");
 
     priv->timer = gobj_create("", GCLASS_TIMER, 0, gobj);
     priv->parsing_request = ghttp_parser_create(
         gobj, HTTP_REQUEST, "EV_ON_MESSAGE", gobj_read_bool_attr(gobj, "send_event")
-    );
-    priv->parsing_response = ghttp_parser_create(
-        gobj, HTTP_RESPONSE, "EV_ON_MESSAGE", gobj_read_bool_attr(gobj, "send_event")
     );
 
     /*
@@ -120,14 +116,9 @@ PRIVATE void mt_create(hgobj gobj)
     SET_PRIV(on_open_event_name,    gobj_read_str_attr)
     SET_PRIV(on_close_event_name,   gobj_read_str_attr)
     SET_PRIV(on_message_event_name, gobj_read_str_attr)
+    SET_PRIV(htopic_frame,          gobj_read_pointer_attr)
+    SET_PRIV(tranger_frame,         gobj_read_pointer_attr)
     SET_PRIV(timeout_inactivity,    gobj_read_int32_attr)
-
-    if(!priv->iamServer) {
-        json_t *kw_connex = gobj_read_json_attr(gobj, "kw_connex");
-        JSON_INCREF(kw_connex);
-        hgobj gobj_bottom = gobj_create(gobj_name(gobj), GCLASS_CONNEX, kw_connex, gobj);
-        gobj_set_bottom_gobj(gobj, gobj_bottom);
-    }
 }
 
 /***************************************************************************
@@ -138,6 +129,8 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     IF_EQ_SET_PRIV(timeout_inactivity,          gobj_read_int32_attr)
+    ELIF_EQ_SET_PRIV(htopic_frame,  gobj_read_pointer_attr)
+    ELIF_EQ_SET_PRIV(tranger_frame, gobj_read_pointer_attr)
     END_EQ_SET_PRIV()
 }
 
@@ -176,10 +169,6 @@ PRIVATE void mt_destroy(hgobj gobj)
     if(priv->parsing_request) {
         ghttp_parser_destroy(priv->parsing_request);
         priv->parsing_request = 0;
-    }
-    if(priv->parsing_response) {
-        ghttp_parser_destroy(priv->parsing_response);
-        priv->parsing_response = 0;
     }
 }
 
@@ -259,7 +248,6 @@ PRIVATE int ac_disconnected(hgobj gobj, const char *event, json_t *kw, hgobj src
     *priv->pconnected = 0;
 
     ghttp_parser_reset(priv->parsing_request);
-    ghttp_parser_reset(priv->parsing_response);
 
     clear_timeout(priv->timer);
 
@@ -286,26 +274,46 @@ PRIVATE int ac_rx_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
     GBUFFER *gbuf = (GBUFFER *)(size_t)kw_get_int(kw, "gbuffer", 0, FALSE);
 
+    if(gobj_trace_level(gobj) & TRAFFIC) {
+        log_debug_gbuf(LOG_DUMP_INPUT, gbuf, gobj_short_name(gobj));
+    }
+
     set_timeout(priv->timer, priv->timeout_inactivity);
 
-    if (priv->iamServer) {
-        /*
-         *  Server
-         *  Analyze the request and respond
-         */
-        int result = parse_message(gobj, gbuf, priv->parsing_request);
-        if (result < 0) {
-            gobj_stop(gobj_bottom_gobj(gobj));
-        }
-    } else {
-        /*
-         *  Client
-         *  Analyze the response
-         */
-        int result = parse_message(gobj, gbuf, priv->parsing_response);
-        if (result < 0) {
-            gobj_send_event(gobj_bottom_gobj(gobj), "EV_DROP", 0, gobj);
-        }
+    /*---------------------------------------------*
+     *   Log the frame
+     *---------------------------------------------*/
+    if(priv->htopic_frame) {
+        gbuf_incref(gbuf);
+        GBUFFER *gbuf_encoded_frame = gbuf_encodebase64(
+            gbuf
+        );
+        json_t *jn_frame = json_object();
+        json_object_set_new(
+            jn_frame,
+            "frame64",
+            json_string(gbuf_cur_rd_pointer(gbuf_encoded_frame))
+        );
+        gbuf_decref(gbuf_encoded_frame);
+
+        md_record_t md_record;
+        tranger_append_record(
+            priv->tranger_frame,
+            tranger_topic_name(priv->htopic_frame),
+            0,  // __t__ if 0 then the time will be set by TimeRanger with now time
+            0,  // __user_flag__
+            &md_record,
+            jn_frame      // owned
+        );
+    }
+
+    /*
+     *  Server
+     *  Analyze the request and respond
+     */
+    int result = parse_message(gobj, gbuf, priv->parsing_request);
+    if (result < 0) {
+        gobj_stop(gobj_bottom_gobj(gobj));
     }
     KW_DECREF(kw);
     return 0;
@@ -323,7 +331,7 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
         const char *code = kw_get_str(kw, "code", "200 OK", 0);
         const char *headers = kw_get_str(kw, "headers", "", 0);
         json_t *jn_body = kw_duplicate(kw_get_dict_value(kw, "body", json_object(), KW_REQUIRED));
-        char *resp = json2str(jn_body);
+        char *resp = json2uglystr(jn_body);
         int len = strlen(resp) + strlen(headers);
         kw_decref(jn_body);
 
@@ -358,6 +366,14 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
         );
         gbuf_append(gbuf, resp, len);
         gbmem_free(resp);
+    }
+
+    if(gobj_trace_level(gobj) & TRAFFIC) {
+        log_debug_gbuf(
+            LOG_DUMP_OUTPUT,
+            gbuf,
+            gobj_short_name(gobj_bottom_gobj(gobj))
+        );
     }
 
     json_t *kw_response = json_pack("{s:I}",
@@ -481,7 +497,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_PROT_HTTP_NAME,
+    GCLASS_PROT_HTTP_SRV_NAME,
     &fsm,
     {
         mt_create,
@@ -561,7 +577,7 @@ PRIVATE GCLASS _gclass = {
 /***************************************************************************
  *              Public access
  ***************************************************************************/
-PUBLIC GCLASS *gclass_prot_http(void)
+PUBLIC GCLASS *gclass_prot_http_srv(void)
 {
     return &_gclass;
 }

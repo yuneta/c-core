@@ -62,6 +62,8 @@ extern "C"{
 #include "c_prot_header4.h"
 #include "c_prot_raw.h"
 #include "c_prot_http.h"
+#include "c_prot_http_srv.h"
+#include "c_prot_http_cli.h"
 // #include "c_serverlink.h"
 // #include "c_tlv.h"
 

@@ -57,6 +57,8 @@ PUBLIC int yuneta_register_c_core(void)
     gobj_register_gclass(GCLASS_PROT_HEADER4);
     gobj_register_gclass(GCLASS_PROT_RAW);
     gobj_register_gclass(GCLASS_PROT_HTTP);
+    gobj_register_gclass(GCLASS_PROT_HTTP_SRV);
+    gobj_register_gclass(GCLASS_PROT_HTTP_CLI);
 
     /*
      *  Mixin uv-gobj
