@@ -32,16 +32,11 @@
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag------------default---------description---------- */
-SDATA (ASN_BOOLEAN,     "send_event",       SDF_RD,         0,              "TRUE send_event, FALSE publish_event"),
-SDATA (ASN_OCTET_STR,   "resource",         SDF_RD,         "/",            "Resource when iam client"),
-SDATA (ASN_JSON,        "kw_connex",        SDF_RD,         0,              "Kw to create connex if client"),
-SDATA (ASN_BOOLEAN,     "connected",        SDF_RD,         0,              "Connection state. Important filter!"),
 SDATA (ASN_INTEGER,     "timeout_inactivity",SDF_WR,        1*60*1000,      "Timeout inactivity"),
+SDATA (ASN_BOOLEAN,     "connected",         SDF_RD,        0,              "Connection state. Important filter!"),
 SDATA (ASN_OCTET_STR,   "on_open_event_name",SDF_RD,        "EV_ON_OPEN",   "Must be empty if you don't want receive this event"),
 SDATA (ASN_OCTET_STR,   "on_close_event_name",SDF_RD,       "EV_ON_CLOSE",  "Must be empty if you don't want receive this event"),
 SDATA (ASN_OCTET_STR,   "on_message_event_name",SDF_RD,     "EV_ON_MESSAGE","Must be empty if you don't want receive this event"),
-SDATA (ASN_POINTER,     "tranger_frame",    0,              0,              "TimeRanger frames"),
-SDATA (ASN_POINTER,     "htopic_frame",     0,              0,              "TimeRanger frames topic"),
 SDATA (ASN_POINTER,     "user_data",        0,              0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,              0,              "more user data"),
 SDATA (ASN_POINTER,     "subscriber",       0,              0,              "subscriber of output-events. If it's null then subscriber is the parent."),
@@ -55,7 +50,7 @@ enum {
     TRAFFIC         = 0x0001,
 };
 PRIVATE const trace_level_t s_user_trace_level[16] = {
-{"traffic",         "Trace input data"},
+{"traffic",         "Trace traffic"},
 {0, 0},
 };
 
@@ -64,17 +59,12 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
     hgobj timer;
-    TYPE_ASN_BOOLEAN *pconnected;
     GHTTP_PARSER *parsing_request;      // A request parser instance
-
-    json_t *tranger_frame;  // Broadcasted from parent
-    json_t *htopic_frame;   // Broadcasted from parent
 
     int timeout_inactivity;
     const char *on_open_event_name;
     const char *on_close_event_name;
     const char *on_message_event_name;
-    int inform_on_close;
 } PRIVATE_DATA;
 
 
@@ -94,11 +84,12 @@ PRIVATE void mt_create(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    priv->pconnected = gobj_danger_attr_ptr(gobj, "connected");
-
     priv->timer = gobj_create("", GCLASS_TIMER, 0, gobj);
     priv->parsing_request = ghttp_parser_create(
-        gobj, HTTP_REQUEST, "EV_ON_MESSAGE", gobj_read_bool_attr(gobj, "send_event")
+        gobj,
+        HTTP_REQUEST,
+        "EV_ON_MESSAGE",
+        FALSE
     );
 
     /*
@@ -116,8 +107,6 @@ PRIVATE void mt_create(hgobj gobj)
     SET_PRIV(on_open_event_name,    gobj_read_str_attr)
     SET_PRIV(on_close_event_name,   gobj_read_str_attr)
     SET_PRIV(on_message_event_name, gobj_read_str_attr)
-    SET_PRIV(htopic_frame,          gobj_read_pointer_attr)
-    SET_PRIV(tranger_frame,         gobj_read_pointer_attr)
     SET_PRIV(timeout_inactivity,    gobj_read_int32_attr)
 }
 
@@ -129,8 +118,6 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     IF_EQ_SET_PRIV(timeout_inactivity,          gobj_read_int32_attr)
-    ELIF_EQ_SET_PRIV(htopic_frame,  gobj_read_pointer_attr)
-    ELIF_EQ_SET_PRIV(tranger_frame, gobj_read_pointer_attr)
     END_EQ_SET_PRIV()
 }
 
@@ -139,10 +126,7 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
  ***************************************************************************/
 PRIVATE int mt_start(hgobj gobj)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    gobj_start(priv->timer);
-
+    gobj_start_childs(gobj);
     return 0;
 }
 
@@ -154,7 +138,7 @@ PRIVATE int mt_stop(hgobj gobj)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     clear_timeout(priv->timer);
-    gobj_stop(priv->timer);
+    gobj_stop_childs(gobj);
 
     return 0;
 }
@@ -192,7 +176,6 @@ PRIVATE int parse_message(hgobj gobj, GBUFFER *gbuf, GHTTP_PARSER *parser)
 {
     size_t ln;
     while((ln=gbuf_leftbytes(gbuf))>0) {
-        size_t ln = gbuf_leftbytes(gbuf);
         char *bf = gbuf_cur_rd_pointer(gbuf);
         int n = ghttp_parser_received(parser, bf, ln);
         if (n == -1) {
@@ -223,11 +206,10 @@ PRIVATE int ac_connected(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    *priv->pconnected = 1;
+    gobj_write_bool_attr(gobj, "connected", TRUE);
 
-    gobj_change_state(gobj, "ST_SESSION");
+    ghttp_parser_reset(priv->parsing_request);
 
-    priv->inform_on_close = TRUE;
     if(!empty_string(priv->on_open_event_name)) {
         gobj_publish_event(gobj, priv->on_open_event_name, 0);
     }
@@ -245,21 +227,15 @@ PRIVATE int ac_disconnected(hgobj gobj, const char *event, json_t *kw, hgobj src
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    *priv->pconnected = 0;
-
-    ghttp_parser_reset(priv->parsing_request);
-
     clear_timeout(priv->timer);
 
     if(gobj_is_volatil(src)) {
         gobj_set_bottom_gobj(gobj, 0);
     }
+    gobj_write_bool_attr(gobj, "connected", FALSE);
 
-    if(priv->inform_on_close) {
-        priv->inform_on_close = FALSE;
-        if(!empty_string(priv->on_close_event_name)) {
-            gobj_publish_event(gobj, priv->on_close_event_name, 0);
-        }
+    if(!empty_string(priv->on_close_event_name)) {
+        gobj_publish_event(gobj, priv->on_close_event_name, 0);
     }
 
     KW_DECREF(kw);
@@ -280,41 +256,11 @@ PRIVATE int ac_rx_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
     set_timeout(priv->timer, priv->timeout_inactivity);
 
-    /*---------------------------------------------*
-     *   Log the frame
-     *---------------------------------------------*/
-    if(priv->htopic_frame) {
-        gbuf_incref(gbuf);
-        GBUFFER *gbuf_encoded_frame = gbuf_encodebase64(
-            gbuf
-        );
-        json_t *jn_frame = json_object();
-        json_object_set_new(
-            jn_frame,
-            "frame64",
-            json_string(gbuf_cur_rd_pointer(gbuf_encoded_frame))
-        );
-        gbuf_decref(gbuf_encoded_frame);
-
-        md_record_t md_record;
-        tranger_append_record(
-            priv->tranger_frame,
-            tranger_topic_name(priv->htopic_frame),
-            0,  // __t__ if 0 then the time will be set by TimeRanger with now time
-            0,  // __user_flag__
-            &md_record,
-            jn_frame      // owned
-        );
-    }
-
-    /*
-     *  Server
-     *  Analyze the request and respond
-     */
     int result = parse_message(gobj, gbuf, priv->parsing_request);
     if (result < 0) {
-        gobj_stop(gobj_bottom_gobj(gobj));
+        gobj_send_event(gobj_bottom_gobj(gobj), "EV_DROP", 0, gobj);
     }
+
     KW_DECREF(kw);
     return 0;
 }
@@ -442,23 +388,17 @@ PRIVATE const EVENT output_events[] = {
 };
 PRIVATE const char *state_names[] = {
     "ST_DISCONNECTED",
-    "ST_WAIT_CONNECTED",
-    "ST_SESSION",
+    "ST_CONNECTED",
     NULL
 };
 
 PRIVATE EV_ACTION ST_DISCONNECTED[] = {
-    {"EV_CONNECTED",        ac_connected,               0},
+    {"EV_CONNECTED",        ac_connected,               "ST_CONNECTED"},
     {"EV_DISCONNECTED",     ac_disconnected,            0},
     {"EV_STOPPED",          ac_stopped,                 0},
     {0,0,0}
 };
-PRIVATE EV_ACTION ST_WAIT_CONNECTED[] = {
-    {"EV_CONNECTED",        ac_connected,               0},
-    {"EV_DISCONNECTED",     ac_disconnected,            "ST_DISCONNECTED"},
-    {0,0,0}
-};
-PRIVATE EV_ACTION ST_SESSION[] = {
+PRIVATE EV_ACTION ST_CONNECTED[] = {
     {"EV_RX_DATA",          ac_rx_data,                 0},
     {"EV_SEND_MESSAGE",     ac_send_message,            0},
     {"EV_TIMEOUT",          ac_timeout_inactivity,      0},
@@ -470,8 +410,7 @@ PRIVATE EV_ACTION ST_SESSION[] = {
 
 PRIVATE EV_ACTION *states[] = {
     ST_DISCONNECTED,
-    ST_WAIT_CONNECTED,
-    ST_SESSION,
+    ST_CONNECTED,
     NULL
 };
 
