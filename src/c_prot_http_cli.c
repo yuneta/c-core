@@ -70,7 +70,7 @@ typedef struct _PRIVATE_DATA {
     const char *on_message_event_name;
     char schema[64];
     char host[NAME_MAX];
-    char port[32];
+    int port;
 
 } PRIVATE_DATA;
 
@@ -218,18 +218,20 @@ PRIVATE int ac_connected(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
     ghttp_parser_reset(priv->parsing_response);
 
+    char port[64];
     parse_http_url(
         priv->url,
         priv->schema, sizeof(priv->schema),
         priv->host, sizeof(priv->host),
-        priv->port, sizeof(priv->port),
+        port, sizeof(port),
         TRUE
     );
+    priv->port = atoi(port);
 
     clear_timeout(priv->timer);
 
-    if(!empty_string(priv->on_close_event_name)) {
-        gobj_publish_event(gobj, priv->on_close_event_name, 0);
+    if(!empty_string(priv->on_open_event_name)) {
+        gobj_publish_event(gobj, priv->on_open_event_name, 0);
     }
 
     KW_DECREF(kw);
@@ -285,9 +287,25 @@ PRIVATE int ac_rx_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
 PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+    const char *http_version = "1.1";
+    int content_length = 0;
+    char *content = 0;
 
+    const char *method = kw_get_str(kw, "method", "GET", 0);
+    const char *resource = kw_get_str(kw, "resource", "/", 0);
+    // TODO json_t *headers = kw_get_dict(kw, "headers", 0, 0);º
+    // TODO json_t *params = kw_get_dict_value(kw, "params", "", 0);
+    //if(json_is_string(params)) -> copia tal cual
+    //if(json_is_object(params)) -> transforma a params
 
-    GBUFFER *gbuf = gbuf_create(256, 4*1024, 0,0);
+    json_t *data = kw_get_dict(kw, "json", 0, 0);
+    if(data) {
+        content = json2uglystr(data);
+        content_length = strlen(content);
+    }
+
+    // TODO calcula bien el size of header
+    GBUFFER *gbuf = gbuf_create(1024+content_length, 1024+content_length, 0,0);
     if(!gbuf) {
         log_error(0,
             "gobj",         "%s", gobj_full_name(gobj),
@@ -298,12 +316,25 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
         );
         return -1;
     }
-    gbuf_printf(gbuf, "GET %s HTTP/1.1\r\n", prot_http_cli);
-    gbuf_printf(gbuf, "Host: %s\r\n", priv->host);
+    gbuf_printf(gbuf, "%s %s HTTP/%s\r\n", method, resource, http_version);
+
+    // TODO merge these own headers with passed headers
+    if(priv->port == 80 || priv->port == 443) {
+        gbuf_printf(gbuf, "Host: %s\r\n", priv->host);
+    } else {
+        gbuf_printf(gbuf, "Host: %s:%d\r\n", priv->host, priv->port);
+    }
     gbuf_printf(gbuf, "User-Agent: yuneta-%s\r\n",  __yuneta_version__);
     gbuf_printf(gbuf, "Connection: keep-alive\r\n");
-    gbuf_printf(gbuf, "Accept: */*\r\n");
+    if(content) {
+        gbuf_printf(gbuf, "Content-Type: application/json; charset=utf-8\r\n");
+        gbuf_printf(gbuf, "Content-Length: %d\r\n", content_length);
+    }
     gbuf_printf(gbuf, "\r\n");
+    if(content) {
+        gbuf_printf(gbuf, content, content_length);
+        gbmem_free(content);
+    }
 
     if(gobj_trace_level(gobj) & TRAFFIC) {
         log_debug_gbuf(
