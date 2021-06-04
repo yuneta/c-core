@@ -135,6 +135,9 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
  ***************************************************************************/
 PRIVATE int mt_start(hgobj gobj)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    gobj_start(priv->timer);
     gobj_start_childs(gobj);
     return 0;
 }
@@ -147,6 +150,7 @@ PRIVATE int mt_stop(hgobj gobj)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     clear_timeout(priv->timer);
+    gobj_stop(priv->timer);
     gobj_stop_childs(gobj);
     return 0;
 }
