@@ -116,6 +116,45 @@ PRIVATE void mt_create(hgobj gobj)
     SET_PRIV(on_close_event_name,   gobj_read_str_attr)
     SET_PRIV(on_message_event_name, gobj_read_str_attr)
     SET_PRIV(timeout_inactivity,    gobj_read_int32_attr)
+
+    if(empty_string(priv->url)) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "url EMPTY",
+            NULL
+        );
+    } else {
+        char port[64];
+        parse_http_url(
+            priv->url,
+            priv->schema, sizeof(priv->schema),
+            priv->host, sizeof(priv->host),
+            port, sizeof(port),
+            FALSE
+        );
+        priv->port = atoi(port);
+    }
+
+    if(empty_string(priv->host)) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "host EMPTY",
+            NULL
+        );
+    }
+    if(!priv->port) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "port EMPTY",
+            NULL
+        );
+    }
 }
 
 /***************************************************************************
@@ -127,6 +166,7 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
 
     IF_EQ_SET_PRIV(timeout_inactivity,          gobj_read_int32_attr)
     ELIF_EQ_SET_PRIV(url,                       gobj_read_str_attr)
+        // TODO recalcula host,port
     END_EQ_SET_PRIV()
 }
 
@@ -221,16 +261,6 @@ PRIVATE int ac_connected(hgobj gobj, const char *event, json_t *kw, hgobj src)
     gobj_write_bool_attr(gobj, "connected", TRUE);
 
     ghttp_parser_reset(priv->parsing_response);
-
-    char port[64];
-    parse_http_url(
-        priv->url,
-        priv->schema, sizeof(priv->schema),
-        priv->host, sizeof(priv->host),
-        port, sizeof(port),
-        TRUE
-    );
-    priv->port = atoi(port);
 
     clear_timeout(priv->timer);
 
@@ -330,6 +360,7 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
     }
     gbuf_printf(gbuf, "User-Agent: yuneta-%s\r\n",  __yuneta_version__);
     gbuf_printf(gbuf, "Connection: keep-alive\r\n");
+    gbuf_printf(gbuf, "Accept: */*\r\n");
     if(content) {
         gbuf_printf(gbuf, "Content-Type: application/json; charset=utf-8\r\n");
         gbuf_printf(gbuf, "Content-Length: %d\r\n", content_length);
