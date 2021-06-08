@@ -17,6 +17,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/statvfs.h>
+#include <sys/utsname.h>
 #include "c_yuno.h"
 
 /***************************************************************************
@@ -459,11 +460,16 @@ SDATA (ASN_COUNTER64,   "qs_higher_response_time", SDF_RD|SDF_STATS,    -1,     
 SDATA (ASN_COUNTER64,   "qs_repeated",      SDF_RD|SDF_STATS,           0,              "Qs"),
 SDATA (ASN_COUNTER64,   "cpu_ticks",        SDF_RD|SDF_STATS,           0,              "Cpu ticks"),
 SDATA (ASN_UNSIGNED,    "cpu",              SDF_RD|SDF_STATS,           0,              "Cpu percent"),
-SDATA (ASN_UNSIGNED,    "timeout_restart",  SDF_WR|SDF_PERSIST,         0,              "timeout (seconds) to restart"),
+SDATA (ASN_UNSIGNED,    "timeout_restart",  SDF_WR|SDF_STATS|SDF_PERSIST,0,             "timeout (seconds) to restart"),
 SDATA (ASN_JSON,        "trace_levels",     SDF_WR|SDF_PERSIST,         0,              "Trace levels"),
 SDATA (ASN_JSON,        "no_trace_levels",  SDF_WR|SDF_PERSIST,         0,              "No trace levels"),
 SDATA (ASN_JSON,        "allowed_ips",      SDF_RD|SDF_PERSIST,         "{}",           "Allowed peer ip's if true, false not allowed"),
 SDATA (ASN_JSON,        "denied_ips",       SDF_RD|SDF_PERSIST,         "{}",           "Denied peer ip's if true, false not denied"),
+SDATA (ASN_OCTET_STR,   "sys_system_name",  SDF_RD|SDF_STATS,           "",             "System name"),
+SDATA (ASN_OCTET_STR,   "sys_node_name",    SDF_RD|SDF_STATS,           "",             "Node name"),
+SDATA (ASN_OCTET_STR,   "sys_version",      SDF_RD|SDF_STATS,           "",             "Version"),
+SDATA (ASN_OCTET_STR,   "sys_release",      SDF_RD|SDF_STATS,           "",             "Release"),
+SDATA (ASN_OCTET_STR,   "sys_machine",      SDF_RD|SDF_STATS,           "",             "Machine"),
 SDATA_END()
 };
 
@@ -591,6 +597,17 @@ PRIVATE void mt_create(hgobj gobj)
     SET_PRIV(timeout_restart,       gobj_read_uint32_attr)
     SET_PRIV(yuno_name,             gobj_read_str_attr)
     SET_PRIV(yuno_role,             gobj_read_str_attr)
+
+    {
+        struct utsname buf1;
+        if(uname(&buf1)==0) {
+            gobj_write_str_attr(gobj, "sys_system_name", buf1.sysname);
+            gobj_write_str_attr(gobj, "sys_node_name", buf1.nodename);
+            gobj_write_str_attr(gobj, "sys_version", buf1.version);
+            gobj_write_str_attr(gobj, "sys_release", buf1.release);
+            gobj_write_str_attr(gobj, "sys_machine", buf1.machine);
+        }
+    }
 }
 
 /***************************************************************************
