@@ -245,6 +245,7 @@ PRIVATE sdata_desc_t tattr_desc[] = {
 SDATA (ASN_BOOLEAN,     "persistent_channels",SDF_RD,           0,              "Set True to do channels persistent (in sqlite database)."),
 SDATA (ASN_BOOLEAN,     "local_store",      SDF_RD,             0,              "Set True to have the persistent_channels in local store (in /yuneta/realms instead of /yuneta/store)"),
 
+SDATA (ASN_INTEGER,     "send_type",        SDF_RD,             0,              "Send type: 0 one dst, 1 all destinations"),
 SDATA (ASN_INTEGER,     "timeout",          SDF_RD,             1*1000,         "Timeout"),
 SDATA (ASN_COUNTER64,   "txMsgs",           SDF_RD,             0,              "Messages transmitted"),
 SDATA (ASN_COUNTER64,   "rxMsgs",           SDF_RD,             0,              "Messages received"),
@@ -283,7 +284,7 @@ typedef struct _PRIVATE_DATA {
     int32_t timeout;
 
     hgobj subscriber;
-
+    send_type_t send_type;
     uint64_t *ptxMsgs;
     uint64_t *prxMsgs;
     uint64_t last_txMsgs;
@@ -359,6 +360,7 @@ PRIVATE void mt_create(hgobj gobj)
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
     SET_PRIV(timeout,                   gobj_read_int32_attr)
+    SET_PRIV(send_type,                 gobj_read_int32_attr)
     SET_PRIV(subscriber,                gobj_read_pointer_attr)
 }
 
@@ -1519,6 +1521,136 @@ PRIVATE hgobj get_next_destination(hgobj gobj)
 }
 
 /***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int send_one_rotate(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *channel = kw_get_str(kw, "__temp__`channel", "", 0);
+    hgobj channel_gobj = (hgobj)(size_t)kw_get_int(kw, "__temp__`channel_gobj", 0, 0);
+    if(!channel_gobj) {
+        if(!empty_string(channel)) {
+            channel_gobj = gobj_child_by_name(gobj, channel, 0);
+        } else {
+            channel_gobj = get_next_destination(gobj);
+        }
+        if(!channel_gobj) {
+            static int repeated = 0;
+
+            if(repeated%1000 == 0) {
+                log_error(0,
+                    "gobj",         "%s", gobj_full_name(gobj),
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "No channel FOUND to send",
+                    "channel",      "%s", channel?channel:"???",
+                    "event",        "%s", event,
+                    "repeated",     "%d", repeated*1000,
+                    NULL
+                );
+            }
+
+            KW_DECREF(kw);
+            return -1;
+        }
+    }
+
+    if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
+        GBUFFER *gbuf = (GBUFFER *)(size_t)kw_get_int(kw, "gbuffer", 0, 0);
+        if(gbuf) {
+            log_debug_gbuf(
+                LOG_DUMP_OUTPUT,
+                gbuf, // not own
+                "GBUFFER %s ==> %s",
+                gobj_short_name(gobj),
+                gobj_short_name(channel_gobj)
+            );
+        } else {
+            log_debug_json(
+                LOG_DUMP_OUTPUT,
+                kw, // not own,
+                "KW %s ==> %s",
+                gobj_short_name(gobj),
+                gobj_short_name(channel_gobj)
+            );
+        }
+    }
+
+    int ret = gobj_send_event(channel_gobj, "EV_SEND_MESSAGE", kw, gobj); // reuse kw
+    if(ret == 0) {
+        (*priv->ptxMsgs)++;
+    }
+
+    return ret;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int send_all(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+    char *resource = "channels";
+
+    if(!priv->resource) {
+        return 0;
+    }
+
+    hgobj channel_gobj = 0;
+
+    /*
+     *  Get a iter of matched resources
+     */
+    dl_list_t *iter = gobj_list_resource(priv->resource, resource, 0);
+
+    json_t *jn_filter = json_pack("{s:b, s:b}",
+        "opened", 1,
+        "disabled", 0
+    );
+    dl_list_t *iter_open = sdata_iter_match(iter, -1, 0, jn_filter, 0);
+
+    hsdata hs=0; rc_instance_t* i_hs=0;
+    i_hs = rc_first_instance(iter_open, (rc_resource_t **)&hs); // first time
+    while(i_hs) {
+        channel_gobj = sdata_read_pointer(hs, "channel_gobj");
+        if(channel_gobj) {
+            if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
+                GBUFFER *gbuf = (GBUFFER *)(size_t)kw_get_int(kw, "gbuffer", 0, 0);
+                if(gbuf) {
+                    log_debug_gbuf(
+                        LOG_DUMP_OUTPUT,
+                        gbuf, // not own
+                        "GBUFFER %s ==> %s",
+                        gobj_short_name(gobj),
+                        gobj_short_name(channel_gobj)
+                    );
+                } else {
+                    log_debug_json(
+                        LOG_DUMP_OUTPUT,
+                        kw, // not own,
+                        "KW %s ==> %s",
+                        gobj_short_name(gobj),
+                        gobj_short_name(channel_gobj)
+                    );
+                }
+            }
+
+            int ret = gobj_send_event(channel_gobj, "EV_SEND_MESSAGE", kw_incref(kw), gobj);
+            if(ret == 0) {
+                (*priv->ptxMsgs)++;
+            }
+
+        }
+    }
+    rc_free_iter(iter_open, TRUE, 0);
+    rc_free_iter(iter, TRUE, 0);
+
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
  *  How many channel opened?
  ***************************************************************************/
 PRIVATE int channels_opened(hgobj gobj)
@@ -1761,76 +1893,21 @@ PRIVATE int ac_iev_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
 PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-    const char *channel = kw_get_str(kw, "__temp__`channel", "", 0);
-    hgobj channel_gobj = (hgobj)(size_t)kw_get_int(kw, "__temp__`channel_gobj", 0, 0);
-    if(!channel_gobj) {
-        if(!empty_string(channel)) {
-            channel_gobj = gobj_child_by_name(gobj, channel, 0);
-        } else {
-            channel_gobj = get_next_destination(gobj);
-        }
-        if(!channel_gobj) {
-            // TODO diferentes tipos de envio, one, one_rotado, all, by re_name, etc
-            static int repeated = 0;
 
-            if(repeated%1000 == 0) {
-                log_error(0,
-                    "gobj",         "%s", gobj_full_name(gobj),
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "No channel FOUND to send",
-                    "channel",      "%s", channel?channel:"???",
-                    "event",        "%s", event,
-                    "repeated",     "%d", repeated*1000,
-                    NULL
-                );
-            }
+    int send_type = kw_get_int(kw, "__send_type__", priv->send_type, 0);
 
-            KW_DECREF(kw);
-            return -1;
-        }
+    switch(send_type) {
+    case TYPE_SEND_ALL:
+        send_all(gobj, event, json_incref(kw), src);
+        break;
+
+    case TYPE_SEND_ONE_ROTATED:
+        send_one_rotate(gobj, event, json_incref(kw), src);
+        break;
     }
 
-    /*
-     *  Avoid infinite loop
-     */
-    if(channel_gobj == gobj) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "INFINITE LOOP",
-            NULL
-        );
-        KW_DECREF(kw);
-        return -1;
-    }
-
-    if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        GBUFFER *gbuf = (GBUFFER *)(size_t)kw_get_int(kw, "gbuffer", 0, 0);
-        if(gbuf) {
-            log_debug_gbuf(
-                LOG_DUMP_OUTPUT,
-                gbuf, // not own
-                "GBUFFER %s ==> %s",
-                gobj_short_name(gobj),
-                gobj_short_name(channel_gobj)
-            );
-        } else {
-            log_debug_json(
-                LOG_DUMP_OUTPUT,
-                kw, // not own,
-                "KW %s ==> %s",
-                gobj_short_name(gobj),
-                gobj_short_name(channel_gobj)
-            );
-        }
-    }
-
-    int ret = gobj_send_event(channel_gobj, "EV_SEND_MESSAGE", kw, gobj); // reuse kw
-    (*priv->ptxMsgs)++;
-
-    return ret;
+    KW_DECREF(kw);
+    return 0;
 }
 
 /***************************************************************************
@@ -1839,81 +1916,24 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
 PRIVATE int ac_send_iev(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-    const char *channel = kw_get_str(kw, "__temp__`channel", "", 0);
-    hgobj channel_gobj = (hgobj)(size_t)kw_get_int(kw, "__temp__`channel_gobj", 0, 0);
-    if(!channel_gobj) {
-        if(!empty_string(channel)) {
-            channel_gobj = gobj_child_by_name(gobj, channel, 0);
-        } else {
-            channel_gobj = get_next_destination(gobj);
-        }
-        if(!channel_gobj) {
-            // TODO diferentes tipos de envio, one, one_rotado, all, by re_name, etc
-            static int repeated = 0;
-
-            if(repeated%1000 == 0) {
-                log_error(0,
-                    "gobj",         "%s", gobj_full_name(gobj),
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "No channel FOUND to send",
-                    "channel",      "%s", channel?channel:"???",
-                    "event",        "%s", event,
-                    "repeated",     "%d", repeated*1000,
-                    NULL
-                );
-            }
-
-            KW_DECREF(kw);
-            return -1;
-        }
-    }
-
-    /*
-     *  Avoid infinite loop
-     */
-    if(channel_gobj == gobj) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "INFINITE LOOP",
-            NULL
-        );
-        KW_DECREF(kw);
-        return -1;
-    }
-
-    if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        GBUFFER *gbuf = (GBUFFER *)(size_t)kw_get_int(kw, "gbuffer", 0, 0);
-        if(gbuf) {
-            log_debug_gbuf(
-                LOG_DUMP_OUTPUT,
-                gbuf, // not own
-                "GBUFFER %s ==> %s",
-                gobj_short_name(gobj),
-                gobj_short_name(channel_gobj)
-            );
-        } else {
-            log_debug_json(
-                LOG_DUMP_OUTPUT,
-                kw, // not own,
-                "KW %s ==> %s",
-                gobj_short_name(gobj),
-                gobj_short_name(channel_gobj)
-            );
-        }
-    }
 
     const char *iev_event = kw_get_str(kw, "event", "", KW_REQUIRED);
     json_t *iev_kw = kw_get_dict(kw, "kw", 0, KW_REQUIRED|KW_EXTRACT);
 
-    int ret = gobj_send_event(channel_gobj, iev_event, iev_kw, gobj);
-    (*priv->ptxMsgs)++;
+    int send_type = kw_get_int(kw, "__send_type__", priv->send_type, 0);
+
+    switch(send_type) {
+    case TYPE_SEND_ALL:
+        send_all(gobj, iev_event, iev_kw, src);
+        break;
+
+    case TYPE_SEND_ONE_ROTATED:
+        send_one_rotate(gobj, iev_event, iev_kw, src);
+        break;
+    }
 
     KW_DECREF(kw);
-
-    return ret;
+    return 0;
 }
 
 /***************************************************************************

@@ -166,7 +166,7 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
  *              Private data
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
-    hgobj tcp0;
+    hgobj tcp0;  // HACK Whatever underneath.
     hgobj timer;
     char iamServer;         // What side? server or client
     int pingT;
@@ -233,11 +233,14 @@ PRIVATE void mt_create(hgobj gobj)
     gobj_subscribe_event(gobj, NULL, NULL, subscriber);
 
     if(!priv->iamServer) {
-        json_t *kw_connex = gobj_read_json_attr(gobj, "kw_connex");
-        json_incref(kw_connex);
-        hgobj tcp0 = gobj_create(gobj_name(gobj), GCLASS_CONNEX, kw_connex, gobj);
-        gobj_write_pointer_attr(gobj, "tcp0", tcp0);
-        gobj_set_bottom_gobj(gobj, tcp0);
+        if(!gobj_bottom_gobj(gobj)) {
+            json_t *kw_connex = gobj_read_json_attr(gobj, "kw_connex");
+            json_incref(kw_connex);
+            hgobj tcp0 = gobj_create(gobj_name(gobj), GCLASS_CONNEX, kw_connex, gobj);
+            gobj_write_pointer_attr(gobj, "tcp0", tcp0);
+            gobj_set_bottom_gobj(gobj, tcp0);
+            // TODO tcp0?
+        }
     }
 
     /*

@@ -17,6 +17,15 @@
 extern "C"{
 #endif
 
+/*********************************************************************
+ *      Constants
+ *********************************************************************/
+typedef enum { // Can be used too in kw with "__send_type__" in EV_SEND_MESSAGE/EV_SEND_IEV events
+    TYPE_SEND_ONE_ROTATED = 0,  // send only one destination and rotated
+    TYPE_SEND_ALL,              // send to all destinations
+} send_type_t;
+
+
 /**rst**
  *
 
