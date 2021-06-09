@@ -141,7 +141,6 @@ SDATA (ASN_BOOLEAN,     "connected",        SDF_RD,                     0,      
 SDATA (ASN_INTEGER,     "timeout_handshake",SDF_WR|SDF_PERSIST,    5*1000,              "Timeout to handshake"),
 SDATA (ASN_INTEGER,     "timeout_close",    SDF_WR|SDF_PERSIST,    3*1000,              "Timeout to close"),
 SDATA (ASN_INTEGER,     "pingT",            SDF_WR|SDF_PERSIST,   50*1000,      "Ping interval. If value <= 0 then No ping"),
-SDATA (ASN_POINTER,     "tcp0",             0,                          0,              "Tcp0 connection"),
 SDATA (ASN_POINTER,     "user_data",        0,                          0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                          0,              "more user data"),
 SDATA (ASN_BOOLEAN,     "iamServer",        SDF_RD,                     0,              "What side? server or client"),
@@ -166,7 +165,6 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
  *              Private data
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
-    hgobj tcp0;  // HACK Whatever underneath.
     hgobj timer;
     char iamServer;         // What side? server or client
     int pingT;
@@ -179,7 +177,6 @@ typedef struct _PRIVATE_DATA {
     FRAME_HEAD message_head;
     GBUFFER *gbuf_message;
 
-    char tcp0_closed;                   // for server, channel closed
     char close_frame_sent;              // close frame sent
     char on_close_broadcasted;          // event on_close already broadcasted
     char on_open_broadcasted;           // event on_open already broadcasted
@@ -233,13 +230,14 @@ PRIVATE void mt_create(hgobj gobj)
     gobj_subscribe_event(gobj, NULL, NULL, subscriber);
 
     if(!priv->iamServer) {
-        if(!gobj_bottom_gobj(gobj)) {
+        hgobj tcp0 = gobj_bottom_gobj(gobj);
+        if(!tcp0) {
+            // Manual connex configuration
             json_t *kw_connex = gobj_read_json_attr(gobj, "kw_connex");
             json_incref(kw_connex);
-            hgobj tcp0 = gobj_create(gobj_name(gobj), GCLASS_CONNEX, kw_connex, gobj);
-            gobj_write_pointer_attr(gobj, "tcp0", tcp0);
+            tcp0 = gobj_create(gobj_name(gobj), GCLASS_CONNEX, kw_connex, gobj);
             gobj_set_bottom_gobj(gobj, tcp0);
-            // TODO tcp0?
+            gobj_write_str_attr(tcp0, "tx_ready_event_name", 0);
         }
     }
 
@@ -248,7 +246,6 @@ PRIVATE void mt_create(hgobj gobj)
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
     SET_PRIV(pingT,             gobj_read_int32_attr)
-    SET_PRIV(tcp0,              gobj_read_pointer_attr)
 }
 
 /***************************************************************************
@@ -259,10 +256,6 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     IF_EQ_SET_PRIV(pingT,               gobj_read_int32_attr)
-    ELIF_EQ_SET_PRIV(tcp0,              gobj_read_pointer_attr)
-        if(priv->tcp0) {
-            gobj_write_str_attr(priv->tcp0, "tx_ready_event_name", 0);
-        }
     END_EQ_SET_PRIV()
 }
 
@@ -277,21 +270,11 @@ PRIVATE int mt_start(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-//     if(!priv->tcp0) {
-//         log_error(0,
-//             "gobj",         "%s", gobj_full_name(gobj),
-//             "function",     "%s", __FUNCTION__,
-//             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-//             "msg",          "%s", "tcp0 is NULL",
-//             NULL
-//         );
-//         return -1;
-//     }
-
     gobj_start(priv->timer);
-    if(priv->tcp0) {
-        if(!gobj_is_running(priv->tcp0)) {
-            gobj_start(priv->tcp0);
+    hgobj tcp0 = gobj_bottom_gobj(gobj);
+    if(tcp0) {
+        if(!gobj_is_running(tcp0)) {
+            gobj_start(tcp0);
         }
     }
     return 0;
@@ -313,9 +296,11 @@ PRIVATE int mt_stop(hgobj gobj)
         gobj_stop(priv->timer);
     }
 
-    if(priv->tcp0) {
-        if(gobj_is_running(priv->tcp0))
-            gobj_stop(priv->tcp0);
+    hgobj tcp0 = gobj_bottom_gobj(gobj);
+    if(tcp0) {
+        if(gobj_is_running(tcp0)) {
+            gobj_stop(tcp0);
+        }
     }
 
     return 0;
@@ -506,7 +491,7 @@ PRIVATE int _write_control_frame(hgobj gobj, char h_fin, char h_opcode, char *da
         //TODO NOOOO disconnect_on_last_transmit
         //json_object_set_new(kw, "disconnect_on_last_transmit", json_true());
     }
-    gobj_send_event(priv->tcp0, "EV_TX_DATA", kw, gobj);
+    gobj_send_event(gobj_bottom_gobj(gobj), "EV_TX_DATA", kw, gobj);
 
     return 0;
 }
@@ -541,9 +526,9 @@ PRIVATE void ws_close(hgobj gobj, int code, const char *reason)
     }
 
     if(priv->iamServer) {
-        if (!priv->tcp0_closed) {
-            priv->tcp0_closed = TRUE;
-            gobj_stop(priv->tcp0);
+        hgobj tcp0 = gobj_bottom_gobj(gobj);
+        if(gobj_is_running(tcp0)) {
+            gobj_stop(tcp0);
         }
     }
     set_timeout(priv->timer, gobj_read_int32_attr(gobj, "timeout_close"));
@@ -1176,8 +1161,6 @@ PRIVATE int b64_encode_string(
  ***************************************************************************/
 PRIVATE int send_http_message(hgobj gobj, const char *http_message)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
     GBUFFER *gbuf = gbuf_create(256, 4*1024, 0,0);
     if(!gbuf) {
         log_error(0,
@@ -1194,7 +1177,7 @@ PRIVATE int send_http_message(hgobj gobj, const char *http_message)
     json_t *kw = json_pack("{s:I}",
         "gbuffer", (json_int_t)(size_t)gbuf
     );
-    return gobj_send_event(priv->tcp0, "EV_TX_DATA", kw, gobj);
+    return gobj_send_event(gobj_bottom_gobj(gobj), "EV_TX_DATA", kw, gobj);
 }
 
 /***************************************************************************
@@ -1203,7 +1186,6 @@ PRIVATE int send_http_message(hgobj gobj, const char *http_message)
 PRIVATE int send_http_message2(hgobj gobj, const char *format, ...)
 {
     va_list ap;
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     GBUFFER *gbuf = gbuf_create(256, 4*1024, 0,0);
     if(!gbuf) {
@@ -1223,7 +1205,7 @@ PRIVATE int send_http_message2(hgobj gobj, const char *format, ...)
     json_t *kw = json_pack("{s:I}",
         "gbuffer", (json_int_t)(size_t)gbuf
     );
-    return gobj_send_event(priv->tcp0, "EV_TX_DATA", kw, gobj);
+    return gobj_send_event(gobj_bottom_gobj(gobj), "EV_TX_DATA", kw, gobj);
 }
 
 /***************************************************************************
@@ -1250,7 +1232,6 @@ PRIVATE BOOL do_request(
     const char *resource,
     json_t *options)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
     GBUFFER *gbuf;
     unsigned char uuid[16];
     char key_b64[40];
@@ -1292,7 +1273,7 @@ PRIVATE BOOL do_request(
     json_t *kw = json_pack("{s:I}",
         "gbuffer", (json_int_t)(size_t)gbuf
     );
-    gobj_send_event(priv->tcp0, "EV_TX_DATA", kw, gobj);
+    gobj_send_event(gobj_bottom_gobj(gobj), "EV_TX_DATA", kw, gobj);
     return TRUE;
 }
 
@@ -1541,8 +1522,8 @@ PRIVATE int ac_connected(hgobj gobj, const char *event, json_t *kw, hgobj src)
         /*
          * send the request
          */
-        const char *host = gobj_read_str_attr(priv->tcp0, "rHost");
-        const char *port = gobj_read_str_attr(priv->tcp0, "rPort");
+        const char *host = gobj_read_str_attr(gobj_bottom_gobj(gobj), "rHost");
+        const char *port = gobj_read_str_attr(gobj_bottom_gobj(gobj), "rPort");
         if(host && port) {
             do_request(
                 gobj,
@@ -1568,7 +1549,6 @@ PRIVATE int ac_disconnected(hgobj gobj, const char *event, json_t *kw, hgobj src
     *priv->pconnected = 0;
 
     if(gobj_is_volatil(src)) {
-        gobj_write_pointer_attr(gobj, "tcp0", 0);
         gobj_set_bottom_gobj(gobj, 0);
     }
 
@@ -1621,7 +1601,7 @@ PRIVATE int ac_process_handshake(hgobj gobj, const char *event, json_t *kw, hgob
          */
         int result = process_http(gobj, gbuf, priv->parsing_request);
         if (result < 0) {
-            gobj_stop(priv->tcp0);
+            gobj_stop(gobj_bottom_gobj(gobj));
 
         } else if (result > 0) {
             int ok = do_response(gobj, priv->parsing_request);
@@ -1629,7 +1609,7 @@ PRIVATE int ac_process_handshake(hgobj gobj, const char *event, json_t *kw, hgob
                 /*
                  * request refused! Drop connection.
                  */
-                gobj_stop(priv->tcp0);
+                gobj_stop(gobj_bottom_gobj(gobj));
             } else {
                 /*------------------------------------*
                  *   Upgrade to websocket
@@ -1647,7 +1627,7 @@ PRIVATE int ac_process_handshake(hgobj gobj, const char *event, json_t *kw, hgob
 
         int result = process_http(gobj, gbuf, priv->parsing_response);
         if (result < 0) {
-            gobj_send_event(priv->tcp0, "EV_DROP", 0, gobj);
+            gobj_send_event(gobj_bottom_gobj(gobj), "EV_DROP", 0, gobj);
 
         } else if (result > 0) {
             if (priv->parsing_response->http_parser.status_code == 101) {
@@ -1674,7 +1654,7 @@ PRIVATE int ac_process_handshake(hgobj gobj, const char *event, json_t *kw, hgob
                 priv->close_frame_sent = TRUE;
                 priv->on_close_broadcasted = TRUE;
                 ws_close(gobj, STATUS_PROTOCOL_ERROR, 0);
-                gobj_send_event(priv->tcp0, "EV_DROP", 0, gobj);
+                gobj_send_event(gobj_bottom_gobj(gobj), "EV_DROP", 0, gobj);
             }
         }
     }
@@ -1699,7 +1679,7 @@ PRIVATE int ac_timeout_waiting_handshake(hgobj gobj, const char *event, json_t *
     priv->on_close_broadcasted = TRUE;  // no on_open was broadcasted
     priv->close_frame_sent = TRUE;
     ws_close(gobj, STATUS_PROTOCOL_ERROR, 0);
-    gobj_send_event(priv->tcp0, "EV_DROP", 0, gobj);
+    gobj_send_event(gobj_bottom_gobj(gobj), "EV_DROP", 0, gobj);
     KW_DECREF(kw);
     return 0;
 }
@@ -1709,8 +1689,6 @@ PRIVATE int ac_timeout_waiting_handshake(hgobj gobj, const char *event, json_t *
  ***************************************************************************/
 PRIVATE int ac_timeout_waiting_disconnected(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
     log_warning(0,
         "gobj",         "%s", gobj_full_name(gobj),
         "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
@@ -1718,7 +1696,7 @@ PRIVATE int ac_timeout_waiting_disconnected(hgobj gobj, const char *event, json_
         NULL
     );
 
-    gobj_send_event(priv->tcp0, "EV_DROP", 0, gobj);
+    gobj_send_event(gobj_bottom_gobj(gobj), "EV_DROP", 0, gobj);
     KW_DECREF(kw);
     return 0;
 }
@@ -1914,8 +1892,8 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
         json_t *kww = json_pack("{s:I}",
             "gbuffer", (json_int_t)(size_t)gbuf_header
         );
-        gobj_send_event(priv->tcp0, "EV_TX_DATA", kww, gobj);    // header
-        gobj_send_event(priv->tcp0, "EV_TX_DATA", kw, gobj);     // paylaod
+        gobj_send_event(gobj_bottom_gobj(gobj), "EV_TX_DATA", kww, gobj);    // header
+        gobj_send_event(gobj_bottom_gobj(gobj), "EV_TX_DATA", kw, gobj);     // paylaod
         return 0;
     }
 
@@ -1948,7 +1926,7 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
     json_t *kww = json_pack("{s:I}",
         "gbuffer", (json_int_t)(size_t)gbuf
     );
-    gobj_send_event(priv->tcp0, "EV_TX_DATA", kww, gobj);
+    gobj_send_event(gobj_bottom_gobj(gobj), "EV_TX_DATA", kww, gobj);
 
     KW_DECREF(kw);
     return 0;
@@ -1959,9 +1937,7 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
  ***************************************************************************/
 PRIVATE int ac_drop(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    gobj_send_event(priv->tcp0, "EV_DROP", 0, gobj);
+    gobj_send_event(gobj_bottom_gobj(gobj), "EV_DROP", 0, gobj);
 
     KW_DECREF(kw);
     return 0;
