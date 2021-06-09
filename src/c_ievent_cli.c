@@ -480,7 +480,7 @@ PRIVATE int send_identity_card(hgobj gobj)
     const char *yuno_tag = gobj_read_str_attr(gobj_yuno(), "yuno_tag");
     json_int_t launch_id = gobj_read_uint64_attr(gobj_yuno(), "launch_id");
     json_t *kw = json_pack(
-        "{s:s, s:s, s:s, s:s, s:s, s:s, s:b, s:i, s:i, s:s, s:s, s:I, s:s}",
+        "{s:s, s:s, s:s, s:s, s:s, s:s, s:b, s:i, s:i, s:s, s:s, s:I, s:s, s:s}",
         "yuno_role", gobj_yuno_role(),
         "yuno_name", gobj_yuno_name(),
         "yuno_tag", yuno_tag?yuno_tag:"",
@@ -493,7 +493,8 @@ PRIVATE int send_identity_card(hgobj gobj)
         "jwt", "", // TODO Json Web Token
         "username", gobj_read_str_attr(gobj, "__username__"),
         "launch_id", launch_id,
-        "yuno_startdate", gobj_read_str_attr(gobj_yuno(), "start_date")
+        "yuno_startdate", gobj_read_str_attr(gobj_yuno(), "start_date"),
+        "id", node_uuid()
     );
 
     json_t *jn_required_services = gobj_read_json_attr(gobj_yuno(), "required_services");

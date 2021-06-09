@@ -5,8 +5,7 @@
  *              All Rights Reserved.
  ****************************************************************************/
 
-#ifndef _YUNETA_ENVIRONMENT_H
-#define _YUNETA_ENVIRONMENT_H 1
+#pragma once
 
 #ifdef __cplusplus
 extern "C"{
@@ -88,11 +87,9 @@ PUBLIC char *yuneta_realm_store_dir(
     BOOL create
 );
 
+PUBLIC const char *node_uuid(void);
 
 #ifdef __cplusplus
 }
-#endif
-
-
 #endif
 

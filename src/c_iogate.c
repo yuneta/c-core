@@ -1898,11 +1898,11 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
 
     switch(send_type) {
     case TYPE_SEND_ALL:
-        send_all(gobj, event, json_incref(kw), src);
+        send_all(gobj, event, kw_incref(kw), src);
         break;
 
     case TYPE_SEND_ONE_ROTATED:
-        send_one_rotate(gobj, event, json_incref(kw), src);
+        send_one_rotate(gobj, event, kw_incref(kw), src);
         break;
     }
 

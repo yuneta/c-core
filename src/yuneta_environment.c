@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <uuid/uuid.h>
 #include "yuneta_environment.h"
 
 /***************************************************************************
@@ -22,6 +23,7 @@ PRIVATE int __xpermission__ = 0;    // permission for directories and executable
 PRIVATE int __rpermission__ = 0;    // permission for regular files
 PRIVATE char __work_dir__[PATH_MAX] = {0};
 PRIVATE char __domain_dir__[PATH_MAX] = {0};
+PRIVATE char uuid[256] = {0};
 
 /***************************************************************************
  *  Register environment
@@ -248,4 +250,48 @@ PUBLIC char *yuneta_realm_store_dir(
         }
     }
     return bf;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC const char *node_uuid(void)
+{
+    char *directory = "/yuneta/store/agent/uuid";
+
+    if(!empty_string(uuid)) {
+        return uuid;
+    }
+
+    json_t *jn_uuid = load_json_from_file(
+        directory,
+        "uuid.json",
+        0
+    );
+
+    if(jn_uuid) {
+        const char *uuid_ = kw_get_str(jn_uuid, "uuid", "", KW_REQUIRED);
+        snprintf(uuid, sizeof(uuid), "%s", uuid_);
+        json_decref(jn_uuid);
+
+    } else {
+        uuid_t binuuid;
+        uuid_generate_random(binuuid);
+        uuid_unparse_lower(binuuid, uuid);
+        jn_uuid = json_object();
+        json_object_set_new(jn_uuid, "uuid", json_string(uuid));
+
+        save_json_to_file(
+            directory,
+            "uuid.json",
+            02770,
+            0660,
+            0,
+            TRUE,   //create
+            TRUE,  //only_read
+            jn_uuid // owned
+        );
+    }
+
+    return uuid;
 }
