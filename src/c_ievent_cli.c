@@ -1129,9 +1129,14 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
         src
     );
     if(!webix) {
-       // Asynchronous response
+        // Asynchronous response
     } else {
-        json_t * kw2 = msg_iev_answer(gobj, kw, webix, 0);
+        json_t *kw2 = msg_iev_answer(
+            gobj,
+            kw,
+            webix,
+            0
+        );
         return send_static_iev(gobj,
             "EV_MT_COMMAND_ANSWER",
             kw2,
