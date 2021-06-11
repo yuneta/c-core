@@ -223,6 +223,7 @@ PRIVATE json_t *mt_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src)
     json_object_set_new(kw, "__stats__", json_string(stats));
 
     send_static_iev(gobj, "EV_MT_STATS", kw, src);
+
     return 0;   // return 0 on asychronous response.
 }
 
@@ -260,7 +261,9 @@ PRIVATE json_t *mt_command(hgobj gobj, const char *command, json_t *kw, hgobj sr
         IEVENT_MESSAGE_AREA_ID,
         jn_ievent_id   // owned
     );
+
     json_object_set_new(kw, "__command__", json_string(command));
+
     send_static_iev(gobj, "EV_MT_COMMAND", kw, src);
 
     return 0;   // return 0 on asychronous response.
