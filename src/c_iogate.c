@@ -1640,7 +1640,7 @@ PRIVATE int send_all(hgobj gobj, const char *event, json_t *kw, hgobj src)
             if(ret == 0) {
                 (*priv->ptxMsgs)++;
             }
-
+            i_hs = rc_next_instance(i_hs, (rc_resource_t **)&hs);
         }
     }
     rc_free_iter(iter_open, TRUE, 0);
