@@ -1976,6 +1976,7 @@ PRIVATE EV_ACTION ST_DISCONNECTED[] = {
     {"EV_DISCONNECTED",     ac_disconnected,                    0},
     {"EV_TIMEOUT",          ac_timeout_waiting_disconnected,    0},
     {"EV_STOPPED",          ac_stopped,                         0},
+    {"EV_TX_READY",         0,                                  0},
     {0,0,0}
 };
 PRIVATE EV_ACTION ST_WAITING_HANDSHAKE[] = {
