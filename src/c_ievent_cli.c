@@ -1098,6 +1098,27 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
     const char *command = kw_get_str(kw, "__command__", 0, 0);
     const char *service = kw_get_str(kw, "service", "", 0);
 
+    if(strncmp(command, "__spawn__", strlen("__spawn__"))==0) {
+        int response_size = MIN(1*1024*1024L, gbmem_get_maximum_block());
+        char *response = gbmem_malloc(response_size);
+        int ret = run_command(command + strlen("__spawn__") + 1, response, response_size);
+        json_t *jn_response = json_string(response);
+        gbmem_free(response);
+
+        return send_static_iev(gobj,
+            "EV_MT_COMMAND_ANSWER",
+            msg_iev_build_webix(
+                gobj,
+                ret,
+                0,
+                0,
+                jn_response,
+                kw
+            ),
+            src
+        );
+    }
+
     hgobj service_gobj;
     if(empty_string(service)) {
         service_gobj = gobj_default_service();
