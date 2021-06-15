@@ -20,6 +20,8 @@
  ***************************************************************************/
 PRIVATE hgobj __yuno_gobj__ = 0;
 PRIVATE char __realm_id__[NAME_MAX] = {0};
+PRIVATE BOOL overwrite_node_owner = FALSE;
+PRIVATE char __node_owner__[NAME_MAX] = {0};
 PRIVATE char __realm_owner__[NAME_MAX] = {0};
 PRIVATE char __realm_role__[NAME_MAX] = {0};
 PRIVATE char __realm_name__[NAME_MAX] = {0};
@@ -625,6 +627,16 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
      *------------------------------------------------*/
     work_dir = kw_get_str(__jn_config__, "environment`work_dir", "", 0);
     domain_dir = kw_get_str(__jn_config__, "environment`domain_dir", "", 0);
+    const char *node_owner  = kw_get_str(__jn_config__, "environment`node_owner", "", 0);
+    overwrite_node_owner = kw_get_bool(
+        __jn_config__, "environment`overwrite_node_owner", 0, KW_WILD_NUMBER
+    );
+
+    gobj_register_node_owner(
+        __node_owner__,
+        overwrite_node_owner
+    );
+
     const char *realm_id  = kw_get_str(__jn_config__, "environment`realm_id", "", 0);
     const char *realm_owner  = kw_get_str(__jn_config__, "environment`realm_owner", "", 0);
     const char *realm_role  = kw_get_str(__jn_config__, "environment`realm_role", "", 0);
@@ -669,6 +681,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
             APP_NAME
         );
     }
+    snprintf(__node_owner__, sizeof(__node_owner__), "%s", node_owner);
     snprintf(__realm_id__, sizeof(__realm_id__), "%s", realm_id);
     snprintf(__realm_owner__, sizeof(__realm_owner__), "%s", realm_owner);
     snprintf(__realm_role__, sizeof(__realm_role__), "%s", realm_role);
@@ -842,6 +855,7 @@ PRIVATE void process(const char *process_name, const char *work_dir, const char 
         "msg",          "%s", "Starting yuno",
         "work_dir",     "%s", work_dir,
         "domain_dir",   "%s", domain_dir,
+        "node_owner",   "%s", __node_owner__,
         "realm_id",     "%s", __realm_id__,
         "realm_owner",  "%s", __realm_owner__,
         "realm_role",   "%s", __realm_role__,
@@ -849,7 +863,7 @@ PRIVATE void process(const char *process_name, const char *work_dir, const char 
         "realm_env",    "%s", __realm_env__,
         "yuno_role",    "%s", __yuno_role__,
         "yuno_name",    "%s", __yuno_name__,
-        "yuno_tag",   "%s", __yuno_tag__,
+        "yuno_tag",     "%s", __yuno_tag__,
         "version",      "%s", __yuno_version__,
         "date",         "%s", __app_datetime__,
         "pid",          "%d", getpid(),
