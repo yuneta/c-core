@@ -20,7 +20,6 @@
  ***************************************************************************/
 PRIVATE hgobj __yuno_gobj__ = 0;
 PRIVATE char __realm_id__[NAME_MAX] = {0};
-PRIVATE BOOL overwrite_node_owner = FALSE;
 PRIVATE char __node_owner__[NAME_MAX] = {0};
 PRIVATE char __realm_owner__[NAME_MAX] = {0};
 PRIVATE char __realm_role__[NAME_MAX] = {0};
@@ -627,21 +626,12 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
      *------------------------------------------------*/
     work_dir = kw_get_str(__jn_config__, "environment`work_dir", "", 0);
     domain_dir = kw_get_str(__jn_config__, "environment`domain_dir", "", 0);
-    const char *node_owner  = kw_get_str(__jn_config__, "environment`node_owner", "", 0);
-    overwrite_node_owner = kw_get_bool(
-        __jn_config__, "environment`overwrite_node_owner", 0, KW_WILD_NUMBER
-    );
-
-    gobj_register_node_owner(
-        __node_owner__,
-        overwrite_node_owner
-    );
-
     const char *realm_id  = kw_get_str(__jn_config__, "environment`realm_id", "", 0);
     const char *realm_owner  = kw_get_str(__jn_config__, "environment`realm_owner", "", 0);
     const char *realm_role  = kw_get_str(__jn_config__, "environment`realm_role", "", 0);
     const char *realm_name  = kw_get_str(__jn_config__, "environment`realm_name", "", 0);
     const char *realm_env  = kw_get_str(__jn_config__, "environment`realm_env", "", 0);
+    const char *node_owner  = kw_get_str(__jn_config__, "environment`node_owner", "", 0);
 
     register_yuneta_environment(
         work_dir,
@@ -662,6 +652,11 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
             "'yuno' dict NOT FOUND in json config"
         );
     }
+    const char *node_owner_  = kw_get_str(jn_yuno, "node_owner", "", 0);
+    if(!empty_string(node_owner_)) {
+        node_owner = node_owner_;
+    }
+
     const char *yuno_role  = kw_get_str(jn_yuno, "yuno_role", "", 0);
     const char *yuno_name  = kw_get_str(jn_yuno, "yuno_name", "", 0);
     const char *yuno_tag  = kw_get_str(jn_yuno, "yuno_tag", "", 0);
@@ -883,6 +878,7 @@ PRIVATE void process(const char *process_name, const char *work_dir, const char 
     );
     json_incref(jn_yuno);
     hgobj gobj = __yuno_gobj__ = gobj_yuno_factory(
+        __node_owner__,
         __realm_id__,
         __realm_owner__,
         __realm_role__,
