@@ -1502,7 +1502,7 @@ PRIVATE json_t *cmd_write_str(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         );
     }
     const char *str_value = kw_get_str(kw, "value", 0, 0);
-    if(empty_string(str_value)) {
+    if(!str_value) {
         return msg_iev_build_webix(
             gobj,
             -1,
