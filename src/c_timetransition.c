@@ -225,7 +225,7 @@ PRIVATE int check_transitions(hgobj gobj)
 PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     if(check_transitions(gobj)>0) {
-        gobj_save_persistent_attrs(gobj);
+        gobj_save_persistent_attrs(gobj, 0); // TODO especifica el attr
     }
 
     JSON_DECREF(kw);

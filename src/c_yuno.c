@@ -168,7 +168,7 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_persistent_attrs[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "",         "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "",         "named-gobj or full gobj"), SDATAPM (ASN_OCTET_STR, "attribute",    0,              "",         "Attribute to list/remove"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_list_childs[] = {
@@ -1446,7 +1446,7 @@ PRIVATE json_t *cmd_write_bool(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
             kw  // owned
         );
     }
-    gobj_save_persistent_attrs(gobj2write);
+    gobj_save_persistent_attrs(gobj2write, json_string(attribute));
 
     json_t *jn_data = sdata2json(gobj_hsdata(gobj2write), ATTR_READABLE|ATTR_WRITABLE, 0);
     return msg_iev_build_webix(
@@ -1563,7 +1563,7 @@ PRIVATE json_t *cmd_write_str(hgobj gobj, const char *cmd, json_t *kw, hgobj src
             kw  // owned
         );
     }
-    gobj_save_persistent_attrs(gobj2write);
+    gobj_save_persistent_attrs(gobj2write, json_string(attribute));
 
     json_t *jn_data = sdata2json(gobj_hsdata(gobj2write), ATTR_READABLE|ATTR_WRITABLE, 0);
     return msg_iev_build_webix(
@@ -1703,7 +1703,7 @@ PRIVATE json_t *cmd_write_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src
             kw  // owned
         );
     }
-    gobj_save_persistent_attrs(gobj2write);
+    gobj_save_persistent_attrs(gobj2write, json_string(attribute));
 
     json_t *jn_data = sdata2json(gobj_hsdata(gobj2write), ATTR_READABLE|ATTR_WRITABLE, 0);
     return msg_iev_build_webix(
@@ -2861,6 +2861,8 @@ PRIVATE json_t* cmd_list_log_handler(hgobj gobj, const char* cmd, json_t* kw, hg
 PRIVATE json_t* cmd_list_persistent_attrs(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
 {
     const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *attribute = kw_get_str(kw, "attribute", 0, 0);
+    json_t *jn_attrs = attribute?json_string(attribute):0;
 
     if(empty_string(gobj_name_)) {
         /*
@@ -2870,7 +2872,7 @@ PRIVATE json_t* cmd_list_persistent_attrs(hgobj gobj, const char* cmd, json_t* k
             0,
             0,
             0,
-            gobj_list_persistent_attrs(0), // owned
+            gobj_list_persistent_attrs(0, jn_attrs), // owned
             kw  // owned
         );
     }
@@ -2879,6 +2881,7 @@ PRIVATE json_t* cmd_list_persistent_attrs(hgobj gobj, const char* cmd, json_t* k
     if(!gobj2view) {
         gobj2view = gobj_find_gobj(gobj_name_);
         if(!gobj2view) {
+            JSON_DECREF(jn_attrs);
             return msg_iev_build_webix(
                 gobj,
                 -1,
@@ -2899,7 +2902,7 @@ PRIVATE json_t* cmd_list_persistent_attrs(hgobj gobj, const char* cmd, json_t* k
         0,
         0,
         0,
-        gobj_list_persistent_attrs(gobj2view), // owned
+        gobj_list_persistent_attrs(gobj2view, jn_attrs), // owned
         kw  // owned
     );
 }
@@ -2910,6 +2913,7 @@ PRIVATE json_t* cmd_list_persistent_attrs(hgobj gobj, const char* cmd, json_t* k
 PRIVATE json_t* cmd_remove_persistent_attrs(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
 {
     const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *attribute = kw_get_str(kw, "attribute", 0, 0);
 
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
@@ -2928,7 +2932,9 @@ PRIVATE json_t* cmd_remove_persistent_attrs(hgobj gobj, const char* cmd, json_t*
         }
     }
 
-    int ret = gobj_remove_persistent_attrs(gobj2view);
+    json_t *jn_attrs = attribute?json_string(attribute):0;
+
+    int ret = gobj_remove_persistent_attrs(gobj2view, jn_attrs);
 
     /*
      *  Inform
@@ -4379,7 +4385,7 @@ PRIVATE int save_global_trace(
         }
     }
 
-    return gobj_save_persistent_attrs(gobj);
+    return gobj_save_persistent_attrs(gobj, json_string("trace_levels"));
 }
 
 /***************************************************************************
@@ -4422,7 +4428,7 @@ PRIVATE int save_user_trace(hgobj gobj, const char* name, const char* level, BOO
         }
     }
 
-    return gobj_save_persistent_attrs(gobj);
+    return gobj_save_persistent_attrs(gobj, json_string("trace_levels"));
 }
 
 /***************************************************************************
@@ -4465,7 +4471,7 @@ PRIVATE int save_user_no_trace(hgobj gobj, const char* name, const char* level, 
         }
     }
 
-    return gobj_save_persistent_attrs(gobj);
+    return gobj_save_persistent_attrs(gobj, json_string("no_trace_levels"));
 }
 
 /***************************************************************************
@@ -5029,7 +5035,7 @@ PUBLIC int add_allowed_ip(const char *ip, BOOL allowed)
         ip,
         allowed?json_true(): json_false()
     )==0) {
-        return gobj_save_persistent_attrs(gobj_yuno());
+        return gobj_save_persistent_attrs(gobj_yuno(), json_string("allowed_ips"));
     } else {
         return -1;
     }
@@ -5041,7 +5047,7 @@ PUBLIC int add_allowed_ip(const char *ip, BOOL allowed)
 PUBLIC int remove_allowed_ip(const char *ip)
 {
     if(json_object_del(gobj_read_json_attr(gobj_yuno(), "allowed_ips"), ip)==0) {
-        return gobj_save_persistent_attrs(gobj_yuno());
+        return gobj_save_persistent_attrs(gobj_yuno(), json_string("allowed_ips"));
     } else {
         return -1;
     }
@@ -5072,7 +5078,7 @@ PUBLIC int add_denied_ip(const char *ip, BOOL denied)
         ip,
         denied?json_true(): json_false()
     )==0) {
-        return gobj_save_persistent_attrs(gobj_yuno());
+        return gobj_save_persistent_attrs(gobj_yuno(), json_string("denied_ips"));
     } else {
         return -1;
     }
@@ -5084,7 +5090,7 @@ PUBLIC int add_denied_ip(const char *ip, BOOL denied)
 PUBLIC int remove_denied_ip(const char *ip)
 {
     if(json_object_del(gobj_read_json_attr(gobj_yuno(), "denied_ips"), ip)==0) {
-        return gobj_save_persistent_attrs(gobj_yuno());
+        return gobj_save_persistent_attrs(gobj_yuno(), json_string("denied_ips"));
     } else {
         return -1;
     }
