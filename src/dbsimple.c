@@ -54,10 +54,12 @@ PRIVATE char *get_persistent_sdata_full_filename(
 }
 
 /***************************************************************************
- *
+   Load writable persistent attributes from simple file db
  ***************************************************************************/
-PUBLIC int db_load_persistent_attrs(hgobj gobj)
+PUBLIC int db_load_persistent_attrs(hgobj gobj, json_t *jn_attrs)
 {
+    JSON_DECREF(jn_attrs); // jn_attrs not used
+
     char path[PATH_MAX];
     get_persistent_sdata_full_filename(gobj, path, sizeof(path), "persistent-attrs", FALSE);
     if(empty_string(path) || access(path, 0)!=0) {
@@ -81,8 +83,10 @@ PUBLIC int db_load_persistent_attrs(hgobj gobj)
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int db_save_persistent_attrs(hgobj gobj)
+PUBLIC int db_save_persistent_attrs(hgobj gobj, json_t *jn_attrs)
 {
+    JSON_DECREF(jn_attrs); // jn_attrs not used
+
     char path[PATH_MAX];
     get_persistent_sdata_full_filename(gobj, path, sizeof(path), "persistent-attrs", TRUE);
     if(empty_string(path)) {
@@ -102,8 +106,10 @@ PUBLIC int db_save_persistent_attrs(hgobj gobj)
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int db_remove_persistent_attrs(hgobj gobj)
+PUBLIC int db_remove_persistent_attrs(hgobj gobj, json_t *jn_attrs)
 {
+    JSON_DECREF(jn_attrs); // jn_attrs not used
+
     char path[PATH_MAX];
     get_persistent_sdata_full_filename(gobj, path, sizeof(path), "persistent-attrs", FALSE);
     if(empty_string(path)) {
@@ -161,8 +167,10 @@ PRIVATE BOOL read_json_cb(
     return TRUE; // to continue
 }
 
-PUBLIC json_t * db_list_persistent_attrs(hgobj gobj)
+PUBLIC json_t * db_list_persistent_attrs(hgobj gobj, json_t *jn_attrs)
 {
+    JSON_DECREF(jn_attrs); // jn_attrs not used
+
     char path[PATH_MAX];
     yuneta_realm_dir(path, sizeof(path), "data", TRUE);
     json_t *jn_dict = json_object();

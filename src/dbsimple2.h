@@ -27,22 +27,34 @@ PUBLIC void dbattrs_end(void);
 /**rst**
    Load writable persistent attributes from simple tranger
 **rst**/
-PUBLIC int dbattrs_load_persistent(hgobj gobj);
+PUBLIC int dbattrs_load_persistent(
+    hgobj gobj,
+    json_t *jn_attrs  // owned
+);
 
 /**rst**
    Save writable persistent attributes from simple tranger
 **rst**/
-PUBLIC int dbattrs_save_persistent(hgobj gobj);
+PUBLIC int dbattrs_save_persistent(
+    hgobj gobj,
+    json_t *jn_attrs  // owned
+);
 
 /**rst**
    Remove writable persistent attributes from simple tranger
 **rst**/
-PUBLIC int dbattrs_remove_persistent(hgobj gobj);
+PUBLIC int dbattrs_remove_persistent(
+    hgobj gobj,
+    json_t *jn_attrs  // owned
+);
 
 /**rst**
    List persistent attributes from simple tranger
 **rst**/
-PUBLIC json_t * dbattrs_list_persistent(hgobj gobj);
+PUBLIC json_t * dbattrs_list_persistent(
+    hgobj gobj,
+    json_t *jn_attrs  // owned
+);
 
 
 #ifdef __cplusplus

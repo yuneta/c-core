@@ -48,10 +48,10 @@ PRIVATE int __print__ = 0;
 
 PRIVATE void *(*__global_startup_persistent_attrs_fn__)(void) = 0;
 PRIVATE void (*__global_end_persistent_attrs_fn__)(void) = 0;
-PRIVATE int (*__global_load_persistent_attrs_fn__)(hgobj gobj) = 0;
-PRIVATE int (*__global_save_persistent_attrs_fn__)(hgobj gobj) = 0;
-PRIVATE int (*__global_remove_persistent_attrs_fn__)(hgobj gobj) = 0;
-PRIVATE json_t * (*__global_list_persistent_attrs_fn__)(hgobj gobj) = 0;
+PRIVATE int (*__global_load_persistent_attrs_fn__)(hgobj gobj, json_t *jn_attrs) = 0;
+PRIVATE int (*__global_save_persistent_attrs_fn__)(hgobj gobj, json_t *jn_attrs) = 0;
+PRIVATE int (*__global_remove_persistent_attrs_fn__)(hgobj gobj, json_t *jn_attrs) = 0;
+PRIVATE json_t * (*__global_list_persistent_attrs_fn__)(hgobj gobj, json_t *jn_attrs) = 0;
 
 PRIVATE json_t * (*__global_command_parser_fn__)(
     hgobj gobj,
@@ -272,10 +272,10 @@ PRIVATE void daemon_catch_signals(void)
  *  DEPRECATED Set functions of gobj_start_up() function.
  ***************************************************************************/
 PUBLIC int yuneta_set_gobj_startup_functions(
-    int (*load_persistent_attrs)(hgobj gobj),
-    int (*save_persistent_attrs)(hgobj gobj),
-    int (*remove_persistent_attrs)(hgobj gobj),
-    json_t * (*list_persistent_attrs)(hgobj gobj),
+    int (*load_persistent_attrs)(hgobj gobj, json_t *jn_attrs),
+    int (*save_persistent_attrs)(hgobj gobj, json_t *jn_attrs),
+    int (*remove_persistent_attrs)(hgobj gobj, json_t *jn_attrs),
+    json_t * (*list_persistent_attrs)(hgobj gobj, json_t *jn_attrs),
     json_function_t global_command_parser,
     json_function_t global_stats_parser
 )
@@ -296,10 +296,10 @@ PUBLIC int yuneta_set_gobj_startup_functions(
 PUBLIC int yuneta_setup(
     void *(*startup_persistent_attrs)(void),
     void (*end_persistent_attrs)(void),
-    int (*load_persistent_attrs)(hgobj gobj),
-    int (*save_persistent_attrs)(hgobj gobj),
-    int (*remove_persistent_attrs)(hgobj gobj),
-    json_t * (*list_persistent_attrs)(hgobj gobj),
+    int (*load_persistent_attrs)(hgobj gobj, json_t *jn_attrs),
+    int (*save_persistent_attrs)(hgobj gobj, json_t *jn_attrs),
+    int (*remove_persistent_attrs)(hgobj gobj, json_t *jn_attrs),
+    json_t * (*list_persistent_attrs)(hgobj gobj, json_t *jn_attrs),
     json_function_t global_command_parser,
     json_function_t global_stats_parser,
     authz_checker_fn global_authz_checker,

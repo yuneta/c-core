@@ -166,9 +166,15 @@ PRIVATE sdata_desc_t pm_gobj_def_name[] = {
 SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name"),
 SDATA_END()
 };
-PRIVATE sdata_desc_t pm_persistent_attrs[] = {
+PRIVATE sdata_desc_t pm_list_persistent_attrs[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "",         "named-gobj or full gobj"), SDATAPM (ASN_OCTET_STR, "attribute",    0,              "",         "Attribute to list/remove"),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj or full gobj"), SDATAPM (ASN_OCTET_STR, "attribute",    0,              0,          "Attribute to list/remove"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_remove_persistent_attrs[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj or full gobj"), SDATAPM (ASN_OCTET_STR, "attribute",    0,              0,          "Attribute to list/remove"),
+SDATAPM (ASN_BOOLEAN,   "__all__",      0,              0,          "Remove all persistent attrs"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_list_childs[] = {
@@ -351,8 +357,8 @@ SDATACM (ASN_SCHEMA,    "set-daemon-debug",         0,      pm_set_daemon_debug,
 SDATACM (ASN_SCHEMA,    "add-log-handler",          0,      pm_add_log_handler,cmd_add_log_handler,     "Add log handler"),
 SDATACM (ASN_SCHEMA,    "delete-log-handler",       0,      pm_del_log_handler,cmd_del_log_handler,     "Delete log handler"),
 SDATACM (ASN_SCHEMA,    "list-log-handler",         0,      0,              cmd_list_log_handler,       "List log handlers"),
-SDATACM (ASN_SCHEMA,    "list-persistent-attrs",    0,      pm_persistent_attrs,cmd_list_persistent_attrs,  "List persistent attributes of yuno"),
-SDATACM (ASN_SCHEMA,    "remove-persistent-attrs",  0,      pm_persistent_attrs,cmd_remove_persistent_attrs,  "List persistent attributes of yuno"),
+SDATACM (ASN_SCHEMA,    "list-persistent-attrs",    0,      pm_list_persistent_attrs,cmd_list_persistent_attrs,  "List persistent attributes of yuno"),
+SDATACM (ASN_SCHEMA,    "remove-persistent-attrs",  0,      pm_remove_persistent_attrs,cmd_remove_persistent_attrs,  "List persistent attributes of yuno"),
 SDATACM (ASN_SCHEMA,    "start-gobj-tree",          0,      pm_gobj_def_name,cmd_start_gobj_tree,       "Start named-gobj tree"),
 SDATACM (ASN_SCHEMA,    "stop-gobj-tree",           0,      pm_gobj_def_name,cmd_stop_gobj_tree,        "Stop named-gobj tree"),
 SDATACM (ASN_SCHEMA,    "enable-gobj",              0,      pm_gobj_def_name,cmd_enable_gobj,           "Enable named-gobj"),
@@ -2860,7 +2866,7 @@ PRIVATE json_t* cmd_list_log_handler(hgobj gobj, const char* cmd, json_t* kw, hg
  ***************************************************************************/
 PRIVATE json_t* cmd_list_persistent_attrs(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *gobj_name_ = kw_get_str(kw, "gobj_name", 0, 0);
     const char *attribute = kw_get_str(kw, "attribute", 0, 0);
     json_t *jn_attrs = attribute?json_string(attribute):0;
 
@@ -2912,8 +2918,28 @@ PRIVATE json_t* cmd_list_persistent_attrs(hgobj gobj, const char* cmd, json_t* k
  ***************************************************************************/
 PRIVATE json_t* cmd_remove_persistent_attrs(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);
     const char *attribute = kw_get_str(kw, "attribute", 0, 0);
+    BOOL all = kw_get_bool(kw, "__all__", 0, KW_WILD_NUMBER);
+
+    if(empty_string(gobj_name_)) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_local_sprintf("what gobj_name?", gobj_short_name(gobj)),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    if(empty_string(attribute) && !all) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_local_sprintf("what attribute?", gobj_short_name(gobj)),
+            0,
+            0,
+            kw  // owned
+        );
+    }
 
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
@@ -2932,18 +2958,16 @@ PRIVATE json_t* cmd_remove_persistent_attrs(hgobj gobj, const char* cmd, json_t*
         }
     }
 
-    json_t *jn_attrs = attribute?json_string(attribute):0;
-
-    int ret = gobj_remove_persistent_attrs(gobj2view, jn_attrs);
+    int ret = gobj_remove_persistent_attrs(gobj2view, json_string(attribute));
 
     /*
      *  Inform
      */
     return msg_iev_build_webix(gobj,
         ret,
-        json_local_sprintf("%s: persistent attrs removed", gobj_short_name(gobj2view)),
         0,
-        0, // owned
+        0,
+        gobj_list_persistent_attrs(gobj2view, 0), // owned
         kw  // owned
     );
 }

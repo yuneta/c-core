@@ -21,23 +21,39 @@ extern "C"{
  **************************************************/
 /**rst**
    Load writable persistent attributes from simple file db
+   WARNING jn_attrs not used
 **rst**/
-PUBLIC int db_load_persistent_attrs(hgobj gobj);
+PUBLIC int db_load_persistent_attrs(
+    hgobj gobj,
+    json_t *jn_attrs  // owned
+);
 
 /**rst**
    Save writable persistent attributes from simple file db
+   WARNING jn_attrs not used
 **rst**/
-PUBLIC int db_save_persistent_attrs(hgobj gobj);
+PUBLIC int db_save_persistent_attrs(
+    hgobj gobj,
+    json_t *jn_attrs  // owned
+);
 
 /**rst**
    Remove writable persistent attributes from simple file db
+   WARNING jn_attrs not used
 **rst**/
-PUBLIC int db_remove_persistent_attrs(hgobj gobj);
+PUBLIC int db_remove_persistent_attrs(
+    hgobj gobj,
+    json_t *jn_attrs  // owned
+);
 
 /**rst**
    List persistent attributes from simple file db
+   WARNING jn_attrs not used
 **rst**/
-PUBLIC json_t * db_list_persistent_attrs(hgobj gobj);
+PUBLIC json_t *db_list_persistent_attrs(
+    hgobj gobj,
+    json_t *jn_attrs  // owned
+);
 
 #ifdef __cplusplus
 }
