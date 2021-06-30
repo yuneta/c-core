@@ -1577,7 +1577,7 @@ PRIVATE int send_one_rotate(hgobj gobj, const char *event, json_t *kw, hgobj src
         }
     }
 
-    int ret = gobj_send_event(channel_gobj, "EV_SEND_MESSAGE", kw, gobj); // reuse kw
+    int ret = gobj_send_event(channel_gobj, event, kw, gobj); // reuse kw
     if(ret == 0) {
         (*priv->ptxMsgs)++;
     }
@@ -1636,7 +1636,7 @@ PRIVATE int send_all(hgobj gobj, const char *event, json_t *kw, hgobj src)
                 }
             }
 
-            int ret = gobj_send_event(channel_gobj, "EV_SEND_MESSAGE", kw_incref(kw), gobj);
+            int ret = gobj_send_event(channel_gobj, event, kw_incref(kw), gobj);
             if(ret == 0) {
                 (*priv->ptxMsgs)++;
             }
@@ -1919,6 +1919,7 @@ PRIVATE int ac_send_iev(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
     const char *iev_event = kw_get_str(kw, "event", "", KW_REQUIRED);
     json_t *iev_kw = kw_get_dict(kw, "kw", 0, KW_REQUIRED|KW_EXTRACT);
+    json_t *__temp__ = kw_get_dict(kw, "__temp__", 0, 0);
 
     int send_type = kw_get_int(kw, "__send_type__", priv->send_type, 0);
 
@@ -1928,6 +1929,9 @@ PRIVATE int ac_send_iev(hgobj gobj, const char *event, json_t *kw, hgobj src)
         break;
 
     case TYPE_SEND_ONE_ROTATED:
+        if(__temp__) {
+            json_object_set(iev_kw, "__temp__", __temp__);
+        }
         send_one_rotate(gobj, iev_event, iev_kw, src);
         break;
     }
