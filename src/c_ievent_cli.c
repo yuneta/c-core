@@ -634,8 +634,6 @@ PRIVATE int resend_subscriptions(hgobj gobj)
 
 
 
-
-
             /***************************
              *      Actions
              ***************************/
@@ -723,7 +721,7 @@ PRIVATE int ac_identity_card_ack(hgobj gobj, const char *event, json_t *kw, hgob
     gobj_write_str_attr(gobj, "remote_yuno_name", src_yuno);
     gobj_write_str_attr(gobj, "remote_yuno_role", src_role);
     gobj_write_str_attr(gobj, "remote_yuno_service", src_service);
-    //const char *username = kw_get_str(kw, "username", "", KW_REQUIRED); // TODO machaco?
+    //const char *username = kw_get_str(kw, "username", "", KW_REQUIRED); // machaco? NO
     //gobj_write_str_attr(gobj, "__username__", username);
 
     // WARNING comprueba result, ahora puede venir negativo
