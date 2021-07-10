@@ -6,9 +6,7 @@
  *          Copyright (c) 2014 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _C_TLV_H
-#define _C_TLV_H 1
+#pragma once
 
 #include <stdint.h>
 #include <ginsfsm.h>
@@ -113,7 +111,3 @@ PUBLIC int snmp_write_sdata_from_varbind(
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

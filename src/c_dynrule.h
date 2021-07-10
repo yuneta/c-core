@@ -4,8 +4,7 @@
  *          Copyright (c) 2015 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-#ifndef _C_DYNRULE_H
-#define _C_DYNRULE_H 1
+#pragma once
 
 #include <ginsfsm.h>
 
@@ -137,6 +136,4 @@ PUBLIC GCLASS *gclass_dynrule(void);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

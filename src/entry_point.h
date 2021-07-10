@@ -5,9 +5,7 @@
  *          Copyright (c) 2014-2015 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _ENTRY_POING_H
-#define _ENTRY_POING_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "msglog_yuneta.h"
@@ -90,7 +88,3 @@ PUBLIC void set_ordered_death(BOOL quick_death);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

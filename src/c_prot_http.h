@@ -7,8 +7,7 @@
  *          Copyright (c) 2018 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-#ifndef _C_PROT_HTTP_H
-#define _C_PROT_HTTP_H 1
+#pragma once
 
 // WARNING OBSOLETE user prot_http_srv
 
@@ -34,6 +33,4 @@ PUBLIC GCLASS *gclass_prot_http(void);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

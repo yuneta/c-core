@@ -5,9 +5,7 @@
  *          Copyright (c) 2013 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _ROLE_REGISTER_H
-#define _ROLE_REGISTER_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "msglog_yuneta.h"
@@ -58,8 +56,5 @@ PUBLIC void ghttp_parser_reset(GHTTP_PARSER *parser);
 
 #ifdef __cplusplus
 }
-#endif
-
-
 #endif
 

@@ -6,9 +6,7 @@
  *          Copyright (c) 2015 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef __DBSIMPLE_H
-#define __DBSIMPLE_H 1
+#pragma once
 
 #include "yuneta_environment.h"
 
@@ -57,6 +55,4 @@ PUBLIC json_t *db_list_persistent_attrs(
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

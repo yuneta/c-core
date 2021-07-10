@@ -7,9 +7,7 @@
  *          Copyright (c) 2015 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _C_DYNAGENT_H
-#define _C_DYNAGENT_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "c_timer.h"
@@ -32,5 +30,3 @@ PUBLIC GCLASS *gclass_dynagent(void);
 }
 #endif
 
-
-#endif

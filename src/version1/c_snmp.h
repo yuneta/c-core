@@ -5,9 +5,7 @@
  *          Copyright (c) 2014 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _C_SNMP_H
-#define _C_SNMP_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "c_tlv.h"
@@ -29,7 +27,3 @@ PUBLIC GCLASS *gclass_snmp(void);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

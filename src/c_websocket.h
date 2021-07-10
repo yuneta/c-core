@@ -34,9 +34,7 @@
  *          Copyright (c) 2013-2014 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _C_WEBSOCKET_H
-#define _C_WEBSOCKET_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "yuneta_version.h"
@@ -61,7 +59,3 @@ PUBLIC GCLASS *gclass_gwebsocket(void);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

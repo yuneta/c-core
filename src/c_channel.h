@@ -4,10 +4,7 @@
  *          Copyright (c) 2016 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-
-#ifndef _C_CHANNEL_H
-#define _C_CHANNEL_H 1
+#pragma once
 
 /*
  *  See c_iogate.h for documentation.
@@ -32,7 +29,4 @@ PUBLIC GCLASS *gclass_channel(void);
 
 #ifdef __cplusplus
 }
-#endif
-
-
 #endif

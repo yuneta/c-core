@@ -7,9 +7,7 @@
  *          Copyright (c) 2014 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _C_UDP_S0_H
-#define _C_UDP_S0_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "msglog_yuneta.h"
@@ -31,7 +29,3 @@ PUBLIC GCLASS *gclass_udp_s0(void);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

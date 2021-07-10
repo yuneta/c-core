@@ -7,8 +7,7 @@
  *          Copyright (c) 2016 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-#ifndef _C_IEVENT_SRV_H
-#define _C_IEVENT_SRV_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "msglog_yuneta.h"
@@ -53,6 +52,4 @@ PUBLIC GCLASS *gclass_ievent_srv(void);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

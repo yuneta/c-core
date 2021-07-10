@@ -62,8 +62,7 @@ configurations
  *          Copyright (c) 2016,2018 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-#ifndef _C_RESOURCE_H
-#define _C_RESOURCE_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "yuneta_environment.h"
@@ -207,6 +206,4 @@ PUBLIC GCLASS *gclass_resource(void);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

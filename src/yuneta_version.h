@@ -3,8 +3,7 @@
  *              Copyright (c) 2013,2018 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-#ifndef _YUNETA_VERSION_H
-#define _YUNETA_VERSION_H 1
+#pragma once
 
 #ifdef __cplusplus
 extern "C"{
@@ -24,5 +23,3 @@ extern "C"{
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* _YUNETA_VERSION_H */

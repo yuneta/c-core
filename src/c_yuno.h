@@ -44,9 +44,7 @@
  *  Copyright (c) 2013-2018 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _C_YUNO_H
-#define _C_YUNO_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "yuneta_environment.h"
@@ -147,7 +145,3 @@ PUBLIC int remove_denied_ip(const char *ip); // Remove from interna list
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

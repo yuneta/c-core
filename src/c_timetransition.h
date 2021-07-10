@@ -4,9 +4,7 @@
  *          Copyright (c) 2016 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _C_TIMETRANSITION_H
-#define _C_TIMETRANSITION_H 1
+#pragma once
 
 #include <ginsfsm.h>
 
@@ -25,7 +23,4 @@ PUBLIC GCLASS *gclass_timetransition(void);
 
 #ifdef __cplusplus
 }
-#endif
-
-
 #endif

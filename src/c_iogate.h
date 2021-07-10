@@ -4,10 +4,7 @@
  *          Copyright (c) 2016 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-
-#ifndef _C_IOGATE_H
-#define _C_IOGATE_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "c_channel.h"
@@ -186,7 +183,4 @@ PUBLIC GCLASS *gclass_iogate(void);
 
 #ifdef __cplusplus
 }
-#endif
-
-
 #endif

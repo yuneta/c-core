@@ -21,9 +21,7 @@
  *          Copyright (c) 2013-2014 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _C_CONNEX_H
-#define _C_CONNEX_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "c_tcp0.h"
@@ -45,7 +43,3 @@ PUBLIC GCLASS *gclass_connex(void);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

@@ -5,9 +5,7 @@
  *          Copyright (c) 2014 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _C_FS_H
-#define _C_FS_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "msglog_yuneta.h"
@@ -29,7 +27,4 @@ PUBLIC GCLASS *gclass_fs(void);
 
 #ifdef __cplusplus
 }
-#endif
-
-
 #endif

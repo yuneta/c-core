@@ -7,8 +7,7 @@
  *          Copyright (c) 2017 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-#ifndef _C_PROT_RAW_H
-#define _C_PROT_RAW_H 1
+#pragma once
 
 #include <ginsfsm.h>
 
@@ -39,6 +38,4 @@ PUBLIC GCLASS *gclass_prot_raw(void);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

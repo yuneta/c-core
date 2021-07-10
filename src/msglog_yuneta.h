@@ -3,9 +3,7 @@
  *              Copyright (c) 2015 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-#ifndef _MSGLOG_YUNETA_H
-#define _MSGLOG_YUNETA_H 1
-
+#pragma once
 
 #ifdef __cplusplus
 extern "C"{
@@ -41,5 +39,3 @@ extern "C"{
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* _MSGLOG_YUNETA_H */

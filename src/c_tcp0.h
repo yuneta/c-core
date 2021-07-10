@@ -70,9 +70,7 @@
 
 
  ****************************************************************************/
-
-#ifndef _C_TCP0_H
-#define _C_TCP0_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "msglog_yuneta.h"
@@ -98,7 +96,3 @@ PUBLIC int accept_connection0(
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

@@ -18,9 +18,7 @@
  *          Copyright (c) 2013-2014 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _C_TCP_S0_H
-#define _C_TCP_S0_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "c_yuno.h"
@@ -41,7 +39,3 @@ PUBLIC GCLASS *gclass_tcp_s0(void);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

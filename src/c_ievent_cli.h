@@ -4,8 +4,7 @@
  *          Copyright (c) 2016 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-#ifndef _C_IVENT_CLI_H
-#define _C_IVENT_CLI_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "yuneta_version.h"
@@ -36,7 +35,4 @@ PUBLIC GCLASS *gclass_ievent(void);
 
 #ifdef __cplusplus
 }
-#endif
-
-
 #endif

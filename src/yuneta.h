@@ -4,9 +4,7 @@
  *              Copyright (c) 2014-2015 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _YUNETA_H
-#define _YUNETA_H 1
+#pragma once
 
 #ifdef __cplusplus
 extern "C"{
@@ -92,7 +90,3 @@ extern "C"{
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

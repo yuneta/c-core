@@ -113,10 +113,7 @@ EV_FINAL_COUNT
 
 
 ============================= end sphinx doc ============================= ^^*/
-
-
-#ifndef _C_COUNTER_H
-#define _C_COUNTER_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "c_timer.h"
@@ -136,7 +133,4 @@ PUBLIC GCLASS *gclass_counter(void);
 
 #ifdef __cplusplus
 }
-#endif
-
-
 #endif

@@ -4,9 +4,7 @@
  *              Copyright (c) 2014-2015 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _YUNETA_REGISTER_H
-#define _YUNETA_REGISTER_H 1
+#pragma once
 
 #ifdef __cplusplus
 extern "C"{
@@ -22,7 +20,3 @@ PUBLIC int yuneta_register_c_core(void);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

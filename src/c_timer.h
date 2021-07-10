@@ -30,9 +30,7 @@
  *          Copyright (c) 2013-2014 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _C_TIMER_H
-#define _C_TIMER_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "c_yuno.h"
@@ -57,7 +55,3 @@ PUBLIC void clear_timeout(hgobj gobj);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

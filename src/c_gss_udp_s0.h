@@ -19,9 +19,7 @@
  *          Copyright (c) 2014 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _C_GSS_UDP_S0_H
-#define _C_GSS_UDP_S0_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "c_timer.h"
@@ -42,7 +40,4 @@ PUBLIC GCLASS *gclass_gss_udp_s0(void);
 
 #ifdef __cplusplus
 }
-#endif
-
-
 #endif

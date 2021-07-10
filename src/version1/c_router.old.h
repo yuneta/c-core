@@ -114,8 +114,7 @@ Output Events
 
 ============================= end sphinx doc ============================= ^^*/
 
-#ifndef _C_ROUTER_H
-#define _C_ROUTER_H 1
+#pragma once
 
 #include <ginsfsm.h>
 #include "yuneta_version.h"
@@ -154,7 +153,3 @@ PUBLIC int send_inter_event_by_route(
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-
