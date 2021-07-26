@@ -138,6 +138,7 @@ PRIVATE json_t* cmd_2key_get_schema(hgobj gobj, const char* cmd, json_t* kw, hgo
 PRIVATE json_t* cmd_2key_get_value(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 PRIVATE json_t* cmd_2key_get_subvalue(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 PRIVATE json_t* cmd_system_topic_schema(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
+PRIVATE json_t* cmd_global_variables(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 
 PRIVATE sdata_desc_t pm_help[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
@@ -378,6 +379,7 @@ SDATACM (ASN_SCHEMA,    "get-2key-schema",          0,      0, cmd_2key_get_sche
 SDATACM (ASN_SCHEMA,    "get-2key-value",           0,      pm_2key_get_value, cmd_2key_get_value, "Get 2key value"),
 SDATACM (ASN_SCHEMA,    "get-2key-subvalue",        0,      pm_2key_get_value, cmd_2key_get_subvalue, "Get 2key sub-value"),
 SDATACM (ASN_SCHEMA,    "system-schema",      0, 0,  cmd_system_topic_schema, "Get system topic schema"),
+SDATACM (ASN_SCHEMA,    "global-variables",         0, 0,  cmd_global_variables, "Get global variables"),
 SDATA_END()
 };
 
@@ -391,7 +393,6 @@ SDATA (ASN_OCTET_STR,   "appDesc",          SDF_RD,                     "",     
 SDATA (ASN_OCTET_STR,   "appDate",          SDF_RD,                     "",             "App date/time"),
 SDATA (ASN_OCTET_STR,   "work_dir",         SDF_RD,                     "",             "Work dir"),
 SDATA (ASN_OCTET_STR,   "domain_dir",       SDF_RD,                     "",             "Domain dir"),
-SDATA (ASN_OCTET_STR,   "node_owner",       SDF_RD,                     "",             "Node Owner"),
 SDATA (ASN_OCTET_STR,   "yuno_role",        SDF_RD,                     "",             "Yuno Role"),
 SDATA (ASN_OCTET_STR,   "yuno_name",        SDF_RD,                     "",             "Yuno Name. Set by agent"),
 SDATA (ASN_OCTET_STR,   "yuno_tag",         SDF_RD,                     "",             "Yuno Alias. Set by agent"),
@@ -1500,7 +1501,7 @@ PRIVATE json_t *cmd_write_str(hgobj gobj, const char *cmd, json_t *kw, hgobj src
             gobj,
             -1,
             json_local_sprintf(
-                "%s: shat attribute?", gobj_short_name(gobj)
+                "%s: what attribute?", gobj_short_name(gobj)
             ),
             0,
             0,
@@ -3813,6 +3814,23 @@ PRIVATE json_t* cmd_system_topic_schema(hgobj gobj, const char* cmd, json_t* kw,
         0,
         0,
         _treedb_create_topic_cols_desc(),
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t* cmd_global_variables(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
+{
+    /*
+     *  Inform
+     */
+    return msg_iev_build_webix(gobj,
+        0,
+        0,
+        0,
+        gobj_global_variables(),
         kw  // owned
     );
 }

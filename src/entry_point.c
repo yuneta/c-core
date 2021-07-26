@@ -652,10 +652,6 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
             "'yuno' dict NOT FOUND in json config"
         );
     }
-    const char *node_owner_  = kw_get_str(jn_yuno, "node_owner", "", 0);
-    if(!empty_string(node_owner_)) {
-        node_owner = node_owner_;
-    }
 
     const char *yuno_role  = kw_get_str(jn_yuno, "yuno_role", "", 0);
     const char *yuno_name  = kw_get_str(jn_yuno, "yuno_name", "", 0);
