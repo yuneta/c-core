@@ -53,6 +53,7 @@ SDATA (ASN_OCTET_STR,   "remote_yuno_name",     SDF_RD, 0, "confirmed remote yun
 SDATA (ASN_OCTET_STR,   "remote_yuno_service",  SDF_RD, 0, "confirmed remote yuno service"),
 SDATA (ASN_JSON,        "extra_info",           SDF_RD, 0, "dict data set by user, added to the identity card msg."),
 SDATA (ASN_OCTET_STR,   "__username__",         SDF_RD, "", "Username"),
+SDATA (ASN_OCTET_STR,   "jwt",                  SDF_WR|SDF_PERSIST, "", "Jwt"),
 
 SDATA (ASN_UNSIGNED,    "timeout_idack",        SDF_RD, 5*1000, "timeout waiting idAck"),
 
