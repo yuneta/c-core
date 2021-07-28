@@ -51,7 +51,7 @@ SDATA (ASN_OCTET_STR,   "this_service",         SDF_RD, 0, "dst_service at ident
 SDATA (ASN_POINTER,     "gobj_service",         0,      0, "gobj of identity_card dst_service"),
 
 SDATA (ASN_BOOLEAN,     "authenticated",        SDF_RD, 0, "True if entry was authenticated"),
-SDATA (ASN_JSON,        "jwt_payload",          SDF_RD, 0, "JWT payload"),
+SDATA (ASN_JSON,        "jwt_payload",          SDF_RD, 0, "JWT payload of authenticated user"),
 SDATA (ASN_OCTET_STR,   "__username__",         SDF_RD, "", "Username"),
 SDATA (ASN_JSON,        "attrs",                SDF_RD, "", "Client attrs"),
 
@@ -683,8 +683,19 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
     /*-------------------------*
      *  Do authentication
      *-------------------------*/
-    // WARNING if not a localhost connection the authentication must be required!
-    // See mt_authenticate of c_authz.c
+    /*
+     *  WARNING if not a localhost connection the authentication must be required!
+     *  See mt_authenticate of c_authz.c
+     *
+     *  HACK Json Web Token must arrive in kw's attribute:
+     *      1) "jwt"
+     *          from browsers for example; they implement refresh of tokens.
+     *
+     *      2) "access_token", "refresh_token", ["id_token"]
+     *          from backend, c_authz must implement the refresh
+     *          "id_token" when is present it's a offline tokens with a long refresh time.
+     *          If id_token is not present then access_token/refresh_token must be used.
+     */
 
     KW_INCREF(kw);
     json_t *jn_resp = gobj_authenticate(gobj_service, kw, gobj);
