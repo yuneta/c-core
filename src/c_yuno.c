@@ -609,6 +609,7 @@ PRIVATE void mt_create(hgobj gobj)
     {
         struct utsname buf1;
         if(uname(&buf1)==0) {
+            change_char(buf1.machine, '_', '-');
             gobj_write_str_attr(gobj, "sys_system_name", buf1.sysname);
             gobj_write_str_attr(gobj, "sys_node_name", buf1.nodename);
             gobj_write_str_attr(gobj, "sys_version", buf1.version);
