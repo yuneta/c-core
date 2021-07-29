@@ -51,7 +51,7 @@ SDATA (ASN_OCTET_STR,   "this_service",         SDF_RD, 0, "dst_service at ident
 SDATA (ASN_POINTER,     "gobj_service",         0,      0, "gobj of identity_card dst_service"),
 
 SDATA (ASN_BOOLEAN,     "authenticated",        SDF_RD, 0, "True if entry was authenticated"),
-SDATA (ASN_JSON,        "jwt_payload",          SDF_RD, 0, "JWT payload of authenticated user"),
+SDATA (ASN_JSON,        "jwt_payload",          SDF_RD, 0, "JWT payload (decoded user data) of authenticated user"),
 SDATA (ASN_OCTET_STR,   "__username__",         SDF_RD, "", "Username"),
 SDATA (ASN_JSON,        "attrs",                SDF_RD, "", "Client attrs"),
 
