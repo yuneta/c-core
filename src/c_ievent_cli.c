@@ -491,7 +491,7 @@ PRIVATE int send_identity_card(hgobj gobj)
         "playing", playing,
         "pid", (int)getpid(),
         "watcher_pid", (int)gobj_read_uint32_attr(gobj_yuno(), "watcher_pid"),
-        "jwt", "", // TODO Json Web Token
+        "jwt", gobj_read_str_attr(gobj, "jwt"),
         "username", gobj_read_str_attr(gobj, "__username__"),
         "launch_id", launch_id,
         "yuno_startdate", gobj_read_str_attr(gobj_yuno(), "start_date"),

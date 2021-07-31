@@ -686,17 +686,7 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
     /*
      *  WARNING if not a localhost connection the authentication must be required!
      *  See mt_authenticate of c_authz.c
-     *
-     *  HACK Json Web Token must arrive in kw's attribute:
-     *      1) "jwt"
-     *          from browsers for example; they implement refresh of tokens.
-     *
-     *      2) "access_token", "refresh_token", ["id_token"]
-     *          from backend, c_authz must implement the refresh
-     *          "id_token" when is present it's a offline tokens with a long refresh time.
-     *          If id_token is not present then access_token/refresh_token must be used.
      */
-
     KW_INCREF(kw);
     json_t *jn_resp = gobj_authenticate(gobj_service, kw, gobj);
     if(kw_get_int(jn_resp, "result", -1, KW_REQUIRED|KW_CREATE)<0) {
