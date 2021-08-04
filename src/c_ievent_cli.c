@@ -727,8 +727,10 @@ PRIVATE int ac_identity_card_ack(hgobj gobj, const char *event, json_t *kw, hgob
 
     // WARNING comprueba result, ahora puede venir negativo
     int result = kw_get_int(kw, "result", -1, 0);
+    const char *comment = kw_get_str(kw, "comment", "", 0);
     if(result < 0) {
         gobj_send_event(get_bottom_gobj(gobj), "EV_DROP", 0, gobj);
+        gobj_publish_event(gobj, "EV_ON_CLOSE", json_incref(kw));
     } else {
         json_t *jn_data = kw_get_dict_value(kw, "data", 0, 0);
 

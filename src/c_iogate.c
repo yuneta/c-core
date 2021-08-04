@@ -2064,6 +2064,7 @@ PRIVATE const EVENT input_events[] = {
     {"EV_ON_MESSAGE",               0, 0, 0},
     {"EV_ON_COMMAND",               0, 0, 0},
     {"EV_ON_ID",                    0, 0, 0},
+    {"EV_ON_ID_NAK",                0, 0, 0},
     {"EV_ON_SETUP",                 0, 0, 0},
     {"EV_ON_SETUP_COMPLETE",        0, 0, 0},
     {"EV_ON_OPEN",                  0, 0, 0},
@@ -2082,6 +2083,7 @@ PRIVATE const EVENT input_events[] = {
 PRIVATE const EVENT output_events[] = {
     {"EV_ON_MESSAGE",               0,   0,  "Message received"},
     {"EV_ON_ID",                    0,   0,  "Id received"},
+    {"EV_ON_ID_NAK",                0,   0,  "Id refused"},
     {"EV_ON_OPEN",                  0,   0,  "Channel opened"},
     {"EV_ON_CLOSE",                 0,   0,  "Channel closed"},
     {NULL, 0}
@@ -2096,6 +2098,7 @@ PRIVATE EV_ACTION ST_IDLE[] = {
     {"EV_IEV_MESSAGE",          ac_iev_message,     0},
     {"EV_ON_COMMAND",           ac_on_message,      0},
     {"EV_ON_ID",                ac_on_message,      0},
+    {"EV_ON_ID_NAK",            ac_on_message,      0},
     {"EV_SEND_MESSAGE",         ac_send_message,    0},
     {"EV_SEND_IEV",             ac_send_iev,        0},
     {"EV_DROP",                 ac_drop,            0},

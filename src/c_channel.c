@@ -302,6 +302,25 @@ PRIVATE int ac_on_id(hgobj gobj, const char *event, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE int ac_on_id_nak(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
+        log_debug_json(
+            LOG_DUMP_INPUT,
+            kw, // not own
+            gobj_short_name(src)
+        );
+    }
+    (*priv->prxMsgs)++;
+
+    return gobj_publish_event(gobj, event, kw); // reuse kw
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -436,6 +455,7 @@ PRIVATE const EVENT input_events[] = {
     // bottom input
     {"EV_ON_MESSAGE",               0,  0,  0},
     {"EV_ON_ID",                    0,  0,  0},
+    {"EV_ON_ID_NAK",                0,  0,  0},
     {"EV_ON_OPEN",                  0,  0,  0},
     {"EV_ON_CLOSE",                 0,  0,  0},
     {"EV_ON_SETUP",                 0,  0,  0},
@@ -448,6 +468,7 @@ PRIVATE const EVENT input_events[] = {
 PRIVATE const EVENT output_events[] = {
     {"EV_ON_MESSAGE",               0,   0,  "Message received"},
     {"EV_ON_ID",                    0,   0,  "Id received"},
+    {"EV_ON_ID_NAK",                0,   0,  "Id refused"},
     {"EV_ON_OPEN",                  0,   0,  "Channel opened"},
     {"EV_ON_CLOSE",                 0,   0,  "Channel closed"},
     {NULL, 0}
@@ -470,6 +491,7 @@ PRIVATE EV_ACTION ST_OPENED[] = {
     {"EV_ON_MESSAGE",           ac_on_message,      0},
     {"EV_SEND_MESSAGE",         ac_send_message,    0},
     {"EV_ON_ID",                ac_on_id,           0},
+    {"EV_ON_ID_NAK",            ac_on_id_nak,       0},
     {"EV_TIMEOUT",              ac_timeout,         0},
     {"EV_DROP",                 ac_drop,            0},
     {"EV_ON_OPEN",              0,                  0},
