@@ -216,7 +216,7 @@ PRIVATE int mt_start(hgobj gobj)
     gobj_start(priv->timer);
 
     priv->cur_job = 0; // First job at start
-    if(gobj_read_bool_attr(gobj, "opened")) {
+    if(gobj_read_bool_attr(gobj, "connected")) {
         execute_action(gobj);
     }
 
