@@ -231,6 +231,11 @@ PRIVATE int parse_message(hgobj gobj, GBUFFER *gbuf, GHTTP_PARSER *parser)
         char *bf = gbuf_cur_rd_pointer(gbuf);
         int n = ghttp_parser_received(parser, bf, ln);
         if (n == -1) {
+            log_debug_full_gbuf(
+                LOG_DUMP_OUTPUT,
+                gbuf,
+                "ghttp_parser_received() FAILED"
+            );
             // Some error in parsing
             ghttp_parser_reset(parser);
             return -1;
@@ -326,11 +331,20 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
     char *content = 0;
 
     const char *method = kw_get_str(kw, "method", "GET", 0);
-    const char *resource = kw_get_str(kw, "resource", "/", 0);
-    // TODO json_t *headers = kw_get_dict(kw, "headers", 0, 0);º
-    // TODO json_t *params = kw_get_dict_value(kw, "params", "", 0);
+    const char *resource = kw_get_str(kw, "resource", "/", 0); // WARNING here it could come params
+    json_t *headers = kw_get_dict(kw, "headers", 0, 0);
+    json_t *params = kw_get_dict_value(kw, "params", 0, 0);
+
+
     //if(json_is_string(params)) -> copia tal cual
     //if(json_is_object(params)) -> transforma a params
+
+//     for k in form_data:
+//         v = form_data[k]
+//         if not data:
+//             data += """%s=%s""" % (k,v)
+//         else:
+//             data += """&%s=%s""" % (k,v)
 
     json_t *data = kw_get_dict(kw, "json", 0, 0);
     if(data) {
