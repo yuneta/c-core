@@ -373,7 +373,8 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
     const char *action = kw_get_str(jn_job_, "exec_result", "", KW_REQUIRED);
 
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        log_debug_json(0, kw, "================> exec RESULT: %s", action);
+        trace_msg("================> exec RESULT: %s", action);
+        log_debug_json(0, kw, "exec RESULT");
     }
 
     int ret = (int)(size_t)gobj_exec_internal_method(

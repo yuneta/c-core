@@ -426,6 +426,9 @@ PRIVATE int ac_timeout_inactivity(hgobj gobj, const char *event, json_t *kw, hgo
  ***************************************************************************/
 PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
+    if(gobj_is_volatil(src)) {
+        gobj_destroy(src);
+    }
     KW_DECREF(kw);
     return 0;
 }
@@ -472,6 +475,7 @@ PRIVATE EV_ACTION ST_CONNECTED[] = {
     {"EV_TX_READY",         0,                          0},
     {"EV_DROP",             ac_drop,                    0},
     {"EV_DISCONNECTED",     ac_disconnected,            "ST_DISCONNECTED"},
+    {"EV_STOPPED",          ac_stopped,                 0},
     {0,0,0}
 };
 

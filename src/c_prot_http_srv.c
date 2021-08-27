@@ -405,6 +405,7 @@ PRIVATE EV_ACTION ST_CONNECTED[] = {
     {"EV_TX_READY",         0,                          0},
     {"EV_DROP",             ac_drop,                    0},
     {"EV_DISCONNECTED",     ac_disconnected,            "ST_DISCONNECTED"},
+    {"EV_STOPPED",          ac_stopped,                 0},
     {0,0,0}
 };
 
