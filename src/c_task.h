@@ -20,6 +20,12 @@ extern "C"{
 /***************************************************************
  *              Constants
  ***************************************************************/
+#define CONTINUE_TASK() \
+    return (void *)(size_t)0;
+
+#define STOP_TASK() \
+    return (void *)(size_t)-1;
+
 #define GCLASS_TASK_NAME "Task"
 #define GCLASS_TASK gclass_task()
 

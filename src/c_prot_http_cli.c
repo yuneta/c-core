@@ -326,34 +326,85 @@ PRIVATE int ac_rx_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
 PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+    const char *method = kw_get_str(kw, "method", "GET", 0);
+    char *resource = gbmem_strdup(kw_get_str(kw, "resource", "/", 0));
+    const char *query = kw_get_str(kw, "query", "", 0);
+    json_t *jn_headers_ = kw_get_dict(kw, "headers", 0, 0);
+    json_t *jn_data = kw_get_dict(kw, "data", 0, 0);
     const char *http_version = "1.1";
     int content_length = 0;
     char *content = 0;
+    const char *key; json_t *v;
 
-    const char *method = kw_get_str(kw, "method", "GET", 0);
-    const char *resource = kw_get_str(kw, "resource", "/", 0); // WARNING here it could come params
-    json_t *headers = kw_get_dict(kw, "headers", 0, 0);
-    json_t *params = kw_get_dict_value(kw, "params", 0, 0);
-
-
-    //if(json_is_string(params)) -> copia tal cual
-    //if(json_is_object(params)) -> transforma a params
-
-//     for k in form_data:
-//         v = form_data[k]
-//         if not data:
-//             data += """%s=%s""" % (k,v)
-//         else:
-//             data += """&%s=%s""" % (k,v)
-
-    json_t *data = kw_get_dict(kw, "json", 0, 0);
-    if(data) {
-        content = json2uglystr(data);
-        content_length = strlen(content);
+    json_t *jn_headers = json_object();
+    json_object_set_new(jn_headers,
+        "User-Agent", json_sprintf("yuneta-%s", __yuneta_version__)
+    );
+    if(jn_data) {
+        json_object_set_new(
+            jn_headers, "Content-Type", json_string("application/json; charset=utf-8")
+        );
+    }
+    json_object_set_new(jn_headers, "Connection", json_string("keep-alive"));
+    json_object_set_new(jn_headers, "Accept", json_string("*/*"));
+    if(priv->port == 80 || priv->port == 443) {
+        json_object_set_new(jn_headers, "Host", json_string(priv->host));
+    } else {
+        json_object_set_new(jn_headers, "Host", json_sprintf("%s:%d", priv->host, priv->port));
+    }
+    if(jn_headers_) {
+        json_object_update(jn_headers, jn_headers_);
     }
 
-    // TODO calcula bien el size of header
-    GBUFFER *gbuf = gbuf_create(1024+content_length, 1024+content_length, 0,0);
+    const char *content_type = kw_get_str(jn_headers, "Content-Type", "", 0);
+    BOOL set_form_urlencoded = strcmp(content_type, "application/x-www-form-urlencoded")==0?1:0;
+    if(set_form_urlencoded) {
+        if(!empty_string(query)) {
+            content = gbmem_strdup(query);
+            content_length = strlen(content);
+        } else {
+            // for k in form_data:
+            //     v = form_data[k]
+            //     if not data:
+            //         data += """%s=%s""" % (k,v)
+            //     else:
+            //         data += """&%s=%s""" % (k,v)
+
+            int ln = kw_content_size(jn_data);
+            GBUFFER *gbuf = gbuf_create(ln, ln, 0,0);
+            int more = 0;
+            json_object_foreach(jn_data, key, v) {
+                if(more) {
+                    gbuf_append_string(gbuf, "&");
+                }
+                gbuf_append_string(gbuf, key);
+                gbuf_append_string(gbuf, "=");
+                gbuf_append_string(gbuf, json_string_value(v));
+                more++;
+            }
+            char *p = gbuf_cur_rd_pointer(gbuf);
+            content = gbmem_strdup(p);
+            content_length = strlen(content);
+        }
+        if (strcasecmp(method, "GET")==0) {
+            // parameters must be in resource
+            int l = strlen(resource) + content_length + 1;
+            char *new_resource = gbmem_malloc(l);
+            snprintf(new_resource, l, "%s%s%s", resource, "?", content);
+            GBMEM_FREE(resource);
+            resource = new_resource;
+            GBMEM_FREE(content);
+        }
+
+    } else {
+        if(jn_data) {
+            content = json2uglystr(jn_data);
+            content_length = strlen(content);
+        }
+    }
+
+    int len = strlen(method) + strlen(resource) + kw_content_size(jn_headers) + content_length + 256;
+    GBUFFER *gbuf = gbuf_create(len, len, 0,0);
     if(!gbuf) {
         log_error(0,
             "gobj",         "%s", gobj_full_name(gobj),
@@ -362,27 +413,24 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
             "msg",          "%s", "gbuf_create() FAILED",
             NULL
         );
+        GBMEM_FREE(resource);
+        JSON_DECREF(jn_headers);
+        GBMEM_FREE(content);
+        KW_DECREF(kw);
         return -1;
     }
     gbuf_printf(gbuf, "%s %s HTTP/%s\r\n", method, resource, http_version);
-
-    // TODO merge these own headers with passed headers
-    if(priv->port == 80 || priv->port == 443) {
-        gbuf_printf(gbuf, "Host: %s\r\n", priv->host);
-    } else {
-        gbuf_printf(gbuf, "Host: %s:%d\r\n", priv->host, priv->port);
+    json_object_foreach(jn_headers, key, v) {
+        gbuf_printf(gbuf, "%s:%s\r\n", key, json_string_value(v));
     }
-    gbuf_printf(gbuf, "User-Agent: yuneta-%s\r\n",  __yuneta_version__);
-    gbuf_printf(gbuf, "Connection: keep-alive\r\n");
-    gbuf_printf(gbuf, "Accept: */*\r\n");
+
     if(content) {
-        gbuf_printf(gbuf, "Content-Type: application/json; charset=utf-8\r\n");
         gbuf_printf(gbuf, "Content-Length: %d\r\n", content_length);
     }
     gbuf_printf(gbuf, "\r\n");
     if(content) {
         gbuf_printf(gbuf, content, content_length);
-        gbmem_free(content);
+        GBMEM_FREE(content);
     }
 
     if(gobj_trace_level(gobj) & TRAFFIC) {
@@ -393,10 +441,13 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
         );
     }
 
+    GBMEM_FREE(resource);
+    JSON_DECREF(jn_headers);
+    KW_DECREF(kw);
+
     json_t *kw_response = json_pack("{s:I}",
         "gbuffer", (json_int_t)(size_t)gbuf
     );
-    KW_DECREF(kw);
     return gobj_send_event(gobj_bottom_gobj(gobj), "EV_TX_DATA", kw_response, gobj);
 }
 

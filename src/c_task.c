@@ -86,8 +86,8 @@ SDATA_END()
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag------------default---------description---------- */
 SDATA (ASN_JSON,        "jobs",             SDF_RD,         0,              "Jobs"),
-SDATA (ASN_JSON,        "input_data",       SDF_RD,         "{}",           "Input Jobs Data"),
-SDATA (ASN_JSON,        "output_data",      SDF_RD,         "{}",           "Output Jobs Data"),
+SDATA (ASN_JSON,        "input_data",       SDF_RD,         "{}",           "Input Jobs Data. Use as you want. Available in exec_action() and exec_result() action methods."),
+SDATA (ASN_JSON,        "output_data",      SDF_RD,         "{}",           "Output Jobs Data. Use as you want. Available in exec_action() and exec_result() action methods."),
 SDATA (ASN_POINTER,     "gobj_jobs",        0,              0,              "GObj defining the jobs"),
 SDATA (ASN_POINTER,     "gobj_results",     0,              0,              "GObj executing the jobs"),
 SDATA (ASN_INTEGER,     "timeout",          SDF_PERSIST|SDF_WR,10*1000,     "Action Timeout"),
