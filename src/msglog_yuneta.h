@@ -20,7 +20,7 @@ extern "C"{
 #define MSGSET_LIBCURL_ERROR            "Curl error"
 #define MSGSET_SERVICE_ERROR            "Service error"
 #define MSGSET_DATABASE_ERROR           "Database error"
-#define MSGSET_TAKS_ERROR               "Task error"
+#define MSGSET_TASK_ERROR               "Task error"
 
 /*
  *   Yuneta Info's MSGLOGs
@@ -35,7 +35,7 @@ extern "C"{
 #define MSGSET_BAD_BEHAVIOUR            "Bad Behaviour"
 #define MSGSET_INFO                     "Info"
 #define MSGSET_PROTOCOL_INFO            "Protocol info"
-#define MSGSET_TAKS_INFO                "Task info"
+#define MSGSET_TASK_INFO                "Task info"
 
 
 #ifdef __cplusplus

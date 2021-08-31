@@ -289,11 +289,14 @@ PRIVATE int stop_task(hgobj gobj, int result)
         trace_msg("================> stop task, result %d", result);
     }
 
-    gobj_publish_event(gobj, "EV_END_TASK", json_pack("{s:i}", "result", result));
-
-    gobj_stop(gobj);
-
-    return 0;
+    return gobj_publish_event(gobj,
+        "EV_END_TASK",
+        json_pack("{s:i, s:O, s:O}",
+            "result", result,
+            "input_data", gobj_read_json_attr(gobj, "input_data"),
+            "output_data", gobj_read_json_attr(gobj, "output_data")
+        )
+    );
 }
 
 /***************************************************************************
@@ -414,7 +417,7 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
     log_error(0,
         "gobj",         "%s", gobj_full_name(gobj),
         "function",     "%s", __FUNCTION__,
-        "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+        "msgset",       "%s", MSGSET_TASK_ERROR,
         "msg",          "%s", "Task failed by timeout",
         NULL
     );
