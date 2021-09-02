@@ -414,12 +414,11 @@ PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    log_error(0,
-        "gobj",         "%s", gobj_full_name(gobj),
-        "function",     "%s", __FUNCTION__,
-        "msgset",       "%s", MSGSET_TASK_ERROR,
-        "msg",          "%s", "Task failed by timeout",
-        NULL
+    json_t *output_data = gobj_read_json_attr(gobj, "output_data");
+    json_object_set_new(
+        output_data,
+        "comment",
+        json_sprintf("Task failed by timeout")
     );
 
     KW_DECREF(kw);
