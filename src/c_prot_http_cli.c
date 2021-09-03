@@ -330,7 +330,7 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
     char *resource = gbmem_strdup(kw_get_str(kw, "resource", "/", 0));
     const char *query = kw_get_str(kw, "query", "", 0);
     json_t *jn_headers_ = kw_get_dict(kw, "headers", 0, 0);
-    json_t *jn_data = kw_get_dict(kw, "data", 0, 0);
+    json_t *jn_data_ = kw_get_dict(kw, "data", 0, 0);
     const char *http_version = "1.1";
     int content_length = 0;
     char *content = 0;
@@ -340,7 +340,7 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
     json_object_set_new(jn_headers,
         "User-Agent", json_sprintf("yuneta-%s", __yuneta_version__)
     );
-    if(jn_data) {
+    if(jn_data_) {
         json_object_set_new(
             jn_headers, "Content-Type", json_string("application/json; charset=utf-8")
         );
@@ -370,10 +370,10 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
             //     else:
             //         data += """&%s=%s""" % (k,v)
 
-            int ln = kw_content_size(jn_data);
+            int ln = kw_content_size(jn_data_);
             GBUFFER *gbuf = gbuf_create(ln, ln, 0,0);
             int more = 0;
-            json_object_foreach(jn_data, key, v) {
+            json_object_foreach(jn_data_, key, v) {
                 if(more) {
                     gbuf_append_string(gbuf, "&");
                 }
@@ -385,6 +385,7 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
             char *p = gbuf_cur_rd_pointer(gbuf);
             content = gbmem_strdup(p);
             content_length = strlen(content);
+            GBUF_DECREF(gbuf);
         }
         if (strcasecmp(method, "GET")==0) {
             // parameters must be in resource
@@ -397,8 +398,8 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
         }
 
     } else {
-        if(jn_data) {
-            content = json2uglystr(jn_data);
+        if(jn_data_) {
+            content = json2uglystr(jn_data_);
             content_length = strlen(content);
         }
     }
@@ -430,7 +431,6 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
     gbuf_printf(gbuf, "\r\n");
     if(content) {
         gbuf_printf(gbuf, content, content_length);
-        GBMEM_FREE(content);
     }
 
     if(gobj_trace_level(gobj) & TRAFFIC) {
@@ -443,6 +443,7 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
 
     GBMEM_FREE(resource);
     JSON_DECREF(jn_headers);
+    GBMEM_FREE(content);
     KW_DECREF(kw);
 
     json_t *kw_response = json_pack("{s:I}",
