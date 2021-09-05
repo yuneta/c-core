@@ -374,12 +374,24 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
             GBUFFER *gbuf = gbuf_create(ln, ln, 0,0);
             int more = 0;
             json_object_foreach(jn_data_, key, v) {
+                const char *value = json_string_value(v);
+                if(empty_string(value)) {
+                    log_error(0,
+                        "gobj",         "%s", gobj_full_name(gobj),
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                        "msg",          "%s", "http header key without value",
+                        "key",          "%s", key,
+                        NULL
+                    );
+                    continue;
+                }
                 if(more) {
                     gbuf_append_string(gbuf, "&");
                 }
                 gbuf_append_string(gbuf, key);
                 gbuf_append_string(gbuf, "=");
-                gbuf_append_string(gbuf, json_string_value(v));
+                gbuf_append_string(gbuf, value);
                 more++;
             }
             char *p = gbuf_cur_rd_pointer(gbuf);
