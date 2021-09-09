@@ -230,6 +230,7 @@ PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    gobj_unsubscribe_event(priv->gobj_results, NULL, NULL, gobj);
     clear_timeout(priv->timer);
     gobj_stop(priv->timer);
     return 0;
@@ -286,10 +287,10 @@ PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 PRIVATE int stop_task(hgobj gobj, int result)
 {
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("================> stop task, result %d", result);
+        trace_msg("================! stop task, result %d of %s", result, gobj_name(gobj));
     }
 
-    return gobj_publish_event(gobj,
+    gobj_publish_event(gobj,
         "EV_END_TASK",
         json_pack("{s:i, s:O, s:O}",
             "result", result,
@@ -297,6 +298,8 @@ PRIVATE int stop_task(hgobj gobj, int result)
             "output_data", gobj_read_json_attr(gobj, "output_data")
         )
     );
+    gobj_stop(gobj);
+    return 0;
 }
 
 /***************************************************************************
@@ -316,7 +319,7 @@ PRIVATE int execute_action(hgobj gobj)
     json_int_t exec_timeout = kw_get_int(jn_job_, "exec_timeout", priv->timeout, 0);
 
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("================> exec ACTION: %s", action);
+        trace_msg("================> exec ACTION %d: %s of %s", priv->cur_job, action, gobj_name(gobj));
     }
 
     int ret = (int)(size_t)gobj_exec_internal_method(
@@ -376,7 +379,7 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
     const char *action = kw_get_str(jn_job_, "exec_result", "", KW_REQUIRED);
 
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("================> exec RESULT: %s", action);
+        trace_msg("================< exec RESULT %d: %s of %s", priv->cur_job, action, gobj_name(gobj));
         log_debug_json(0, kw, "exec RESULT");
     }
 
