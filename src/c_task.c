@@ -309,6 +309,19 @@ PRIVATE int execute_action(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    if(priv->cur_job > priv->max_job) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "cur_job index overflow",
+            "cur_job",      "%d", priv->cur_job,
+            "max_job",      "%d", priv->max_job,
+            NULL
+        );
+        stop_task(gobj, 0);
+        return 0;
+    }
     json_t *jn_job_ = json_array_get(priv->jobs, priv->cur_job);
     if(!jn_job_) {
         stop_task(gobj, 0);
