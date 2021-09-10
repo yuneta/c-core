@@ -210,15 +210,8 @@ PRIVATE int mt_start(hgobj gobj)
      *  Subscribe to gobj_results events
      *  TODO gobj_results puede dar soporte a varias tasks,
      *  hay que suscribirse con algún tipo de id.
-     *  Falla complicado un gobj_results con muchas tareas (dba_postgres),
-     *  de momento sigue son línea única, relación unívoca.
      */
-    json_t *kw_subs = json_pack("{s:{s:s}}",
-        "__global__",
-            "gobj_task_name", gobj_name(gobj)
-    );
-
-    gobj_subscribe_event(priv->gobj_results, NULL, kw_subs, gobj);
+    gobj_subscribe_event(priv->gobj_results, NULL, 0, gobj);
 
     gobj_start(priv->timer);
 
@@ -393,15 +386,6 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
 PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    const char *gobj_task_name = kw_get_str(kw, "gobj_task_name", "", KW_REQUIRED);
-    if(strcmp(gobj_task_name, gobj_name(gobj))!=0) {
-        if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-            trace_msg("================X! msg for %s, me %s", gobj_task_name, gobj_name(gobj));
-        }
-        KW_DECREF(kw);
-        return 0;
-    }
 
     json_t *jn_job_ = json_array_get(priv->jobs, priv->cur_job);
 
