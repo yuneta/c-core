@@ -210,6 +210,8 @@ PRIVATE int mt_start(hgobj gobj)
      *  Subscribe to gobj_results events
      *  TODO gobj_results puede dar soporte a varias tasks,
      *  hay que suscribirse con algún tipo de id.
+     *  Si tienes multi tasks puedes solucionar este problema
+     *  usando Object with __queries_in_queue__, mira el ejemplo de Dba_postgres y Postgres
      */
     gobj_subscribe_event(priv->gobj_results, NULL, 0, gobj);
 
