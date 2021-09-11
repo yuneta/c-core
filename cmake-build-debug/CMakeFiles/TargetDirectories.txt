@@ -1,0 +1,7 @@
+/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/CMakeFiles/install/strip.dir
+/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/CMakeFiles/install/local.dir
+/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/CMakeFiles/yuneta-core.dir
+/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/CMakeFiles/edit_cache.dir
+/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/CMakeFiles/install.dir
+/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/CMakeFiles/list_install_components.dir

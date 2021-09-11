@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="yuneta-core"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="install/strip">
+				<Option working_dir="/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 install/strip"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="install/local">
+				<Option working_dir="/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 install/local"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="yuneta-core">
+				<Option output="/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/libyuneta-core.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DDEBUG"/>
+					<Add option="-D_GNU_SOURCE"/>
+					<Add option="-D_LARGEFILE_SOURCE"/>
+					<Add option="-D_FILE_OFFSET_BITS=64"/>
+					<Add option="-DHAVE_REGEX_H"/>
+					<Add directory="/yuneta/development/output/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/9/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 yuneta-core"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="yuneta-core/fast">
+				<Option output="/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/libyuneta-core.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DDEBUG"/>
+					<Add option="-D_GNU_SOURCE"/>
+					<Add option="-D_LARGEFILE_SOURCE"/>
+					<Add option="-D_FILE_OFFSET_BITS=64"/>
+					<Add option="-DHAVE_REGEX_H"/>
+					<Add directory="/yuneta/development/output/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/9/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 yuneta-core/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="install">
+				<Option working_dir="/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 install"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="list_install_components">
+				<Option working_dir="/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 list_install_components"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/yuneta/development/yuneta/^yuneta/c-core/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_channel.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_channel.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_connex.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_connex.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_counter.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_counter.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_dynrule.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_dynrule.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_fs.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_fs.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_gss_udp_s0.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_gss_udp_s0.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_ievent_cli.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_ievent_cli.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_ievent_srv.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_ievent_srv.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_iogate.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_iogate.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_mqiogate.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_mqiogate.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_node.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_node.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_prot_header4.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_prot_header4.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_prot_http.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_prot_http.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_prot_http_cli.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_prot_http_cli.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_prot_http_srv.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_prot_http_srv.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_prot_raw.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_prot_raw.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_qiogate.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_qiogate.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_resource.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_resource.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_rstats.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_rstats.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_task.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_task.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_tcp0.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_tcp0.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_tcp_s0.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_tcp_s0.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_timer.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_timer.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_timetransition.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_timetransition.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_tranger.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_tranger.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_treedb.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_treedb.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_udp0.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_udp0.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_udp_s0.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_udp_s0.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_websocket.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_websocket.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_yuno.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/c_yuno.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/dbsimple.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/dbsimple.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/dbsimple2.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/dbsimple2.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/entry_point.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/entry_point.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/ghttp_parser.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/ghttp_parser.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/msglog_yuneta.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/yuneta.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/yuneta_environment.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/yuneta_environment.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/yuneta_register.c">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/yuneta_register.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/src/yuneta_version.h">
+			<Option target="yuneta-core"/>
+		</Unit>
+		<Unit filename="/yuneta/development/yuneta/^yuneta/c-core/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>
