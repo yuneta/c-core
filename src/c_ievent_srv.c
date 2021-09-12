@@ -697,6 +697,7 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
             "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
             "msg",          "%s", "Authentication rejected",
             "cause",        "%s", comment,
+            "detail",       "%j", jn_resp,
             NULL
         );
 
