@@ -255,43 +255,66 @@ PUBLIC char *yuneta_realm_store_dir(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC const char *node_uuid(void)
+PUBLIC const char *get_random_uuid(void)
+{
+    static char uuid_[256] = {0};
+
+    uuid_t binuuid;
+    uuid_generate_random(binuuid);
+    uuid_unparse_lower(binuuid, uuid_);
+
+    return uuid_;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE void save_uuid(const char *uuid_)
 {
     char *directory = "/yuneta/store/agent/uuid";
+
+    json_t *jn_uuid = json_object();
+    json_object_set_new(jn_uuid, "uuid", json_string(uuid_));
+
+    save_json_to_file(
+        directory,
+        "uuid.json",
+        02770,
+        0660,
+        0,
+        TRUE,   //create
+        FALSE,  //only_read
+        jn_uuid // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC const char *node_uuid(void)
+{
+    struct dirent *dent;
+    DIR *dir;
 
     if(!empty_string(uuid)) {
         return uuid;
     }
 
-    json_t *jn_uuid = load_json_from_file(
-        directory,
-        "uuid.json",
-        0
-    );
-
-    if(jn_uuid) {
-        const char *uuid_ = kw_get_str(jn_uuid, "uuid", "", KW_REQUIRED);
-        snprintf(uuid, sizeof(uuid), "%s", uuid_);
-        json_decref(jn_uuid);
-
-    } else {
-        uuid_t binuuid;
-        uuid_generate_random(binuuid);
-        uuid_unparse_lower(binuuid, uuid);
-        jn_uuid = json_object();
-        json_object_set_new(jn_uuid, "uuid", json_string(uuid));
-
-        save_json_to_file(
-            directory,
-            "uuid.json",
-            02770,
-            0660,
-            0,
-            TRUE,   //create
-            TRUE,  //only_read
-            jn_uuid // owned
-        );
+    if (!(dir = opendir("/dev/disk/by-uuid"))) {
+        save_uuid("????1");
+        return "????1";
     }
 
-    return uuid;
+    while ((dent = readdir(dir))) {
+        char *dname = dent->d_name;
+        if (strlen(dname)==36) {
+            snprintf(uuid, sizeof(uuid), "%s", dname);
+            save_uuid(uuid);
+            return uuid;
+        }
+    }
+    closedir(dir);
+    save_uuid("????2");
+    return "????2";
 }
+
