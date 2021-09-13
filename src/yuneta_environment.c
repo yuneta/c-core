@@ -291,30 +291,56 @@ PRIVATE void save_uuid(const char *uuid_)
 /***************************************************************************
  *
  ***************************************************************************/
+uint64_t timespec2nsec(const struct timespec *timespec)
+{
+    return (timespec->tv_sec * (uint64_t)1000000000) + timespec->tv_nsec;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PUBLIC const char *node_uuid(void)
 {
+    const char *root_dir = "/dev/disk/by-uuid";
     struct dirent *dent;
+    struct stat st;
     DIR *dir;
+    uint64_t low_fecha = 0;
+    char path[PATH_MAX];
 
     if(!empty_string(uuid)) {
         return uuid;
     }
 
-    if (!(dir = opendir("/dev/disk/by-uuid"))) {
+    if (!(dir = opendir(root_dir))) {
         save_uuid("????1");
         return "????1";
     }
 
+    snprintf(uuid, sizeof(uuid), "%s", "????2");
+
     while ((dent = readdir(dir))) {
         char *dname = dent->d_name;
-        if (strlen(dname)==36) {
+        if (strlen(dname)!=36) {
+            continue;
+        }
+        snprintf(path, sizeof(path), "%s/%s", root_dir, dname);
+        if(stat(path, &st) != 0) {
+            continue;
+        }
+        if(low_fecha == 0) {
+            low_fecha = timespec2nsec(&st.st_mtim);
             snprintf(uuid, sizeof(uuid), "%s", dname);
-            save_uuid(uuid);
-            return uuid;
+        } else {
+            if(timespec2nsec(&st.st_mtim) < low_fecha) {
+                low_fecha = timespec2nsec(&st.st_mtim);
+                snprintf(uuid, sizeof(uuid), "%s", dname);
+            }
         }
     }
+
+    save_uuid(uuid);
     closedir(dir);
-    save_uuid("????2");
-    return "????2";
+    return uuid;
 }
 
