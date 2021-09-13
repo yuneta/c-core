@@ -301,16 +301,37 @@ uint64_t timespec2nsec(const struct timespec *timespec)
  ***************************************************************************/
 PUBLIC const char *node_uuid(void)
 {
+    if(!empty_string(uuid)) {
+        return uuid;
+    }
+
+   json_t *jn_uuid = load_json_from_file(
+        "/yuneta/store/agent/uuid",
+        "uuid.json",
+        0
+    );
+
+    if(jn_uuid) {
+        const char *uuid_ = kw_get_str(jn_uuid, "uuid", "", KW_REQUIRED);
+        snprintf(uuid, sizeof(uuid), "%s", uuid_);
+        json_decref(jn_uuid);
+    } else {
+        generate_node_uuid();
+    }
+    return uuid;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC const char *generate_node_uuid(void)
+{
     const char *root_dir = "/dev/disk/by-uuid";
     struct dirent *dent;
     struct stat st;
     DIR *dir;
     uint64_t low_fecha = 0;
     char path[PATH_MAX];
-
-    if(!empty_string(uuid)) {
-        return uuid;
-    }
 
     if (!(dir = opendir(root_dir))) {
         save_uuid("????1");
