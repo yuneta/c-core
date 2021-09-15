@@ -23,7 +23,7 @@ PRIVATE int __xpermission__ = 0;    // permission for directories and executable
 PRIVATE int __rpermission__ = 0;    // permission for regular files
 PRIVATE char __work_dir__[PATH_MAX] = {0};
 PRIVATE char __domain_dir__[PATH_MAX] = {0};
-PRIVATE char uuid[256] = {0};
+PRIVATE char global_uuid[256] = {0};
 
 /***************************************************************************
  *  Register environment
@@ -271,8 +271,9 @@ PUBLIC const char *get_random_uuid(void)
  ***************************************************************************/
 PRIVATE void save_uuid(const char *uuid_)
 {
-    char *directory = "/yuneta/store/agent/uuid";
+    snprintf(global_uuid, sizeof(global_uuid), "%s", uuid_);
 
+    char *directory = "/yuneta/store/agent/uuid";
     json_t *jn_uuid = json_object();
     json_object_set_new(jn_uuid, "uuid", json_string(uuid_));
 
@@ -299,10 +300,10 @@ uint64_t timespec2nsec(const struct timespec *timespec)
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC const char *node_uuid(void)
+PRIVATE const char *read_node_uuid(void)
 {
-    if(!empty_string(uuid)) {
-        return uuid;
+    if(!empty_string(global_uuid)) {
+        return global_uuid;
     }
 
    json_t *jn_uuid = load_json_from_file(
@@ -313,32 +314,79 @@ PUBLIC const char *node_uuid(void)
 
     if(jn_uuid) {
         const char *uuid_ = kw_get_str(jn_uuid, "uuid", "", KW_REQUIRED);
-        snprintf(uuid, sizeof(uuid), "%s", uuid_);
+        snprintf(global_uuid, sizeof(global_uuid), "%s", uuid_);
         json_decref(jn_uuid);
-    } else {
-        generate_node_uuid();
     }
-    return uuid;
+    return global_uuid;
+}
+
+/***************************************************************************
+ *  En raspberry pi:
+        Hardware        : BCM2835
+        Revision        : a020d3
+        Serial          : 00000000a6d12d83
+ ***************************************************************************/
+PRIVATE const char *_calculate_uuid_by_cpuinfo(void)
+{
+    const char *filename = "/proc/cpuinfo";
+    static char new_uuid[256] = {0};
+    char buffer[LINE_MAX];
+    char hardware[16] = {0};
+    char revision[16] = {0};
+    char serial[32] = {0};
+
+    new_uuid[0] = 0;
+
+    BOOL found = FALSE;
+    FILE *file = fopen(filename, "r");
+    if(file) {
+        while(fgets(buffer, sizeof(buffer), file)) {
+            if(strncasecmp(buffer, "Hardware", strlen("Hardware")) ==0) {
+                char *p = strchr(buffer, ':');
+                p++;
+                left_justify(p);
+                snprintf(hardware, sizeof(hardware), "%s", p);
+            }
+            if(strncasecmp(buffer, "Revision", strlen("Revision")) ==0) {
+                char *p = strchr(buffer, ':');
+                p++;
+                left_justify(p);
+                snprintf(revision, sizeof(revision), "%s", p);
+            }
+            if(strncasecmp(buffer, "Serial", strlen("Serial")) ==0) {
+                char *p = strchr(buffer, ':');
+                p++;
+                left_justify(p);
+                snprintf(serial, sizeof(serial), "%s", p);
+                found = TRUE;
+            }
+        }
+        fclose(file);
+    }
+    if(found) {
+        snprintf(new_uuid, sizeof(new_uuid), "%s-%s-%s", hardware, revision, serial);
+    }
+    return new_uuid;
 }
 
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC const char *generate_node_uuid(void)
+PRIVATE const char *_calculate_uuid_by_disk(void)
 {
     const char *root_dir = "/dev/disk/by-uuid";
     struct dirent *dent;
     struct stat st;
     DIR *dir;
     uint64_t low_fecha = 0;
+    static char new_uuid[256] = {0};
     char path[PATH_MAX];
 
     if (!(dir = opendir(root_dir))) {
-        save_uuid("????1");
-        return "????1";
+        return "";
     }
 
-    snprintf(uuid, sizeof(uuid), "%s", "????2");
+    new_uuid[0] = 0;
 
     while ((dent = readdir(dir))) {
         char *dname = dent->d_name;
@@ -351,17 +399,64 @@ PUBLIC const char *generate_node_uuid(void)
         }
         if(low_fecha == 0) {
             low_fecha = timespec2nsec(&st.st_mtim);
-            snprintf(uuid, sizeof(uuid), "%s", dname);
+            snprintf(new_uuid, sizeof(new_uuid), "%s", dname);
         } else {
             if(timespec2nsec(&st.st_mtim) < low_fecha) {
                 low_fecha = timespec2nsec(&st.st_mtim);
-                snprintf(uuid, sizeof(uuid), "%s", dname);
+                snprintf(new_uuid, sizeof(new_uuid), "%s", dname);
             }
         }
     }
 
-    save_uuid(uuid);
     closedir(dir);
-    return uuid;
+    return new_uuid;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE const char *_calculate_new_uuid(void)
+{
+    const char *uuid_by_disk = _calculate_uuid_by_disk();
+    const char *uuid_by_cpuinfo = _calculate_uuid_by_cpuinfo();
+
+    if(!empty_string(uuid_by_cpuinfo)) {
+        // Raspberry
+        return uuid_by_cpuinfo;
+    } else {
+        return uuid_by_disk;
+    }
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC const char *node_uuid(void)
+{
+    const char *uuid = read_node_uuid();
+    if(!empty_string(uuid)) {
+        return uuid;
+    } else {
+        return generate_node_uuid();
+    }
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC const char *generate_node_uuid(void)
+{
+    const char *cur_uuid = read_node_uuid();
+    const char *new_uuid = _calculate_new_uuid();
+
+    if(!empty_string(cur_uuid)) {
+        if(strcmp(cur_uuid, new_uuid)==0) {
+            return cur_uuid;
+        }
+    }
+
+    save_uuid(new_uuid);
+
+    return new_uuid;
 }
 
