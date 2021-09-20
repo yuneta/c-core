@@ -112,7 +112,7 @@ PRIVATE json_t *cmd_set_no_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, h
 PRIVATE json_t *cmd_trunk_rotatory_file(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_reset_log_counters(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
-// PRIVATE json_t *cmd_spawn(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_spawn(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_set_daemon_debug(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE json_t* cmd_add_log_handler(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
@@ -220,11 +220,11 @@ SDATAPM (ASN_OCTET_STR, "level",        0,              0,          "attribute n
 SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value"),
 SDATA_END()
 };
-// PRIVATE sdata_desc_t pm_spawn[] = {
-// /*-PM----type-----------name------------flag------------default-----description---------- */
-// SDATAPM (ASN_OCTET_STR, "process",      0,              0,          "Process to execute"),
-// SDATA_END()
-// };
+PRIVATE sdata_desc_t pm_spawn[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "process",      0,              0,          "Process to execute"),
+SDATA_END()
+};
 PRIVATE sdata_desc_t pm_set_daemon_debug[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value"),
@@ -351,7 +351,7 @@ SDATACM (ASN_SCHEMA,    "trunk-rotatory-file",      0,      0,              cmd_
 SDATACM (ASN_SCHEMA,    "reset-log-counters",       0,      0,              cmd_reset_log_counters,     "Reset log counters"),
 
 // HACK DANGER backdoor, use Yuneta only in private networks, or public but encrypted and assured connections.
-//SDATACM (ASN_SCHEMA,    "spawn",                    0,      pm_spawn,       cmd_spawn,                  "Spawn a new process"),
+SDATACM (ASN_SCHEMA,    "spawn",                    0,      pm_spawn,       cmd_spawn,                  "Spawn a new process"),
 
 SDATACM (ASN_SCHEMA,    "set-daemon-debug",         0,      pm_set_daemon_debug,cmd_set_daemon_debug,   "Set daemon debug"),
 
@@ -2639,33 +2639,33 @@ PRIVATE json_t *cmd_reset_log_counters(hgobj gobj, const char *cmd, json_t *kw, 
 /***************************************************************************
  *  Run a command
  ***************************************************************************/
-// PRIVATE json_t *cmd_spawn(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-// {
-//     const char *process = kw_get_str(kw, "process", 0, 0);
-//     if(empty_string(process)) {
-//         return msg_iev_build_webix(
-//             gobj,
-//             -1,
-//             json_local_sprintf("What process?"),
-//             0,
-//             0,
-//             kw  // owned
-//         );
-//     }
-//     int response_size = 32*1024;
-//     char *response = gbmem_malloc(response_size);
-//     int ret = run_command(process, response, response_size);
-//     json_t *jn_response = json_local_sprintf(response);
-//     gbmem_free(response);
-//     return msg_iev_build_webix(
-//         gobj,
-//         ret,
-//         jn_response,
-//         0,
-//         0,
-//         kw  // owned
-//     );
-// }
+PRIVATE json_t *cmd_spawn(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    const char *process = kw_get_str(kw, "process", 0, 0);
+    if(empty_string(process)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What process?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    int response_size = gbmem_get_maximum_block();
+    char *response = gbmem_malloc(response_size);
+    int ret = run_command(process, response, response_size);
+    json_t *jn_response = json_local_sprintf(response);
+    gbmem_free(response);
+    return msg_iev_build_webix(
+        gobj,
+        ret,
+        jn_response,
+        0,
+        0,
+        kw  // owned
+    );
+}
 
 /***************************************************************************
  *
