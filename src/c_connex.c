@@ -31,7 +31,7 @@
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag------------------------default---------description---------- */
 SDATA (ASN_UNSIGNED,    "connxs",           SDF_RD,                     0,              "connection counter"),
-SDATA (ASN_BOOLEAN,     "connected",        SDF_RD,                     0,              ""),
+SDATA (ASN_BOOLEAN,     "connected",        SDF_RD|SDF_STATS,           0,              "Connection state. Important filter!"),
 
 SDATA (ASN_BOOLEAN,     "manual",                       SDF_RD,         0,              "Set true if you want connect manually"),
 SDATA (ASN_OCTET_STR,   "connected_event_name",         SDF_RD,         "EV_CONNECTED", "Must be empty if you don't want receive this event"),
