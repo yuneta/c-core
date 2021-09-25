@@ -12,7 +12,7 @@ extern "C"{
 /*********************************************************************
  *      Version
  *********************************************************************/
-#define __yuneta_version__  "4.19.1"
+#define __yuneta_version__  "4.19.2"
 #define __yuneta_date__     __DATE__ " " __TIME__
 
 #define __yuneta_long_version__ "yuneta:" __yuneta_version__ " " \
