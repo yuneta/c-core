@@ -599,10 +599,10 @@ PRIVATE const EVENT input_events[] = {
     {NULL, 0}
 };
 PRIVATE const EVENT output_events[] = {
-    {"EV_CONNECTED",        0},
-    {"EV_DISCONNECTED",     0},
     {"EV_RX_DATA",          0},
     {"EV_TX_READY",         0},
+    {"EV_CONNECTED",        0},
+    {"EV_DISCONNECTED",     0},
     {"EV_STOPPED",          0},
     {NULL, 0}
 };
