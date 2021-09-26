@@ -585,10 +585,10 @@ PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
-    {"EV_CONNECTED",        0},
-    {"EV_DISCONNECTED",     0},
     {"EV_RX_DATA",          0},
     {"EV_TX_READY",         0},
+    {"EV_CONNECTED",        0},
+    {"EV_DISCONNECTED",     0},
     {"EV_STOPPED",          0},
 
     {"EV_DROP",             0},
