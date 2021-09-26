@@ -105,8 +105,11 @@ PRIVATE void mt_create(hgobj gobj)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     priv->timer = gobj_create("", GCLASS_TIMER, 0, gobj);
-    hgobj tcp0 = gobj_create(gobj_name(gobj), GCLASS_TCP0, 0, gobj);
-    gobj_set_bottom_gobj(gobj, tcp0);
+    hgobj tcp0 = gobj_bottom_gobj(gobj);
+    if(!tcp0) {
+        tcp0 = gobj_create(gobj_name(gobj), GCLASS_TCP0, 0, gobj);
+        gobj_set_bottom_gobj(gobj, tcp0);
+    }
 
     dl_init(&priv->dl_tx_data);
 
