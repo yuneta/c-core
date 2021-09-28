@@ -5055,6 +5055,7 @@ PUBLIC json_int_t default_service_get_stat(const char *path)
 
 /***************************************************************************
  *  Is ip or peername allowed?
+ *  TODO pueden meter ip's con nombre, traduce a numérico
  ***************************************************************************/
 PUBLIC BOOL is_ip_allowed(const char *peername)
 {
