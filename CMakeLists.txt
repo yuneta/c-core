@@ -84,6 +84,8 @@ set (SRCS
     src/c_prot_http.c
     src/c_prot_http_srv.c
     src/c_prot_http_cli.c
+    src/c_prot_modbus_master.c
+    src/c_serial.c
 
     # gossamer
     src/c_gss_udp_s0.c
@@ -148,6 +150,8 @@ set (HDRS
     src/c_prot_http.h
     src/c_prot_http_srv.h
     src/c_prot_http_cli.h
+    src/c_prot_modbus_master.h
+    src/c_serial.h
 
     # gossamer
     src/c_gss_udp_s0.h
