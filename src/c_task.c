@@ -137,7 +137,7 @@ typedef struct _PRIVATE_DATA {
 
     json_t *jobs;
     int max_job;
-    int cur_job;
+    int idx_job;
 
     hgobj gobj_jobs;
     hgobj gobj_results;
@@ -219,7 +219,7 @@ PRIVATE int mt_start(hgobj gobj)
 
     gobj_start(priv->timer);
 
-    priv->cur_job = 0; // First job at start
+    priv->idx_job = 0; // First job at start
     if(gobj_read_bool_attr(gobj, "connected")) {
         execute_action(gobj);
     }
@@ -234,6 +234,7 @@ PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    priv->idx_job = 0; // Reset First job
     gobj_unsubscribe_event(priv->gobj_results, NULL, NULL, gobj);
     clear_timeout(priv->timer);
     gobj_stop(priv->timer);
@@ -286,12 +287,47 @@ PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
 
 /***************************************************************************
- *
+ *  Task End will be called with next result values:
+
+    switch(result) {
+        case -1:
+            // Error from some task action
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_APP_ERROR,
+                "msg",          "%s", "Task End with error",
+                "comment",      "%s", comment,
+                "src",          "%s", gobj_full_name(src),
+                NULL
+            );
+            log_debug_json(0, kw, "Task End with error");
+            break;
+        case -2:
+            // Error from task manager: timeout, incomplete task
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_APP_ERROR,
+                "msg",          "%s", "Task End by timeout",
+                "comment",      "%s", comment,
+                "src",          "%s", gobj_full_name(src),
+                NULL
+            );
+            log_debug_json(0, kw, "Task End by timeout");
+            break;
+        case 0:
+            // Task end ok
+            break;
+    }
  ***************************************************************************/
 PRIVATE int stop_task(hgobj gobj, int result)
 {
-    json_t *kw_task = json_pack("{s:i, s:O, s:O}",
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    json_t *kw_task = json_pack("{s:i, s:i, s:O, s:O}",
         "result", result,
+        "last_job", priv->idx_job,
         "input_data", gobj_read_json_attr(gobj, "input_data"),
         "output_data", gobj_read_json_attr(gobj, "output_data")
     );
@@ -325,20 +361,20 @@ PRIVATE int execute_action(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(priv->cur_job > priv->max_job) {
+    if(priv->idx_job > priv->max_job) {
         log_error(0,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_INTERNAL_ERROR,
             "msg",          "%s", "cur_job index overflow",
-            "cur_job",      "%d", priv->cur_job,
+            "cur_job",      "%d", priv->idx_job,
             "max_job",      "%d", priv->max_job,
             NULL
         );
-        stop_task(gobj, 0);
+        stop_task(gobj, -2); // -2 WARNING about incomplete task
         return 0;
     }
-    json_t *jn_job_ = json_array_get(priv->jobs, priv->cur_job);
+    json_t *jn_job_ = json_array_get(priv->jobs, priv->idx_job);
     if(!jn_job_) {
         stop_task(gobj, 0);
         return 0;
@@ -348,7 +384,7 @@ PRIVATE int execute_action(hgobj gobj)
     json_int_t exec_timeout = kw_get_int(jn_job_, "exec_timeout", priv->timeout, 0);
 
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("💎💎Task ⏩ exec ACTION %s(%d '%s')", gobj_name(gobj), priv->cur_job, action);
+        trace_msg("💎💎Task ⏩ exec ACTION %s(%d '%s')", gobj_name(gobj), priv->idx_job, action);
     }
 
     int ret = (int)(size_t)gobj_exec_internal_method(
@@ -361,11 +397,11 @@ PRIVATE int execute_action(hgobj gobj)
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
         if(ret < 0) {
             trace_msg("💎💎Task ⏪ exec ACTION %s(%d '%s') 🔴 ERROR",
-                gobj_name(gobj), priv->cur_job, action
+                gobj_name(gobj), priv->idx_job, action
             );
         } else {
             trace_msg("💎💎Task ⏪ exec ACTION %s(%d '%s') 🔵 OK",
-                gobj_name(gobj), priv->cur_job, action
+                gobj_name(gobj), priv->idx_job, action
             );
         }
     }
@@ -377,19 +413,19 @@ PRIVATE int execute_action(hgobj gobj)
         if(ret < 0) {
             log_debug_json(0, kw_task,
                 "💎💎Task ⏪ exec ACTION %s(%d '%s') 🔴 ERROR",
-                gobj_name(gobj), priv->cur_job, action
+                gobj_name(gobj), priv->idx_job, action
             );
         } else {
             log_debug_json(0, kw_task,
                 "💎💎Task ⏪ exec ACTION %s(%d '%s') 🔵 OK",
-                gobj_name(gobj), priv->cur_job, action
+                gobj_name(gobj), priv->idx_job, action
             );
         }
         json_decref(kw_task);
     }
 
     if(ret < 0) {
-        stop_task(gobj, ret);
+        stop_task(gobj, -1);
     } else {
         set_timeout(priv->timer, exec_timeout);
     }
@@ -434,12 +470,12 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    json_t *jn_job_ = json_array_get(priv->jobs, priv->cur_job);
+    json_t *jn_job_ = json_array_get(priv->jobs, priv->idx_job);
 
     const char *action = kw_get_str(jn_job_, "exec_result", "", KW_REQUIRED);
 
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("💎💎Task ⏩ exec RESULT %s(%d '%s')", gobj_name(gobj), priv->cur_job, action);
+        trace_msg("💎💎Task ⏩ exec RESULT %s(%d '%s')", gobj_name(gobj), priv->idx_job, action);
     }
 
     int ret = (int)(size_t)gobj_exec_internal_method(
@@ -452,11 +488,11 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
         if(ret < 0) {
             trace_msg("💎💎Task ⏪ exec RESULT %s(%d '%s') 🔴 ERROR",
-                gobj_name(gobj), priv->cur_job, action
+                gobj_name(gobj), priv->idx_job, action
             );
         } else {
             trace_msg("💎💎Task ⏪ exec RESULT %s(%d '%s') 🔵 OK",
-                gobj_name(gobj), priv->cur_job, action
+                gobj_name(gobj), priv->idx_job, action
             );
         }
     }
@@ -468,21 +504,21 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
         if(ret < 0) {
             log_debug_json(0, kw_task,
                 "💎💎Task ⏪ exec RESULT %s(%d '%s') 🔴 ERROR",
-                gobj_name(gobj), priv->cur_job, action
+                gobj_name(gobj), priv->idx_job, action
             );
         } else {
             log_debug_json(0, kw_task,
                 "💎💎Task ⏪ exec RESULT %s(%d '%s') 🔵 OK",
-                gobj_name(gobj), priv->cur_job, action
+                gobj_name(gobj), priv->idx_job, action
             );
         }
         json_decref(kw_task);
     }
 
     if(ret < 0) {
-        stop_task(gobj, ret);
+        stop_task(gobj, -1);
     } else {
-        priv->cur_job++;
+        priv->idx_job++;
         execute_action(gobj);
     }
 
@@ -515,7 +551,7 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
     );
 
     KW_DECREF(kw);
-    stop_task(gobj, -1);
+    stop_task(gobj, -2); // -2 WARNING about incomplete task
     return 0;
 }
 
