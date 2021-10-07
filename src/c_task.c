@@ -2,6 +2,7 @@
  *          C_TASK.C
  *          Task GClass.
  *
+
         "jobs": [
             {
                 "exec_action", "$local_method",
@@ -10,24 +11,63 @@
             },
             ...
         ]
+                being "$local_method" a local method of gobj_jobs
+                "exec_timeout" in miliseconds
 
-    being "$local_method" a local method of gobj_jobs
-    "exec_timeout" in miliseconds
+        "input_data": tasks can use for they want
+        "output_data": tasks can use for they want
+        "gobj_jobs": json integer with a hgobj or json string with a unique gobj
+        "gobj_results": json integer with a hgobj or json string with a unique gobj
+
 
     if exec_action() or exec_result() return -1 then the job is stopped
 
- *          Tasks
- *              - gobj_jobs: gobj defining the jobs (local methods)
- *              - gobj_results: GObj executing the jobs,
- *                  - set as bottom gobj
- *                  - inform of results of the jobs with the api
- *                      EV_ON_OPEN
- *                      EV_ON_CLOSE
- *                      EV_ON_MESSAGE ->
- *                          {
- *                              result: 0 or -1,
- *                              data:
- *                          }
+            Tasks
+                - gobj_jobs: gobj defining the jobs (local methods)
+                - gobj_results: GObj executing the jobs,
+                    - set as bottom gobj
+                    - inform of results of the jobs with the api
+                        EV_ON_OPEN
+                        EV_ON_CLOSE
+                        EV_ON_MESSAGE ->
+                            {
+                                result: 0 or -1,
+                                data:
+                            }
+
+ *  Task End (Event EV_END_TASK) will be called with next result values:
+
+    switch(result) {
+        case -1:
+            // Error from some task action
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_APP_ERROR,
+                "msg",          "%s", "Task End with error",
+                "comment",      "%s", comment,
+                "src",          "%s", gobj_full_name(src),
+                NULL
+            );
+            log_debug_json(0, kw, "Task End with error");
+            break;
+        case -2:
+            // Error from task manager: timeout, incomplete task
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_APP_ERROR,
+                "msg",          "%s", "Task End by timeout",
+                "comment",      "%s", comment,
+                "src",          "%s", gobj_full_name(src),
+                NULL
+            );
+            log_debug_json(0, kw, "Task End by timeout");
+            break;
+        case 0:
+            // Task end ok
+            break;
+    }
 
  *
  *          HACK if gobj is volatil then will self auto-destroy on stop
@@ -88,8 +128,8 @@ PRIVATE sdata_desc_t tattr_desc[] = {
 SDATA (ASN_JSON,        "jobs",             SDF_RD,         0,              "Jobs"),
 SDATA (ASN_JSON,        "input_data",       SDF_RD,         "{}",           "Input Jobs Data. Use as you want. Available in exec_action() and exec_result() action methods."),
 SDATA (ASN_JSON,        "output_data",      SDF_RD,         "{}",           "Output Jobs Data. Use as you want. Available in exec_action() and exec_result() action methods."),
-SDATA (ASN_POINTER,     "gobj_jobs",        0,              0,              "GObj defining the jobs"),
-SDATA (ASN_POINTER,     "gobj_results",     0,              0,              "GObj executing the jobs"),
+SDATA (ASN_JSON,        "gobj_jobs",        SDF_RD,         0,              "GObj defining the jobs: json integer with a hgobj or json string with a unique gobj"),
+SDATA (ASN_JSON,        "gobj_results",     SDF_RD,         0,              "GObj executing the jobs: json integer with a hgobj or json string with a unique gobj"),
 SDATA (ASN_INTEGER,     "timeout",          SDF_PERSIST|SDF_WR,10*1000,     "Action Timeout"),
 SDATA (ASN_POINTER,     "user_data",        0,              0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,              0,              "more user data"),
@@ -170,14 +210,70 @@ PRIVATE void mt_create(hgobj gobj)
         gobj_subscribe_event(gobj, NULL, NULL, subscriber);
     }
 
+    json_t *jn_gobj_results = gobj_read_json_attr(gobj, "gobj_results");
+    if(json_is_integer(jn_gobj_results)) {
+        priv->gobj_results = (hgobj)(size_t)json_integer_value(jn_gobj_results);
+        if(gobj_is_volatil(priv->gobj_results)) {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "WARNING don't use volatil gobjs",
+                "dst",          "%s", gobj_name(priv->gobj_results),
+                NULL
+            );
+        }
+
+    } else if(json_is_string(jn_gobj_results)) {
+        const char *sdst = json_string_value(jn_gobj_results);
+        priv->gobj_results = gobj_find_unique_gobj(sdst, TRUE);
+
+    } else {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "gobj_results must be a json integer or string",
+            "gobj_results", "%j", jn_gobj_results,
+            NULL
+        );
+    }
+
+    json_t *jn_gobj_jobs = gobj_read_json_attr(gobj, "gobj_jobs");
+    if(json_is_integer(jn_gobj_jobs)) {
+        priv->gobj_jobs = (hgobj)(size_t)json_integer_value(jn_gobj_jobs);
+        if(gobj_is_volatil(priv->gobj_jobs)) {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "WARNING don't use volatil gobjs",
+                "dst",          "%s", gobj_name(priv->gobj_jobs),
+                NULL
+            );
+        }
+
+    } else if(json_is_string(jn_gobj_jobs)) {
+        const char *sdst = json_string_value(jn_gobj_jobs);
+        priv->gobj_jobs = gobj_find_unique_gobj(sdst, TRUE);
+
+    } else {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "gobj_jobs must be a json integer or string",
+            "gobj_jobs", "%j", jn_gobj_jobs,
+            NULL
+        );
+    }
+
     /*
      *  Do copy of heavy used parameters, for quick access.
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
     SET_PRIV(timeout,               gobj_read_int32_attr)
     SET_PRIV(jobs,                  gobj_read_json_attr)
-    SET_PRIV(gobj_results,          gobj_read_pointer_attr)
-    SET_PRIV(gobj_jobs,             gobj_read_pointer_attr)
 
     priv->max_job = json_array_size(priv->jobs);
     gobj_set_bottom_gobj(gobj, priv->gobj_results);
