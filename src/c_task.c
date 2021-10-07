@@ -104,10 +104,12 @@ SDATA_END()
  *  in s_user_trace_level
  *---------------------------------------------*/
 enum {
-    TRACE_MESSAGES = 0x0001,
+    TRACE_MESSAGES  = 0x0001,
+    TRACE_MESSAGES2 = 0x0002,
 };
 PRIVATE const trace_level_t s_user_trace_level[16] = {
 {"messages",        "Trace messages"},
+{"messages2",       "Trace messages with data"},
 {0, 0},
 };
 
@@ -288,17 +290,29 @@ PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int stop_task(hgobj gobj, int result)
 {
+    json_t *kw_task = json_pack("{s:i, s:O, s:O}",
+        "result", result,
+        "input_data", gobj_read_json_attr(gobj, "input_data"),
+        "output_data", gobj_read_json_attr(gobj, "output_data")
+    );
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("================! stop task, result %d of %s", result, gobj_name(gobj));
+        if(result < 0) {
+            trace_msg("💎💎Task END ⏫⏫ 🔴 ERROR, gobj %s", gobj_name(gobj));
+        } else {
+            trace_msg("💎💎Task END ⏫⏫ 🔵 OK, gobj %s", gobj_name(gobj));
+        }
+    }
+    if(gobj_trace_level(gobj) & TRACE_MESSAGES2) {
+        if(result < 0) {
+            log_debug_json(0, kw_task, "💎💎Task END ⏫⏫ 🔴 ERROR, gobj %s", gobj_name(gobj));
+        } else {
+            log_debug_json(0, kw_task, "💎💎Task END ⏫⏫ 🔵 OK, gobj %s", gobj_name(gobj));
+        }
     }
 
     gobj_publish_event(gobj,
         "EV_END_TASK",
-        json_pack("{s:i, s:O, s:O}",
-            "result", result,
-            "input_data", gobj_read_json_attr(gobj, "input_data"),
-            "output_data", gobj_read_json_attr(gobj, "output_data")
-        )
+        kw_task
     );
     gobj_stop(gobj);
     return 0;
@@ -334,7 +348,7 @@ PRIVATE int execute_action(hgobj gobj)
     json_int_t exec_timeout = kw_get_int(jn_job_, "exec_timeout", priv->timeout, 0);
 
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("================> exec ACTION %d: %s of %s", priv->cur_job, action, gobj_name(gobj));
+        trace_msg("💎💎Task ⏩ exec ACTION %s(%d '%s')", gobj_name(gobj), priv->cur_job, action);
     }
 
     int ret = (int)(size_t)gobj_exec_internal_method(
@@ -343,6 +357,37 @@ PRIVATE int execute_action(hgobj gobj)
         0,
         gobj
     );
+
+    if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
+        if(ret < 0) {
+            trace_msg("💎💎Task ⏪ exec ACTION %s(%d '%s') 🔴 ERROR",
+                gobj_name(gobj), priv->cur_job, action
+            );
+        } else {
+            trace_msg("💎💎Task ⏪ exec ACTION %s(%d '%s') 🔵 OK",
+                gobj_name(gobj), priv->cur_job, action
+            );
+        }
+    }
+    if(gobj_trace_level(gobj) & TRACE_MESSAGES2) {
+        json_t *kw_task = json_pack("{s:O, s:O}",
+            "input_data", gobj_read_json_attr(gobj, "input_data"),
+            "output_data", gobj_read_json_attr(gobj, "output_data")
+        );
+        if(ret < 0) {
+            log_debug_json(0, kw_task,
+                "💎💎Task ⏪ exec ACTION %s(%d '%s') 🔴 ERROR",
+                gobj_name(gobj), priv->cur_job, action
+            );
+        } else {
+            log_debug_json(0, kw_task,
+                "💎💎Task ⏪ exec ACTION %s(%d '%s') 🔵 OK",
+                gobj_name(gobj), priv->cur_job, action
+            );
+        }
+        json_decref(kw_task);
+    }
+
     if(ret < 0) {
         stop_task(gobj, ret);
     } else {
@@ -394,8 +439,7 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
     const char *action = kw_get_str(jn_job_, "exec_result", "", KW_REQUIRED);
 
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("================< exec RESULT %d: %s of %s", priv->cur_job, action, gobj_name(gobj));
-        log_debug_json(0, kw, "exec RESULT");
+        trace_msg("💎💎Task ⏩ exec RESULT %s(%d '%s')", gobj_name(gobj), priv->cur_job, action);
     }
 
     int ret = (int)(size_t)gobj_exec_internal_method(
@@ -404,6 +448,37 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
         json_incref(kw),
         gobj
     );
+
+    if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
+        if(ret < 0) {
+            trace_msg("💎💎Task ⏪ exec RESULT %s(%d '%s') 🔴 ERROR",
+                gobj_name(gobj), priv->cur_job, action
+            );
+        } else {
+            trace_msg("💎💎Task ⏪ exec RESULT %s(%d '%s') 🔵 OK",
+                gobj_name(gobj), priv->cur_job, action
+            );
+        }
+    }
+    if(gobj_trace_level(gobj) & TRACE_MESSAGES2) {
+        json_t *kw_task = json_pack("{s:O, s:O}",
+            "input_data", gobj_read_json_attr(gobj, "input_data"),
+            "output_data", gobj_read_json_attr(gobj, "output_data")
+        );
+        if(ret < 0) {
+            log_debug_json(0, kw_task,
+                "💎💎Task ⏪ exec RESULT %s(%d '%s') 🔴 ERROR",
+                gobj_name(gobj), priv->cur_job, action
+            );
+        } else {
+            log_debug_json(0, kw_task,
+                "💎💎Task ⏪ exec RESULT %s(%d '%s') 🔵 OK",
+                gobj_name(gobj), priv->cur_job, action
+            );
+        }
+        json_decref(kw_task);
+    }
+
     if(ret < 0) {
         stop_task(gobj, ret);
     } else {
