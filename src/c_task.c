@@ -429,14 +429,22 @@ PRIVATE int stop_task(hgobj gobj, int result)
     );
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
         if(result < 0) {
-            trace_msg("💎💎Task END ⏫⏫ 🔴 ERROR, gobj %s", gobj_name(gobj));
+            if(result == -2) {
+                trace_msg("💎💎Task END ⏫⏫ ⏳ ERROR, gobj %s", gobj_name(gobj));
+            } else {
+                trace_msg("💎💎Task END ⏫⏫ 🔴 ERROR, gobj %s", gobj_name(gobj));
+            }
         } else {
             trace_msg("💎💎Task END ⏫⏫ 🔵 OK, gobj %s", gobj_name(gobj));
         }
     }
     if(gobj_trace_level(gobj) & TRACE_MESSAGES2) {
         if(result < 0) {
-            log_debug_json(0, kw_task, "💎💎Task END ⏫⏫ 🔴 ERROR, gobj %s", gobj_name(gobj));
+            if(result == -2) {
+                log_debug_json(0, kw_task, "💎💎Task END ⏫⏫ ⏳ ERROR, gobj %s", gobj_name(gobj));
+            } else {
+                log_debug_json(0, kw_task, "💎💎Task END ⏫⏫ 🔴 ERROR, gobj %s", gobj_name(gobj));
+            }
         } else {
             log_debug_json(0, kw_task, "💎💎Task END ⏫⏫ 🔵 OK, gobj %s", gobj_name(gobj));
         }
