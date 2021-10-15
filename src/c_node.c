@@ -1210,7 +1210,7 @@ PRIVATE int mt_unlink_nodes(
 PRIVATE json_t *mt_get_node(
     hgobj gobj,
     const char *topic_name,
-    json_t *kw,         // id' and pkey2s fields are used to find the node
+    json_t *kw,         // 'id' and pkey2s fields are used to find the node
     json_t *jn_options, // fkey,hook options
     hgobj src
 )
@@ -2842,6 +2842,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
             kw  // owned
         );
     }
+    json_object_set_new(kw, "id", json_string(id)); // HACK remove 'id' field of cli
 
     json_t *node = gobj_get_node(
         gobj,
