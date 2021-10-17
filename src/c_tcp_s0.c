@@ -347,6 +347,21 @@ PRIVATE int mt_start(hgobj gobj)
         );
     }
 
+    /*
+     *  Warning of listening in non-local ip's
+     */
+    if(strncmp(host, "127.0.", strlen("127.0."))!=0) {
+        log_warning(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "msgset",       "%s", MSGSET_CONFIGURATION_ERROR,
+            "msg",          "%s", "Using non-local ip WITHOUT TLS",
+            "url",          "%s", priv->url,
+            "lHost",        "%s", host,
+            "lPort",        "%s", port,
+            NULL
+        );
+    }
+
     gobj_change_state(gobj, "ST_IDLE");
 
     return 0;
