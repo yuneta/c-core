@@ -871,7 +871,7 @@ PRIVATE GBUFFER *build_modbus_request_read_message(hgobj gobj, json_t *jn_slave,
     uint8_t slave_id = (uint8_t)kw_get_int(jn_slave, "id", 0, KW_REQUIRED);
     uint16_t address = kw_get_int(jn_map, "address", 0, KW_REQUIRED|KW_WILD_NUMBER);
     uint16_t size = kw_get_int(jn_map, "size", 0, KW_REQUIRED|KW_WILD_NUMBER);
-
+    const char *id = kw_get_str(jn_map, "id", "", 0);
     const char *type = kw_get_str(jn_map, "type", "", KW_REQUIRED);
     int object_type = get_object_type(gobj, type);
 
@@ -1009,12 +1009,14 @@ PRIVATE GBUFFER *build_modbus_request_read_message(hgobj gobj, json_t *jn_slave,
     priv->modbus_function = modbus_function;
 
     if(gobj_trace_level(gobj) & TRACE_DECODE) {
-        trace_msg("=====> func: %d %s, slave_id: %d, addr: %04X, size: %d",
+        trace_msg("🍅🍅⏩ func: %d %s, slave_id: %d, addr: %d (0x%04X), size: %d, id: %s",
             modbus_function,
             modbus_function_name(modbus_function),
             slave_id,
             address,
-            size
+            address,
+            size,
+            id
         );
     }
 
@@ -1272,7 +1274,7 @@ PRIVATE int load_slave_mapping(hgobj gobj)
         return -1;
     }
     priv->mapping_ = kw_get_list(priv->cur_slave_, "mapping", 0, KW_REQUIRED);
-    priv->idx_mapping = 0;
+    priv->idx_mapping = -1;
     priv->max_mapping = json_array_size(priv->mapping_);
     if(priv->max_mapping == 0) {
         log_error(0,
@@ -1299,11 +1301,17 @@ PRIVATE int next_map(hgobj gobj)
 
     priv->cur_map_ = 0; // Reset cur map
 
-    priv->idx_mapping++;
+    if(priv->idx_mapping < 0) {
+        priv->idx_mapping = 0;
+    } else {
+        priv->idx_mapping++;
+    }
     if(priv->idx_mapping < priv->max_mapping) {
         // Next map in current slave
         if(gobj_trace_level(gobj) & TRACE_POLLING) {
-            trace_msg("=====> next map  : slave %d, map %d", priv->idx_slaves, priv->idx_mapping);
+            trace_msg("🔊🔊🔊🔊⏩ next map  : slave %d, map %d",
+                priv->idx_slaves, priv->idx_mapping
+            );
         }
         return 0; // do polling
     }
@@ -1311,8 +1319,11 @@ PRIVATE int next_map(hgobj gobj)
     priv->idx_slaves++;
     if(priv->idx_slaves < priv->max_slaves) {
         load_slave_mapping(gobj);
+        priv->idx_mapping = 0;;
         if(gobj_trace_level(gobj) & TRACE_POLLING) {
-            trace_msg("=====> next slave: slave %d, map %d", priv->idx_slaves, priv->idx_mapping);
+            trace_msg("🔊🔊🔊🔊🔊🔊🔊🔊⏩ next slave: slave %d, map %d",
+                priv->idx_slaves, priv->idx_mapping
+            );
         }
         return 0; // do polling
     }
@@ -1507,7 +1518,7 @@ PRIVATE int framehead_consume(hgobj gobj, FRAME_HEAD *frame, istream istream, ch
         );
     } else {
         if(gobj_trace_level(gobj) & TRACE_DECODE) {
-            trace_msg("<===== func: %d %s, slave_id: %d, count: %d",
+            trace_msg("🍅🍅⏪ func: %d %s, slave_id: %d, count: %d",
                 frame->function,
                 modbus_function_name(frame->function),
                 frame->slave_id,
@@ -2217,7 +2228,10 @@ PRIVATE json_t *get_variable_value(hgobj gobj, slave_data_t *pslv, json_t *jn_va
     }
 
     int address = kw_get_int(jn_variable, "address", -1, KW_REQUIRED|KW_WILD_NUMBER);
-
+    int multiplier = kw_get_int(jn_variable, "multiplier", 1, KW_WILD_NUMBER);
+    if(multiplier == 0) {
+        multiplier = 1;
+    }
     const char *format = kw_get_str(jn_variable, "format", "", KW_REQUIRED);
     variable_format_t variable_format = get_variable_format(gobj, format);
 
@@ -2265,9 +2279,11 @@ PRIVATE json_t *get_variable_value(hgobj gobj, slave_data_t *pslv, json_t *jn_va
 
                 if(variable_format == FORMAT_INT16) {
                     int16_t v = endian_16(endian_format, (uint8_t *)pv);
+                    v = v*multiplier;
                     jn_value = json_integer(v);
                 } else {
                     uint16_t v = endian_16(endian_format, (uint8_t *)pv);
+                    v = v*multiplier;
                     jn_value = json_integer(v);
                 }
             }
@@ -2294,9 +2310,11 @@ PRIVATE json_t *get_variable_value(hgobj gobj, slave_data_t *pslv, json_t *jn_va
 
                 if(variable_format == FORMAT_INT32) {
                     int32_t v = endian_32(endian_format, (uint8_t *)pv);
+                    v = v*multiplier;
                     jn_value = json_integer(v);
                 } else {
                     uint32_t v = endian_32(endian_format, (uint8_t *)pv);
+                    v = v*multiplier;
                     jn_value = json_integer(v);
                 }
             }
@@ -2323,9 +2341,11 @@ PRIVATE json_t *get_variable_value(hgobj gobj, slave_data_t *pslv, json_t *jn_va
 
                 if(variable_format == FORMAT_INT64) {
                     int64_t v = endian_64(endian_format, (uint8_t *)pv);
+                    v = v*multiplier;
                     jn_value = json_integer(v);
                 } else {
                     uint64_t v = endian_64(endian_format, (uint8_t *)pv);
+                    v = v*multiplier;
                     jn_value = json_integer(v);
                 }
             }
@@ -2350,6 +2370,7 @@ PRIVATE json_t *get_variable_value(hgobj gobj, slave_data_t *pslv, json_t *jn_va
                 }
 
                 float v = endian_float(endian_format, (uint8_t *)pv);
+                v = v*multiplier;
                 jn_value = json_real(v);
             }
             break;
@@ -2373,6 +2394,7 @@ PRIVATE json_t *get_variable_value(hgobj gobj, slave_data_t *pslv, json_t *jn_va
                 }
 
                 double v = endian_double(endian_format, (uint8_t *)pv);
+                v = v*multiplier;
                 jn_value = json_real(v);
             }
             break;
@@ -2830,14 +2852,24 @@ PRIVATE int ac_timeout_polling(hgobj gobj, const char *event, json_t *kw, hgobj 
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(poll_modbus(gobj)<0) {
+    /*
+     *  Next map
+     */
+    if(next_map(gobj)<0) {
         /*
-         *  Problemas con el query actual, pasa al siguiente después del timeout
+         *  NO map or end of cycle, wait timeout_polling
          */
-        next_map(gobj);
         set_timeout(priv->timer, priv->timeout_polling*1000);
     } else {
-        // timeout set by poll_modbus
+        if(poll_modbus(gobj)<0) {
+            /*
+             *  Problemas con el query actual, pasa al siguiente después del timeout
+             */
+            next_map(gobj);
+            set_timeout(priv->timer, priv->timeout_polling*1000);
+        } else {
+            // timeout set by poll_modbus
+        }
     }
 
     KW_DECREF(kw);
