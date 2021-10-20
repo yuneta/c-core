@@ -1,6 +1,6 @@
 /***********************************************************************
  *          C_TCP_S0.C
- *          GClass of TCP server level 0 mixin-uv.
+ *          GClass of TCP server level 0 uv-mixin.
  *
  *  GObj for manage listen socket events.
  *  It's a mixin of gobj-ecosistema and libuv library.

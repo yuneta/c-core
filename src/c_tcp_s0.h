@@ -1,6 +1,6 @@
 /****************************************************************************
  *          C_TCP_S0.H
- *          GClass of TCP server level 0 mixin-uv.
+ *          GClass of TCP server level 0 uv-mixin.
  *
 
     Input Events                                Output Events
