@@ -114,6 +114,7 @@ PRIVATE json_t *cmd_reset_log_counters(hgobj gobj, const char *cmd, json_t *kw, 
 
 PRIVATE json_t *cmd_spawn(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_set_daemon_debug(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_set_deep_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE json_t* cmd_add_log_handler(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 PRIVATE json_t* cmd_del_log_handler(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
@@ -226,6 +227,11 @@ SDATAPM (ASN_OCTET_STR, "process",      0,              0,          "Process to 
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_set_daemon_debug[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_set_deep_trace[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value"),
 SDATA_END()
@@ -354,6 +360,8 @@ SDATACM (ASN_SCHEMA,    "reset-log-counters",       0,      0,              cmd_
 SDATACM (ASN_SCHEMA,    "spawn",                    0,      pm_spawn,       cmd_spawn,                  "Spawn a new process"),
 
 SDATACM (ASN_SCHEMA,    "set-daemon-debug",         0,      pm_set_daemon_debug,cmd_set_daemon_debug,   "Set daemon debug"),
+SDATACM (ASN_SCHEMA,    "set-deep-trace",         0,      pm_set_deep_trace,cmd_set_deep_trace,   "Set deep trace, all traces active"),
+
 
 SDATACM (ASN_SCHEMA,    "add-log-handler",          0,      pm_add_log_handler,cmd_add_log_handler,     "Add log handler"),
 SDATACM (ASN_SCHEMA,    "delete-log-handler",       0,      pm_del_log_handler,cmd_del_log_handler,     "Delete log handler"),
@@ -2695,6 +2703,47 @@ PRIVATE json_t* cmd_set_daemon_debug(hgobj gobj, const char* cmd, json_t* kw, hg
     }
 
     daemon_set_debug_mode(trace);
+
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        json_local_sprintf(
+            "%s: daemon debug set to %d", gobj_short_name(gobj), trace
+        ),
+        0,
+        0,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t* cmd_set_deep_trace(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
+{
+    const char *trace_value = kw_get_str(kw, "set", 0, 0);
+    if(empty_string(trace_value)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf(
+                "%s: set or re-set?", gobj_short_name(gobj)
+            ),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+    BOOL trace;
+    if(strcasecmp(trace_value, "true")==0 || strcasecmp(trace_value, "set")==0) {
+        trace = 1;
+    } else if(strcasecmp(trace_value, "false")==0 || strcasecmp(trace_value, "reset")==0) {
+        trace = 0;
+    } else {
+        trace = atoi(trace_value);
+    }
+
+    gobj_set_deep_tracing(trace);
 
     return msg_iev_build_webix(
         gobj,

@@ -49,6 +49,7 @@
 #include <ginsfsm.h>
 #include "yuneta_environment.h"
 #include "c_timer.h"
+#include "entry_point.h"
 #include "yuneta_version.h"
 
 #ifdef __cplusplus

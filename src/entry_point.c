@@ -474,6 +474,9 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
             if(strcmp(handler_type, "stdout")==0) {
                 if(arguments.verbose_log) {
                     handler_options = arguments.verbose_log;
+                    if(handler_options & LOG_HND_OPT_DEEP_TRACE) {
+                        gobj_set_deep_tracing(TRUE);
+                    }
                 }
                 log_add_handler(key, handler_type, handler_options, 0);
 
@@ -982,14 +985,6 @@ PRIVATE void process(const char *process_name, const char *work_dir, const char 
 PUBLIC void set_assure_kill_time(int seconds)
 {
     __assure_kill_time__ = seconds;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PUBLIC BOOL running_as_daemon(void)
-{
-    return __as_daemon__;
 }
 
 /***************************************************************************

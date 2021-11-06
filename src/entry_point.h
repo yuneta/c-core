@@ -70,11 +70,6 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
 PUBLIC void set_assure_kill_time(int seconds);
 
 /*
- *  CLI needs to know
- */
-PUBLIC BOOL running_as_daemon(void);
-
-/*
  *  For TEST: kill the yuno in `timeout` seconds.
  */
 PUBLIC void set_auto_kill_time(int seconds);
