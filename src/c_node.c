@@ -1322,23 +1322,14 @@ PRIVATE json_t *mt_list_nodes(
     json_t *list = json_array();
     int idx; json_t *node;
     json_array_foreach(iter, idx, node) {
-        /*----------------------------------------*
-         *  Check AUTHZS
-         *----------------------------------------*/
-        /*
-         *  En node tengo __treedb_name__, __topic_name__, "id"
-         */
-        const char *permission = "read";
-        if(gobj_user_has_authz(gobj, permission, json_incref(node), src)) {
-            json_array_append_new(
-                list,
-                node_collapsed_view( // TODO añade opción "expand"
-                    priv->tranger,
-                    node,
-                    json_incref(jn_options)
-                )
-            );
-        }
+        json_array_append_new(
+            list,
+            node_collapsed_view( // TODO añade opción "expand"
+                priv->tranger,
+                node,
+                json_incref(jn_options)
+            )
+        );
     }
     json_decref(iter);
 
@@ -2786,6 +2777,21 @@ PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
             gobj,
             -1,
             json_sprintf("What topic_name?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    /*----------------------------------------*
+     *  Check AUTHZS
+     *----------------------------------------*/
+    const char *permission = "read";
+    if(!gobj_user_has_authz(gobj, permission, kw_incref(kw), src)) {
+        return msg_iev_build_webix(
+            gobj,
+            -403,
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
