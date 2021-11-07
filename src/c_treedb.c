@@ -55,7 +55,8 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_authzs[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "authz",        0,              0,          "authz about you want help"),
+SDATAPM (ASN_OCTET_STR, "authz",        0,              0,          "permission to search"),
+SDATAPM (ASN_OCTET_STR, "service",      0,              0,          "Service where to search the permission. If empty print all service's permissions"),
 SDATA_END()
 };
 
@@ -353,7 +354,7 @@ PRIVATE json_t *mt_treedbs(
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -420,7 +421,7 @@ PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -434,7 +435,7 @@ PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What treedb_name?"),
+            json_sprintf("What treedb_name?"),
             0,
             0,
             kw  // owned
@@ -444,7 +445,7 @@ PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What filename_mask?"),
+            json_sprintf("What filename_mask?"),
             0,
             0,
             kw  // owned
@@ -464,7 +465,7 @@ PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("treedb_schema not found: '%s'", treedb_name),
+            json_sprintf("treedb_schema not found: '%s'", treedb_name),
             0,
             0,
             kw  // owned
@@ -518,7 +519,7 @@ PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Internal error, tranger client NULL"),
+            json_sprintf("Internal error, tranger client NULL"),
             0,
             0,
             kw  // owned
@@ -552,7 +553,7 @@ PRIVATE json_t *cmd_open_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj s
 
     return msg_iev_build_webix(gobj,
         gobj_client_node?0:-1,
-        json_local_sprintf(gobj_client_node?"Treedb opened!":log_last_message()),
+        json_sprintf("%s", gobj_client_node?"Treedb opened!":log_last_message()),
         0,
         0,
         kw  // owned
@@ -574,7 +575,7 @@ PRIVATE json_t *cmd_close_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -588,7 +589,7 @@ PRIVATE json_t *cmd_close_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What treedb_name?"),
+            json_sprintf("What treedb_name?"),
             0,
             0,
             kw  // owned
@@ -603,7 +604,7 @@ PRIVATE json_t *cmd_close_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Treedb_name not found: '%s'", treedb_name),
+            json_sprintf("Treedb_name not found: '%s'", treedb_name),
             0,
             0,
             kw  // owned
@@ -623,7 +624,7 @@ PRIVATE json_t *cmd_close_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj 
 
     return msg_iev_build_webix(gobj,
         0,
-        json_local_sprintf("Treedb closed!"),
+        json_sprintf("Treedb closed!"),
         0,
         0,
         kw  // owned
@@ -646,7 +647,7 @@ PRIVATE json_t *cmd_delete_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -660,7 +661,7 @@ PRIVATE json_t *cmd_delete_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What treedb_name?"),
+            json_sprintf("What treedb_name?"),
             0,
             0,
             kw  // owned
@@ -670,7 +671,7 @@ PRIVATE json_t *cmd_delete_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("This command must be use with force"),
+            json_sprintf("This command must be use with force"),
             0,
             0,
             kw  // owned
@@ -681,7 +682,7 @@ PRIVATE json_t *cmd_delete_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj
 
     return msg_iev_build_webix(gobj,
         ret,
-        json_local_sprintf(ret<0?log_last_message():"Treedb deleted!"),
+        json_sprintf("%s", ret<0?log_last_message():"Treedb deleted!"),
         0,
         0,
         kw  // owned
@@ -708,7 +709,7 @@ PRIVATE json_t *cmd_create_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -720,7 +721,7 @@ PRIVATE json_t *cmd_create_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Treedb_name not found: '%s'", treedb_name),
+            json_sprintf("Treedb_name not found: '%s'", treedb_name),
             0,
             0,
             kw  // owned
@@ -743,7 +744,7 @@ PRIVATE json_t *cmd_create_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
 
     return msg_iev_build_webix(gobj,
         topic?0:-1,
-        topic?json_local_sprintf("Topic created!"):json_local_sprintf("Cannot create new topic"),
+        topic?json_sprintf("Topic created!"):json_sprintf("Cannot create new topic"),
         0,
         0,
         kw  // owned
@@ -766,7 +767,7 @@ PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -778,7 +779,7 @@ PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Treedb_name not found: '%s'", treedb_name),
+            json_sprintf("Treedb_name not found: '%s'", treedb_name),
             0,
             0,
             kw  // owned
@@ -793,7 +794,7 @@ PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
 
     return msg_iev_build_webix(gobj,
         ret,
-        ret<0?json_local_sprintf("Cannot delete topic"):json_local_sprintf("Topic deleted!"),
+        ret<0?json_sprintf("Cannot delete topic"):json_sprintf("Topic deleted!"),
         0,
         0,
         kw  // owned

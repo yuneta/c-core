@@ -1726,7 +1726,7 @@ PUBLIC GCLASS *gclass_resource(void)
 //         return msg_iev_build_webix(
 //             gobj,
 //             -101,
-//             json_local_sprintf("What source?"),
+//             json_sprintf("What source?"),
 //             0,
 //             0,
 //             kw  // owned
@@ -1743,7 +1743,7 @@ PUBLIC GCLASS *gclass_resource(void)
 //         return msg_iev_build_webix(
 //             gobj,
 //             -102,
-//             json_local_sprintf("Cannot open '%s' source.", path),
+//             json_sprintf("Cannot open '%s' source.", path),
 //             0,
 //             0,
 //             kw  // owned
@@ -1768,7 +1768,7 @@ PUBLIC GCLASS *gclass_resource(void)
 //         return msg_iev_build_webix(
 //             gobj,
 //             -103,
-//             json_local_sprintf("Cannot load db. Bad json format in '%s' source.", path),
+//             json_sprintf("Cannot load db. Bad json format in '%s' source.", path),
 //             0,
 //             0,
 //             kw  // owned
@@ -1830,7 +1830,7 @@ PUBLIC GCLASS *gclass_resource(void)
 //     return msg_iev_build_webix(
 //         gobj,
 //         0,
-//         json_local_sprintf("Loaded %d records.", n_records),
+//         json_sprintf("Loaded %d records.", n_records),
 //         0,
 //         0,
 //         kw  // owned
@@ -1988,7 +1988,7 @@ PUBLIC GCLASS *gclass_resource(void)
 //     return msg_iev_build_webix(
 //         gobj,
 //         0,
-//         json_local_sprintf("Configuration saved in '%s' destination.", path),
+//         json_sprintf("Configuration saved in '%s' destination.", path),
 //         0,
 //         0,
 //         kw  // owned

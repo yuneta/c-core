@@ -663,7 +663,7 @@ PRIVATE json_t *cmd_add_channel(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     if(!priv->resource) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("Channel resource not in use."),
+            json_sprintf("Channel resource not in use."),
             0,
             0,
             kw  // owned
@@ -680,7 +680,7 @@ PRIVATE json_t *cmd_add_channel(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     if(empty_string(url)) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "What url?"
             ),
             0,
@@ -693,7 +693,7 @@ PRIVATE json_t *cmd_add_channel(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     if(r<0) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "Bad url: '%s'", url
             ),
             0,
@@ -754,7 +754,7 @@ PRIVATE json_t *cmd_add_channel(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         if(!gate_config) {
             return msg_iev_build_webix(gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "Bad config type: '%s'", type
                 ),
                 0,
@@ -797,7 +797,7 @@ PRIVATE json_t *cmd_add_channel(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Cannot create resource."),
+            json_sprintf("Cannot create resource."),
             0,
             0,
             kw  // owned
@@ -827,7 +827,7 @@ PRIVATE json_t *cmd_add_channel(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         sdata_destroy(hs);
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "Cannot create the channel gobj."
             ),
             0,
@@ -882,7 +882,7 @@ PRIVATE json_t *cmd_delete_channel(hgobj gobj, const char *cmd, json_t *kw, hgob
     if(!priv->resource) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("Channel resource not in use."),
+            json_sprintf("Channel resource not in use."),
             0,
             0,
             kw  // owned
@@ -898,7 +898,7 @@ PRIVATE json_t *cmd_delete_channel(hgobj gobj, const char *cmd, json_t *kw, hgob
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("'channel_id' required."),
+            json_sprintf("'channel_id' required."),
             0,
             0,
             kw  // owned
@@ -909,7 +909,7 @@ PRIVATE json_t *cmd_delete_channel(hgobj gobj, const char *cmd, json_t *kw, hgob
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Channel not found."),
+            json_sprintf("Channel not found."),
             0,
             0,
             kw  // owned
@@ -921,7 +921,7 @@ PRIVATE json_t *cmd_delete_channel(hgobj gobj, const char *cmd, json_t *kw, hgob
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Cannot delete a hard-coded channel."),
+            json_sprintf("Cannot delete a hard-coded channel."),
             0,
             0,
             kw  // owned
@@ -932,7 +932,7 @@ PRIVATE json_t *cmd_delete_channel(hgobj gobj, const char *cmd, json_t *kw, hgob
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Cannot delete the channel."),
+            json_sprintf("Cannot delete the channel."),
             0,
             0,
             kw  // owned
@@ -946,7 +946,7 @@ PRIVATE json_t *cmd_delete_channel(hgobj gobj, const char *cmd, json_t *kw, hgob
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("Channel deleted."),
+        json_sprintf("Channel deleted."),
         0,
         0,
         kw  // owned
@@ -964,7 +964,7 @@ PRIVATE json_t *cmd_list_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     if(!priv->resource) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("Channel resource not in use."),
+            json_sprintf("Channel resource not in use."),
             0,
             0,
             kw  // owned
@@ -988,7 +988,7 @@ PRIVATE json_t *cmd_list_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     json_t *webix = msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf(cmd),
+        json_sprintf("%s", cmd),
         0, //RESOURCE_WEBIX_SCHEMA(priv->resource, resource),
         jn_data, // owned
         kw  // owned
@@ -1009,7 +1009,7 @@ PRIVATE json_t *cmd_list_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj
     if(!priv->resource) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("Channel resource not in use."),
+            json_sprintf("Channel resource not in use."),
             0,
             0,
             kw  // owned
@@ -1059,7 +1059,7 @@ PRIVATE int add_child_to_data(hgobj gobj, json_t *jn_data, hgobj child)
     }
     return json_array_append_new(
         jn_data,
-        json_local_sprintf(FORMATD_VIEW_CHANNELS,
+        json_sprintf(FORMATD_VIEW_CHANNELS,
             channel_name,
             opened,
             txMsgs,
@@ -1078,7 +1078,7 @@ PRIVATE json_t *cmd_view_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj
     json_t *jn_data = json_array();
     json_array_append_new(
         jn_data,
-        json_local_sprintf(FORMATT_VIEW_CHANNELS,
+        json_sprintf(FORMATT_VIEW_CHANNELS,
             "  Channel name",
             "Opened",
             "Tx Msgs",
@@ -1093,7 +1093,7 @@ PRIVATE json_t *cmd_view_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj
     );
     json_array_append_new(
         jn_data,
-        json_local_sprintf(FORMATT_VIEW_CHANNELS,
+        json_sprintf(FORMATT_VIEW_CHANNELS,
             " =====================",
             "======",
             "============",
@@ -1207,7 +1207,7 @@ PRIVATE json_t *cmd_enable_channels(hgobj gobj, const char *cmd, json_t *kw, hgo
     if(!priv->resource) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("Channel resource not in use."),
+            json_sprintf("Channel resource not in use."),
             0,
             0,
             kw  // owned
@@ -1256,7 +1256,7 @@ PRIVATE json_t *cmd_disable_channels(hgobj gobj, const char *cmd, json_t *kw, hg
     if(!priv->resource) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("Channel resource not in use."),
+            json_sprintf("Channel resource not in use."),
             0,
             0,
             kw  // owned

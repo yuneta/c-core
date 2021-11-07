@@ -488,7 +488,7 @@ PRIVATE void on_read_cb(
             0,
             buf->base,
             nread,
-            temp
+            "%s", temp
         );
     }
 
@@ -618,7 +618,7 @@ PRIVATE int send_data(hgobj gobj, GBUFFER *gbuf)
             0,
             b[0].base,
             b[0].len,
-            temp
+            "%s", temp
         );
     }
 

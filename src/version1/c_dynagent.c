@@ -192,7 +192,7 @@ PRIVATE json_t *mt_command(hgobj gobj, const char *str)
         }
     }
     if(!cnf_cmd->cmd) {
-        jn_data = json_local_sprintf(
+        jn_data = json_sprintf(
             "Command '%s' not available in %s service. Try 'help' command.",
             cmd,
             gobj_short_name(gobj)
@@ -201,7 +201,7 @@ PRIVATE json_t *mt_command(hgobj gobj, const char *str)
     }
 
     if(!gobj_is_running(gobj)) {
-        jn_data = json_local_sprintf(
+        jn_data = json_sprintf(
             "GObj '%s' is not running",
             gobj_short_name(gobj)
         );
@@ -445,14 +445,14 @@ PRIVATE json_t *cmd_list_commands(hgobj gobj, char *cmd, char *params, int *resu
     json_t *jn_data = json_array();
     json_array_append_new(
         jn_data,
-        json_local_sprintf(FORMAT_LIST_COMMANDS,
+        json_sprintf(FORMAT_LIST_COMMANDS,
             "Command",
             "Description"
         )
     );
     json_array_append_new(
         jn_data,
-        json_local_sprintf(FORMAT_LIST_COMMANDS,
+        json_sprintf(FORMAT_LIST_COMMANDS,
             "==========================",
             "======================================="
         )
@@ -461,7 +461,7 @@ PRIVATE json_t *cmd_list_commands(hgobj gobj, char *cmd, char *params, int *resu
     for(; cnf_cmd->cmd!= 0; cnf_cmd++) {
         json_array_append_new(
             jn_data,
-            json_local_sprintf(FORMAT_LIST_COMMANDS,
+            json_sprintf(FORMAT_LIST_COMMANDS,
                 cnf_cmd->cmd,
                 cnf_cmd->desc
             )

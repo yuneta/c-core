@@ -161,7 +161,7 @@ PRIVATE BOOL read_json_cb(
     if(jn_attr) {
         json_object_set_new(jn_dict, fullpath, jn_attr);
     } else {
-        jn_attr = json_local_sprintf("Invalid json in '%s' file, error '%s'", fullpath, error.text);
+        jn_attr = json_sprintf("Invalid json in '%s' file, error '%s'", fullpath, error.text);
         json_object_set_new(jn_dict, fullpath, jn_attr);
     }
     return TRUE; // to continue

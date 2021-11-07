@@ -78,7 +78,8 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_authzs[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "authz",        0,              0,          "authz about you want help"),
+SDATAPM (ASN_OCTET_STR, "authz",        0,              0,          "permission to search"),
+SDATAPM (ASN_OCTET_STR, "service",      0,              0,          "Service where to search the permission. If empty print all service's permissions"),
 SDATA_END()
 };
 
@@ -506,7 +507,7 @@ PRIVATE json_t *cmd_print_tranger(hgobj gobj, const char *cmd, json_t *kw, hgobj
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -569,7 +570,7 @@ PRIVATE json_t *cmd_check_json(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
     json_check_refcounts(tranger, max_refcount, &result)?0:-1;
     return msg_iev_build_webix(gobj,
         result,
-        json_local_sprintf("check refcounts of tranger: %s", result==0?"Ok":"Bad"),
+        json_sprintf("check refcounts of tranger: %s", result==0?"Ok":"Bad"),
         0,
         0,
         kw  // owned
@@ -592,7 +593,7 @@ PRIVATE json_t *cmd_create_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -654,7 +655,7 @@ PRIVATE json_t *cmd_delete_topic(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -727,7 +728,7 @@ PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -770,7 +771,7 @@ PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -827,7 +828,7 @@ PRIVATE json_t *cmd_open_list(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -1016,7 +1017,7 @@ PRIVATE json_t *cmd_close_list(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -1076,7 +1077,7 @@ PRIVATE json_t *cmd_add_record(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -1165,7 +1166,7 @@ PRIVATE json_t *cmd_get_list_data(hgobj gobj, const char *cmd, json_t *kw, hgobj
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned

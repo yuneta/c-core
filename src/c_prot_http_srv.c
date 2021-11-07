@@ -254,7 +254,7 @@ PRIVATE int ac_rx_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
     GBUFFER *gbuf = (GBUFFER *)(size_t)kw_get_int(kw, "gbuffer", 0, FALSE);
 
     if(gobj_trace_level(gobj) & TRAFFIC) {
-        log_debug_gbuf(LOG_DUMP_INPUT, gbuf, gobj_short_name(gobj));
+        log_debug_gbuf(LOG_DUMP_INPUT, gbuf, "%s", gobj_short_name(gobj));
     }
 
     set_timeout(priv->timer, priv->timeout_inactivity);
@@ -321,7 +321,7 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
         log_debug_gbuf(
             LOG_DUMP_OUTPUT,
             gbuf,
-            gobj_short_name(gobj_bottom_gobj(gobj))
+            "%s", gobj_short_name(gobj_bottom_gobj(gobj))
         );
     }
 

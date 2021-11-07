@@ -149,7 +149,8 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_authzs[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "authz",        0,              0,          "authz about you want help"),
+SDATAPM (ASN_OCTET_STR, "authz",        0,              0,          "permission to search"),
+SDATAPM (ASN_OCTET_STR, "service",      0,              0,          "Service where to search the permission. If empty print all service's permissions"),
 SDATA_END()
 };
 
@@ -971,7 +972,7 @@ PRIVATE json_t *cmd_view_gclass(hgobj gobj, const char *cmd, json_t *kw, hgobj s
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: what gclass is '%s'?", gobj_short_name(gobj), gclass_name_
                 ),
                 0,
@@ -1006,7 +1007,7 @@ PRIVATE json_t *cmd_view_gobj(hgobj gobj, const char *cmd, json_t *kw, hgobj src
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -1063,7 +1064,7 @@ PRIVATE json_t *cmd_view_attrs(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -1098,7 +1099,7 @@ PRIVATE json_t *cmd_view_attrs2(hgobj gobj, const char *cmd, json_t *kw, hgobj s
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -1132,7 +1133,7 @@ PRIVATE json_t *cmd_webix_gobj_tree(hgobj gobj, const char *cmd, json_t *kw, hgo
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -1166,7 +1167,7 @@ PRIVATE json_t *cmd_view_gobj_tree(hgobj gobj, const char *cmd, json_t *kw, hgob
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -1200,7 +1201,7 @@ PRIVATE json_t *cmd_view_gobj_treedb(hgobj gobj, const char *cmd, json_t *kw, hg
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -1282,7 +1283,7 @@ PRIVATE json_t *cmd_list_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: what gobj?", gobj_short_name(gobj)
             ),
             0,
@@ -1294,7 +1295,7 @@ PRIVATE json_t *cmd_list_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: what child_gclass?", gobj_short_name(gobj)
             ),
             0,
@@ -1306,7 +1307,7 @@ PRIVATE json_t *cmd_list_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: what attributes?", gobj_short_name(gobj)
             ),
             0,
@@ -1368,7 +1369,7 @@ PRIVATE json_t *cmd_write_bool(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -1383,7 +1384,7 @@ PRIVATE json_t *cmd_write_bool(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: what attribute?", gobj_short_name(gobj)
             ),
             0,
@@ -1396,7 +1397,7 @@ PRIVATE json_t *cmd_write_bool(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: what value?", gobj_short_name(gobj)
             ),
             0,
@@ -1409,7 +1410,7 @@ PRIVATE json_t *cmd_write_bool(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: attr '%s.%s' non-existent",
                 gobj_short_name(gobj),
                 gobj_name_,
@@ -1424,7 +1425,7 @@ PRIVATE json_t *cmd_write_bool(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: '%s.%s' attr is not writable",
                 gobj_short_name(gobj),
                 gobj_name_,
@@ -1451,7 +1452,7 @@ PRIVATE json_t *cmd_write_bool(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: can't write '%s.%s'",
                 gobj_short_name(gobj),
                 gobj_name_,
@@ -1468,7 +1469,7 @@ PRIVATE json_t *cmd_write_bool(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf(
+        json_sprintf(
             "%s: %s.%s=%d done",
             gobj_short_name(gobj),
             gobj_name_,
@@ -1494,7 +1495,7 @@ PRIVATE json_t *cmd_write_str(hgobj gobj, const char *cmd, json_t *kw, hgobj src
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -1509,7 +1510,7 @@ PRIVATE json_t *cmd_write_str(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: what attribute?", gobj_short_name(gobj)
             ),
             0,
@@ -1522,7 +1523,7 @@ PRIVATE json_t *cmd_write_str(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: what value?", gobj_short_name(gobj)
             ),
             0,
@@ -1535,7 +1536,7 @@ PRIVATE json_t *cmd_write_str(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: attr '%s.%s' non-existent",
                 gobj_short_name(gobj),
                 gobj_name_,
@@ -1550,7 +1551,7 @@ PRIVATE json_t *cmd_write_str(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: '%s.%s' attr is not writable",
                 gobj_short_name(gobj),
                 gobj_name_,
@@ -1568,7 +1569,7 @@ PRIVATE json_t *cmd_write_str(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: can't write '%s.%s'",
                 gobj_short_name(gobj),
                 gobj_name_,
@@ -1585,7 +1586,7 @@ PRIVATE json_t *cmd_write_str(hgobj gobj, const char *cmd, json_t *kw, hgobj src
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf(
+        json_sprintf(
             "%s: %s.%s=%s done",
             gobj_short_name(gobj),
             gobj_name_,
@@ -1611,7 +1612,7 @@ PRIVATE json_t *cmd_write_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -1626,7 +1627,7 @@ PRIVATE json_t *cmd_write_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: what attribute?", gobj_short_name(gobj)
             ),
             0,
@@ -1639,7 +1640,7 @@ PRIVATE json_t *cmd_write_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: what value?", gobj_short_name(gobj)
             ),
             0,
@@ -1652,7 +1653,7 @@ PRIVATE json_t *cmd_write_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: attr '%s.%s' non-existent",
                 gobj_short_name(gobj),
                 gobj_name_,
@@ -1667,7 +1668,7 @@ PRIVATE json_t *cmd_write_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: '%s.%s' attr is not writable",
                 gobj_short_name(gobj),
                 gobj_name_,
@@ -1708,7 +1709,7 @@ PRIVATE json_t *cmd_write_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: can't write '%s.%s'",
                 gobj_short_name(gobj),
                 gobj_name_,
@@ -1725,7 +1726,7 @@ PRIVATE json_t *cmd_write_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf(
+        json_sprintf(
             "%s: %s.%s=%s done",
             gobj_short_name(gobj),
             gobj_name_,
@@ -1751,7 +1752,7 @@ PRIVATE json_t *cmd_read_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -1766,7 +1767,7 @@ PRIVATE json_t *cmd_read_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: what attribute?", gobj_short_name(gobj)
             ),
             0,
@@ -1779,7 +1780,7 @@ PRIVATE json_t *cmd_read_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: '%s.%s' attribute not found",
                 gobj_short_name(gobj),
                 gobj_name_,
@@ -1795,7 +1796,7 @@ PRIVATE json_t *cmd_read_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: '%s.%s' attr is not readable",
                 gobj_short_name(gobj),
                 gobj_name_,
@@ -1836,7 +1837,7 @@ PRIVATE json_t *cmd_read_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: '%s.%s' attr is not numeric",
                 gobj_short_name(gobj),
                 gobj_name_,
@@ -1923,7 +1924,7 @@ PRIVATE json_t *cmd_info_cpus(hgobj gobj, const char *cmd, json_t *kw, hgobj src
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("Number of cpus: %d", count),
+        json_sprintf("Number of cpus: %d", count),
         0,
         jn_stats, // owned
         kw  // owned
@@ -2006,7 +2007,7 @@ PRIVATE json_t *cmd_info_ifs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("Number of ifs: %d", count),
+        json_sprintf("Number of ifs: %d", count),
         0,
         jn_data, // owned
         kw  // owned
@@ -2057,7 +2058,7 @@ PRIVATE json_t *cmd_info_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, h
                 return msg_iev_build_webix(
                     gobj,
                     -1,
-                    json_local_sprintf(
+                    json_sprintf(
                         "%s: what gclass is '%s'?", gobj_short_name(gobj), gclass_name_
                     ),
                     0,
@@ -2093,7 +2094,7 @@ PRIVATE json_t *cmd_get_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hg
                 return msg_iev_build_webix(
                     gobj,
                     -1,
-                    json_local_sprintf(
+                    json_sprintf(
                         "%s: what gclass is '%s'?", gobj_short_name(gobj), gclass_name_
                     ),
                     0,
@@ -2108,7 +2109,7 @@ PRIVATE json_t *cmd_get_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hg
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("%d gclass with some trace", json_array_size(jn_data)),
+        json_sprintf("%d gclass with some trace", (int)json_array_size(jn_data)),
         0,
         jn_data,
         kw  // owned
@@ -2130,7 +2131,7 @@ PRIVATE json_t *cmd_get_gclass_no_trace(hgobj gobj, const char *cmd, json_t *kw,
                 return msg_iev_build_webix(
                     gobj,
                     -1,
-                    json_local_sprintf(
+                    json_sprintf(
                         "%s: what gclass is '%s'?", gobj_short_name(gobj), gclass_name_
                     ),
                     0,
@@ -2145,7 +2146,7 @@ PRIVATE json_t *cmd_get_gclass_no_trace(hgobj gobj, const char *cmd, json_t *kw,
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("%d gclass with some no trace", json_array_size(jn_data)),
+        json_sprintf("%d gclass with some no trace", (int)json_array_size(jn_data)),
         0,
         jn_data,
         kw  // owned
@@ -2165,7 +2166,7 @@ PRIVATE json_t *cmd_info_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgo
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -2198,7 +2199,7 @@ PRIVATE json_t *cmd_get_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgob
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -2212,7 +2213,7 @@ PRIVATE json_t *cmd_get_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgob
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("%d gobjs with some trace", json_array_size(jn_data)),
+        json_sprintf("%d gobjs with some trace", (int)json_array_size(jn_data)),
         0,
         jn_data,
         kw  // owned
@@ -2232,7 +2233,7 @@ PRIVATE json_t *cmd_get_gobj_no_trace(hgobj gobj, const char *cmd, json_t *kw, h
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -2246,7 +2247,7 @@ PRIVATE json_t *cmd_get_gobj_no_trace(hgobj gobj, const char *cmd, json_t *kw, h
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("%d gobjs with some no trace", json_array_size(jn_data)),
+        json_sprintf("%d gobjs with some no trace", (int)json_array_size(jn_data)),
         0,
         jn_data,
         kw  // owned
@@ -2263,7 +2264,7 @@ PRIVATE json_t *cmd_set_global_trace(hgobj gobj, const char *cmd, json_t *kw, hg
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: what level?", gobj_short_name(gobj)
             ),
             0,
@@ -2277,7 +2278,7 @@ PRIVATE json_t *cmd_set_global_trace(hgobj gobj, const char *cmd, json_t *kw, hg
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: bitmask set or re-set?", gobj_short_name(gobj)
             ),
             0,
@@ -2323,7 +2324,7 @@ PRIVATE json_t *cmd_set_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hg
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: what gclass is '%s'?", gobj_short_name(gobj), gclass_name_
                 ),
                 0,
@@ -2338,7 +2339,7 @@ PRIVATE json_t *cmd_set_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hg
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: what level?", gobj_short_name(gobj)
             ),
             0,
@@ -2352,7 +2353,7 @@ PRIVATE json_t *cmd_set_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hg
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: bitmask set or re-set?", gobj_short_name(gobj)
             ),
             0,
@@ -2398,7 +2399,7 @@ PRIVATE json_t *cmd_set_no_gclass_trace(hgobj gobj, const char *cmd, json_t *kw,
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: what gclass is '%s'?", gobj_short_name(gobj), gclass_name_
                 ),
                 0,
@@ -2413,7 +2414,7 @@ PRIVATE json_t *cmd_set_no_gclass_trace(hgobj gobj, const char *cmd, json_t *kw,
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: what level?", gobj_short_name(gobj)
             ),
             0,
@@ -2427,7 +2428,7 @@ PRIVATE json_t *cmd_set_no_gclass_trace(hgobj gobj, const char *cmd, json_t *kw,
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: bitmask set or re-set?", gobj_short_name(gobj)
             ),
             0,
@@ -2473,7 +2474,7 @@ PRIVATE json_t *cmd_set_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgob
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -2488,7 +2489,7 @@ PRIVATE json_t *cmd_set_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgob
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: what level?", gobj_short_name(gobj)
             ),
             0,
@@ -2502,7 +2503,7 @@ PRIVATE json_t *cmd_set_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgob
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: bitmask set or re-set?", gobj_short_name(gobj)
             ),
             0,
@@ -2549,7 +2550,7 @@ PRIVATE json_t *cmd_set_no_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, h
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -2564,7 +2565,7 @@ PRIVATE json_t *cmd_set_no_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, h
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: what level?", gobj_short_name(gobj)
             ),
             0,
@@ -2578,7 +2579,7 @@ PRIVATE json_t *cmd_set_no_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, h
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: bitmask set or re-set?", gobj_short_name(gobj)
             ),
             0,
@@ -2620,7 +2621,7 @@ PRIVATE json_t *cmd_trunk_rotatory_file(hgobj gobj, const char *cmd, json_t *kw,
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("%s: Trunk all rotatory files done.", gobj_short_name(gobj)),
+        json_sprintf("%s: Trunk all rotatory files done.", gobj_short_name(gobj)),
         0,
         0,
         kw  // owned
@@ -2636,7 +2637,7 @@ PRIVATE json_t *cmd_reset_log_counters(hgobj gobj, const char *cmd, json_t *kw, 
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("%s: Log counters reset.", gobj_short_name(gobj)),
+        json_sprintf("%s: Log counters reset.", gobj_short_name(gobj)),
         0,
         0,
         kw  // owned
@@ -2654,7 +2655,7 @@ PRIVATE json_t *cmd_spawn(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What process?"),
+            json_sprintf("What process?"),
             0,
             0,
             kw  // owned
@@ -2663,7 +2664,7 @@ PRIVATE json_t *cmd_spawn(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     int response_size = gbmem_get_maximum_block();
     char *response = gbmem_malloc(response_size);
     int ret = run_command(process, response, response_size);
-    json_t *jn_response = json_local_sprintf(response);
+    json_t *jn_response = json_sprintf("%s", response);
     gbmem_free(response);
     return msg_iev_build_webix(
         gobj,
@@ -2685,7 +2686,7 @@ PRIVATE json_t* cmd_set_daemon_debug(hgobj gobj, const char* cmd, json_t* kw, hg
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: set or re-set?", gobj_short_name(gobj)
             ),
             0,
@@ -2707,7 +2708,7 @@ PRIVATE json_t* cmd_set_daemon_debug(hgobj gobj, const char* cmd, json_t* kw, hg
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf(
+        json_sprintf(
             "%s: daemon debug set to %d", gobj_short_name(gobj), trace
         ),
         0,
@@ -2726,7 +2727,7 @@ PRIVATE json_t* cmd_set_deep_trace(hgobj gobj, const char* cmd, json_t* kw, hgob
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "%s: set or re-set?", gobj_short_name(gobj)
             ),
             0,
@@ -2748,7 +2749,7 @@ PRIVATE json_t* cmd_set_deep_trace(hgobj gobj, const char* cmd, json_t* kw, hgob
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf(
+        json_sprintf(
             "%s: daemon debug set to %d", gobj_short_name(gobj), trace
         ),
         0,
@@ -2775,7 +2776,7 @@ PRIVATE json_t* cmd_add_log_handler(hgobj gobj, const char* cmd, json_t* kw, hgo
     if(empty_string(handler_name)) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("What name?"),
+            json_sprintf("What name?"),
             0,
             0,
             kw  // owned
@@ -2784,7 +2785,7 @@ PRIVATE json_t* cmd_add_log_handler(hgobj gobj, const char* cmd, json_t* kw, hgo
     if(strcmp(handler_type, "file")==0) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("Handler 'file' type not allowed"),
+            json_sprintf("Handler 'file' type not allowed"),
             0,
             0,
             kw  // owned
@@ -2795,7 +2796,7 @@ PRIVATE json_t* cmd_add_log_handler(hgobj gobj, const char* cmd, json_t* kw, hgo
         if(empty_string(url)) {
             return msg_iev_build_webix(gobj,
                 -1,
-                json_local_sprintf("What url?"),
+                json_sprintf("What url?"),
                 0,
                 0,
                 kw  // owned
@@ -2847,7 +2848,7 @@ PRIVATE json_t* cmd_add_log_handler(hgobj gobj, const char* cmd, json_t* kw, hgo
     } else {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("Unknown '%s' handler type.", handler_type),
+            json_sprintf("Unknown '%s' handler type.", handler_type),
             0,
             0,
             kw  // owned
@@ -2859,7 +2860,7 @@ PRIVATE json_t* cmd_add_log_handler(hgobj gobj, const char* cmd, json_t* kw, hgo
      */
     return msg_iev_build_webix(gobj,
         added>0?0:-1,
-        json_local_sprintf("%s: %d handlers added.", gobj_short_name(gobj), added),
+        json_sprintf("%s: %d handlers added.", gobj_short_name(gobj), added),
         0,
         0,
         kw  // owned
@@ -2875,7 +2876,7 @@ PRIVATE json_t* cmd_del_log_handler(hgobj gobj, const char* cmd, json_t* kw, hgo
     if(empty_string(handler_name)) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("%s: what name?", gobj_short_name(gobj)),
+            json_sprintf("%s: what name?", gobj_short_name(gobj)),
             0,
             0,
             kw  // owned
@@ -2888,7 +2889,7 @@ PRIVATE json_t* cmd_del_log_handler(hgobj gobj, const char* cmd, json_t* kw, hgo
      */
     return msg_iev_build_webix(gobj,
         deletions>0?0:-1,
-        json_local_sprintf("%s: %d handlers deleted.", gobj_short_name(gobj), deletions),
+        json_sprintf("%s: %d handlers deleted.", gobj_short_name(gobj), deletions),
         0,
         0,
         kw  // owned
@@ -2942,7 +2943,7 @@ PRIVATE json_t* cmd_list_persistent_attrs(hgobj gobj, const char* cmd, json_t* k
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -2976,7 +2977,7 @@ PRIVATE json_t* cmd_remove_persistent_attrs(hgobj gobj, const char* cmd, json_t*
     if(empty_string(gobj_name_)) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("what gobj_name?", gobj_short_name(gobj)),
+            json_sprintf("what gobj_name?"),
             0,
             0,
             kw  // owned
@@ -2985,7 +2986,7 @@ PRIVATE json_t* cmd_remove_persistent_attrs(hgobj gobj, const char* cmd, json_t*
     if(empty_string(attribute) && !all) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("what attribute?", gobj_short_name(gobj)),
+            json_sprintf("what attribute?"),
             0,
             0,
             kw  // owned
@@ -2999,7 +3000,7 @@ PRIVATE json_t* cmd_remove_persistent_attrs(hgobj gobj, const char* cmd, json_t*
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -3036,7 +3037,7 @@ PRIVATE json_t* cmd_start_gobj_tree(hgobj gobj, const char* cmd, json_t* kw, hgo
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -3049,7 +3050,7 @@ PRIVATE json_t* cmd_start_gobj_tree(hgobj gobj, const char* cmd, json_t* kw, hgo
     if(gobj2view == gobj_yuno()) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("%s: __yuno__ forbidden.", gobj_short_name(gobj)),
+            json_sprintf("%s: __yuno__ forbidden.", gobj_short_name(gobj)),
             0,
             0,
             kw  // owned
@@ -3062,7 +3063,7 @@ PRIVATE json_t* cmd_start_gobj_tree(hgobj gobj, const char* cmd, json_t* kw, hgo
      */
     return msg_iev_build_webix(gobj,
         0,
-        json_local_sprintf("%s: '%s' tree started.", gobj_short_name(gobj), gobj_name_),
+        json_sprintf("%s: '%s' tree started.", gobj_short_name(gobj), gobj_name_),
         0,
         0,
         kw  // owned
@@ -3082,7 +3083,7 @@ PRIVATE json_t* cmd_stop_gobj_tree(hgobj gobj, const char* cmd, json_t* kw, hgob
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -3095,7 +3096,7 @@ PRIVATE json_t* cmd_stop_gobj_tree(hgobj gobj, const char* cmd, json_t* kw, hgob
     if(gobj2view == gobj_yuno()) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("%s: __yuno__ forbidden.", gobj_short_name(gobj)),
+            json_sprintf("%s: __yuno__ forbidden.", gobj_short_name(gobj)),
             0,
             0,
             kw  // owned
@@ -3108,7 +3109,7 @@ PRIVATE json_t* cmd_stop_gobj_tree(hgobj gobj, const char* cmd, json_t* kw, hgob
      */
     return msg_iev_build_webix(gobj,
         0,
-        json_local_sprintf("%s: '%s' tree stopped.", gobj_short_name(gobj), gobj_name_),
+        json_sprintf("%s: '%s' tree stopped.", gobj_short_name(gobj), gobj_name_),
         0,
         0,
         kw  // owned
@@ -3128,7 +3129,7 @@ PRIVATE json_t* cmd_enable_gobj(hgobj gobj, const char* cmd, json_t* kw, hgobj s
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -3141,7 +3142,7 @@ PRIVATE json_t* cmd_enable_gobj(hgobj gobj, const char* cmd, json_t* kw, hgobj s
     if(gobj2view == gobj_yuno()) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("%s: __yuno__ forbidden.", gobj_short_name(gobj)),
+            json_sprintf("%s: __yuno__ forbidden.", gobj_short_name(gobj)),
             0,
             0,
             kw  // owned
@@ -3154,7 +3155,7 @@ PRIVATE json_t* cmd_enable_gobj(hgobj gobj, const char* cmd, json_t* kw, hgobj s
      */
     return msg_iev_build_webix(gobj,
         0,
-        json_local_sprintf("%s: '%s' enabled.", gobj_short_name(gobj), gobj_name_),
+        json_sprintf("%s: '%s' enabled.", gobj_short_name(gobj), gobj_name_),
         0,
         0,
         kw  // owned
@@ -3174,7 +3175,7 @@ PRIVATE json_t* cmd_disable_gobj(hgobj gobj, const char* cmd, json_t* kw, hgobj 
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -3187,7 +3188,7 @@ PRIVATE json_t* cmd_disable_gobj(hgobj gobj, const char* cmd, json_t* kw, hgobj 
     if(gobj2view == gobj_yuno()) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("%s: __yuno__ forbidden.", gobj_short_name(gobj)),
+            json_sprintf("%s: __yuno__ forbidden.", gobj_short_name(gobj)),
             0,
             0,
             kw  // owned
@@ -3200,7 +3201,7 @@ PRIVATE json_t* cmd_disable_gobj(hgobj gobj, const char* cmd, json_t* kw, hgobj 
      */
     return msg_iev_build_webix(gobj,
         0,
-        json_local_sprintf("%s: '%s' disabled.", gobj_short_name(gobj), gobj_name_),
+        json_sprintf("%s: '%s' disabled.", gobj_short_name(gobj), gobj_name_),
         0,
         0,
         kw  // owned
@@ -3226,7 +3227,7 @@ PRIVATE json_t* cmd_subscribe_event(hgobj gobj, const char* cmd, json_t* kw, hgo
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -3283,7 +3284,7 @@ PRIVATE json_t* cmd_subscribe_event(hgobj gobj, const char* cmd, json_t* kw, hgo
      */
     return msg_iev_build_webix(gobj,
         0,
-        json_local_sprintf("Subscribed to event '%s' of '%s'.",
+        json_sprintf("Subscribed to event '%s' of '%s'.",
             event_name?event_name:"", gobj_name_
         ),
         0,
@@ -3308,7 +3309,7 @@ PRIVATE json_t* cmd_unsubscribe_event(hgobj gobj, const char* cmd, json_t* kw, h
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -3339,7 +3340,7 @@ PRIVATE json_t* cmd_unsubscribe_event(hgobj gobj, const char* cmd, json_t* kw, h
      */
     return msg_iev_build_webix(gobj,
         0,
-        json_local_sprintf("Unsubscribed from event '%s' of '%s'.",
+        json_sprintf("Unsubscribed from event '%s' of '%s'.",
             event_name?event_name:"", gobj_name_
         ),
         0,
@@ -3418,7 +3419,7 @@ PRIVATE json_t* cmd_list_subscriptions(hgobj gobj, const char* cmd, json_t* kw, 
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -3526,7 +3527,7 @@ PRIVATE json_t* cmd_list_subscribings(hgobj gobj, const char* cmd, json_t* kw, h
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf(
+                json_sprintf(
                     "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
                 ),
                 0,
@@ -3592,7 +3593,7 @@ PRIVATE json_t* cmd_add_allowed_ip(hgobj gobj, const char* cmd, json_t* kw, hgob
     if(empty_string(ip)) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("What ip?"),
+            json_sprintf("What ip?"),
             0,
             0,
             kw  // owned
@@ -3601,7 +3602,7 @@ PRIVATE json_t* cmd_add_allowed_ip(hgobj gobj, const char* cmd, json_t* kw, hgob
     if(!kw_has_key(kw, "allowed")) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("Allowed, true or false?"),
+            json_sprintf("Allowed, true or false?"),
             0,
             0,
             kw  // owned
@@ -3631,7 +3632,7 @@ PRIVATE json_t* cmd_remove_allowed_ip(hgobj gobj, const char* cmd, json_t* kw, h
     if(empty_string(ip)) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("What ip?"),
+            json_sprintf("What ip?"),
             0,
             0,
             kw  // owned
@@ -3680,7 +3681,7 @@ PRIVATE json_t* cmd_add_denied_ip(hgobj gobj, const char* cmd, json_t* kw, hgobj
     if(empty_string(ip)) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("What ip?"),
+            json_sprintf("What ip?"),
             0,
             0,
             kw  // owned
@@ -3689,7 +3690,7 @@ PRIVATE json_t* cmd_add_denied_ip(hgobj gobj, const char* cmd, json_t* kw, hgobj
     if(!kw_has_key(kw, "denied")) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("Allowed, true or false?"),
+            json_sprintf("Allowed, true or false?"),
             0,
             0,
             kw  // owned
@@ -3719,7 +3720,7 @@ PRIVATE json_t* cmd_remove_denied_ip(hgobj gobj, const char* cmd, json_t* kw, hg
     if(empty_string(ip)) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("What ip?"),
+            json_sprintf("What ip?"),
             0,
             0,
             kw  // owned
@@ -3766,7 +3767,7 @@ PRIVATE json_t* cmd_2key_get_value(hgobj gobj, const char* cmd, json_t* kw, hgob
     if(empty_string(key1)) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("What key1?"),
+            json_sprintf("What key1?"),
             0,
             0,
             kw  // owned
@@ -3776,7 +3777,7 @@ PRIVATE json_t* cmd_2key_get_value(hgobj gobj, const char* cmd, json_t* kw, hgob
     if(empty_string(key2)) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("What key2?"),
+            json_sprintf("What key2?"),
             0,
             0,
             kw  // owned
@@ -3787,7 +3788,7 @@ PRIVATE json_t* cmd_2key_get_value(hgobj gobj, const char* cmd, json_t* kw, hgob
     if(!value) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("2key not found: '%s','%s'", key1, key2),
+            json_sprintf("2key not found: '%s','%s'", key1, key2),
             0,
             0,
             kw  // owned
@@ -3803,7 +3804,7 @@ PRIVATE json_t* cmd_2key_get_value(hgobj gobj, const char* cmd, json_t* kw, hgob
         if(!value) {
             return msg_iev_build_webix(gobj,
                 -1,
-                json_local_sprintf("Path not found: '%s'", path),
+                json_sprintf("Path not found: '%s'", path),
                 0,
                 0,
                 kw  // owned
@@ -3842,7 +3843,7 @@ PRIVATE json_t* cmd_2key_get_subvalue(hgobj gobj, const char* cmd, json_t* kw, h
     if(empty_string(path)) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf("What path?"),
+            json_sprintf("What path?"),
             0,
             0,
             kw  // owned

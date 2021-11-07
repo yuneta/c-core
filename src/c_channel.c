@@ -272,7 +272,7 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
         log_debug_json(
             LOG_DUMP_INPUT,
             kw, // not own
-            gobj_short_name(src)
+            "%s", gobj_short_name(src)
         );
     }
     (*priv->prxMsgs)++;
@@ -291,7 +291,7 @@ PRIVATE int ac_on_id(hgobj gobj, const char *event, json_t *kw, hgobj src)
         log_debug_json(
             LOG_DUMP_INPUT,
             kw, // not own
-            gobj_short_name(src)
+            "%s", gobj_short_name(src)
         );
     }
     (*priv->prxMsgs)++;
@@ -310,7 +310,7 @@ PRIVATE int ac_on_id_nak(hgobj gobj, const char *event, json_t *kw, hgobj src)
         log_debug_json(
             LOG_DUMP_INPUT,
             kw, // not own
-            gobj_short_name(src)
+            "%s", gobj_short_name(src)
         );
     }
     (*priv->prxMsgs)++;
@@ -336,7 +336,7 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
                 log_debug_json(
                     LOG_DUMP_OUTPUT,
                     kw, // not own
-                    gobj_short_name(child)
+                    "%s", gobj_short_name(child)
                 );
             }
             KW_INCREF(kw);

@@ -88,7 +88,8 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_authzs[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "authz",        0,              0,          "authz about you want help"),
+SDATAPM (ASN_OCTET_STR, "authz",        0,              0,          "permission to search"),
+SDATAPM (ASN_OCTET_STR, "service",      0,              0,          "Service where to search the permission. If empty print all service's permissions"),
 SDATA_END()
 };
 
@@ -1852,7 +1853,7 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -1875,7 +1876,7 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Can't decode json content64"),
+                json_sprintf("Can't decode json content64"),
                 0,
                 0,
                 kw  // owned
@@ -1894,7 +1895,7 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What record?"),
+            json_sprintf("What record?"),
             0,
             0,
             kw  // owned
@@ -1910,7 +1911,7 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -1926,7 +1927,7 @@ PRIVATE json_t *cmd_create_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     );
     return msg_iev_build_webix(gobj,
         node?0:-1,
-        json_local_sprintf(node?"Node created!":log_last_message()),
+        json_sprintf("%s", node?"Node created!":log_last_message()),
         gobj_topic_desc(gobj, topic_name),
         node,
         kw  // owned
@@ -1946,7 +1947,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -1969,7 +1970,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Can't decode json content64"),
+                json_sprintf("Can't decode json content64"),
                 0,
                 0,
                 kw  // owned
@@ -1988,7 +1989,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What record?"),
+            json_sprintf("What record?"),
             0,
             0,
             kw  // owned
@@ -2004,7 +2005,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -2021,7 +2022,7 @@ PRIVATE json_t *cmd_update_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
 
     return msg_iev_build_webix(gobj,
         node?0:-1,
-        json_local_sprintf(node?"Node update!":log_last_message()),
+        json_sprintf("%s", node?"Node update!":log_last_message()),
         gobj_topic_desc(gobj, topic_name),
         node,
         kw  // owned
@@ -2041,7 +2042,7 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -2052,7 +2053,7 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("field 'id' is required to delete nodes"),
+            json_sprintf("field 'id' is required to delete nodes"),
             0,
             0,
             kw  // owned
@@ -2067,7 +2068,7 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -403,
-            json_local_sprintf("No permission to '%s'", permission),
+            json_sprintf("No permission to '%s'", permission),
             0,
             0,
             kw  // owned
@@ -2088,7 +2089,7 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Node not found"),
+            json_sprintf("Node not found"),
             0,
             0,
             kw  // owned
@@ -2107,7 +2108,7 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf(log_last_message()),
+            json_sprintf("%s", log_last_message()),
             0,
             0,
             kw  // owned
@@ -2117,7 +2118,7 @@ PRIVATE json_t *cmd_delete_node(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("Node deleted"),
+        json_sprintf("Node deleted"),
         gobj_topic_desc(gobj, topic_name),
         node,
         kw  // owned
@@ -2137,7 +2138,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What parent ref?"),
+            json_sprintf("What parent ref?"),
             0,
             0,
             kw  // owned
@@ -2147,7 +2148,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What child ref?"),
+            json_sprintf("What child ref?"),
             0,
             0,
             kw  // owned
@@ -2170,7 +2171,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Wrong parent ref"),
+            json_sprintf("Wrong parent ref"),
             0,
             0,
             kw  // owned
@@ -2189,7 +2190,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Wrong child ref"),
+            json_sprintf("Wrong child ref"),
             0,
             0,
             kw  // owned
@@ -2207,7 +2208,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Parent not found"),
+            json_sprintf("Parent not found"),
             0,
             0,
             kw  // owned
@@ -2225,7 +2226,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Parent not found"),
+            json_sprintf("Parent not found"),
             0,
             0,
             kw  // owned
@@ -2252,7 +2253,7 @@ PRIVATE json_t *cmd_link_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
 
     return msg_iev_build_webix(gobj,
         result,
-        result<0?json_local_sprintf(log_last_message()):json_local_sprintf("Nodes linked!"),
+        result<0?json_sprintf("%s", log_last_message()):json_sprintf("Nodes linked!"),
         gobj_topic_desc(gobj, child_topic_name),
         child_node,
         kw  // owned
@@ -2272,7 +2273,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What parent ref?"),
+            json_sprintf("What parent ref?"),
             0,
             0,
             kw  // owned
@@ -2282,7 +2283,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What child ref?"),
+            json_sprintf("What child ref?"),
             0,
             0,
             kw  // owned
@@ -2305,7 +2306,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Wrong parent ref"),
+            json_sprintf("Wrong parent ref"),
             0,
             0,
             kw  // owned
@@ -2324,7 +2325,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Wrong child ref"),
+            json_sprintf("Wrong child ref"),
             0,
             0,
             kw  // owned
@@ -2342,7 +2343,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Parent not found"),
+            json_sprintf("Parent not found"),
             0,
             0,
             kw  // owned
@@ -2360,7 +2361,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Parent not found"),
+            json_sprintf("Parent not found"),
             0,
             0,
             kw  // owned
@@ -2387,7 +2388,7 @@ PRIVATE json_t *cmd_unlink_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj 
 
     return msg_iev_build_webix(gobj,
         result,
-        result<0?json_local_sprintf(log_last_message()):json_local_sprintf("Nodes unlinked!"),
+        result<0?json_sprintf("%s", log_last_message()):json_sprintf("Nodes unlinked!"),
         gobj_topic_desc(gobj, child_topic_name),
         child_node,
         kw  // owned
@@ -2423,7 +2424,7 @@ PRIVATE json_t *cmd_topics(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What treedb_name?"),
+            json_sprintf("What treedb_name?"),
             0,
             0,
             kw  // owned
@@ -2462,7 +2463,7 @@ PRIVATE json_t *cmd_jtree(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -2472,7 +2473,7 @@ PRIVATE json_t *cmd_jtree(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What hook?"),
+            json_sprintf("What hook?"),
             0,
             0,
             kw  // owned
@@ -2518,7 +2519,7 @@ PRIVATE json_t *cmd_jtree(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("What node_id?"),
+                json_sprintf("What node_id?"),
                 0,
                 0,
                 kw  // owned
@@ -2557,7 +2558,7 @@ PRIVATE json_t *cmd_desc(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
             return msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("What topic_name?"),
+                json_sprintf("What topic_name?"),
                 0,
                 0,
                 kw  // owned
@@ -2672,7 +2673,7 @@ PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -2682,7 +2683,7 @@ PRIVATE json_t *cmd_parents(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What node id?"),
+            json_sprintf("What node id?"),
             0,
             0,
             kw  // owned
@@ -2723,7 +2724,7 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -2733,7 +2734,7 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What hook?"),
+            json_sprintf("What hook?"),
             0,
             0,
             kw  // owned
@@ -2743,7 +2744,7 @@ PRIVATE json_t *cmd_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What node id?"),
+            json_sprintf("What node id?"),
             0,
             0,
             kw  // owned
@@ -2784,7 +2785,7 @@ PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -2803,7 +2804,7 @@ PRIVATE json_t *cmd_list_nodes(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
         gobj,
         nodes?0:-1,
         nodes?
-            json_local_sprintf("%d nodes", json_array_size(nodes)):
+            json_sprintf("%d nodes", (int)json_array_size(nodes)):
             json_string(log_last_message()),
         nodes?tranger_topic_desc(priv->tranger, topic_name):0,
         nodes,
@@ -2826,7 +2827,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -2836,7 +2837,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What node id?"),
+            json_sprintf("What node id?"),
             0,
             0,
             kw  // owned
@@ -2854,7 +2855,7 @@ PRIVATE json_t *cmd_get_node(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
     return msg_iev_build_webix(gobj,
         node?0:-1,
-        node?0:json_local_sprintf("Node not found"),
+        node?0:json_sprintf("Node not found"),
         node?tranger_topic_desc(priv->tranger, topic_name):0,
         node,
         kw  // owned
@@ -2878,7 +2879,7 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -2905,7 +2906,7 @@ PRIVATE json_t *cmd_node_instances(hgobj gobj, const char *cmd, json_t *kw, hgob
         gobj,
         0,
         instances?
-            json_local_sprintf("%d instances", json_array_size(instances)):
+            json_sprintf("%d instances", (int)json_array_size(instances)):
             json_string(log_last_message()),
         instances?tranger_topic_desc(priv->tranger, topic_name):0,
         instances,
@@ -2925,7 +2926,7 @@ PRIVATE json_t *cmd_node_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -2940,7 +2941,7 @@ PRIVATE json_t *cmd_node_pkey2s(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("%d pkey2s", json_array_size(pkey2s)),
+        json_sprintf("%d pkey2s", (int)json_array_size(pkey2s)),
         0,
         pkey2s,
         kw  // owned
@@ -2959,7 +2960,7 @@ PRIVATE json_t *cmd_snap_content(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What topic_name?"),
+            json_sprintf("What topic_name?"),
             0,
             0,
             kw  // owned
@@ -2971,7 +2972,7 @@ PRIVATE json_t *cmd_snap_content(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What snap_id?"),
+            json_sprintf("What snap_id?"),
             0,
             0,
             kw  // owned
@@ -3038,7 +3039,7 @@ PRIVATE json_t *cmd_shoot_snap(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
     if(empty_string(name)) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "What snap name?"
             ),
             0,
@@ -3079,7 +3080,7 @@ PRIVATE json_t *cmd_activate_snap(hgobj gobj, const char *cmd, json_t *kw, hgobj
     if(empty_string(name)) {
         return msg_iev_build_webix(gobj,
             -1,
-            json_local_sprintf(
+            json_sprintf(
                 "What snap name?"
             ),
             0,
@@ -3168,7 +3169,7 @@ PRIVATE json_t *cmd_export_db(hgobj gobj, const char *event, json_t *kw, hgobj s
             json_decref(jn_data);
             return msg_iev_build_webix(gobj,
                 -1,
-                json_local_sprintf("File '%s' already exists. Use overwrite option", name),
+                json_sprintf("File '%s' already exists. Use overwrite option", name),
                 0,
                 0,
                 kw  // owned
@@ -3183,7 +3184,7 @@ PRIVATE json_t *cmd_export_db(hgobj gobj, const char *event, json_t *kw, hgobj s
      */
     return msg_iev_build_webix(gobj,
         ret,
-        json_local_sprintf("Treedb exported %s", ret==0?"ok":"failed"),
+        json_sprintf("Treedb exported %s", ret==0?"ok":"failed"),
         0,
         jn_data, // owned
         kw  // owned
@@ -3214,7 +3215,7 @@ PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What content64?"),
+            json_sprintf("What content64?"),
             0,
             0,
             kw  // owned
@@ -3230,7 +3231,7 @@ PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Bad json in content64"),
+            json_sprintf("Bad json in content64"),
             0,
             0,
             kw  // owned

@@ -332,7 +332,8 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_authzs[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "authz",        0,              0,          "authz about you want help"),
+SDATAPM (ASN_OCTET_STR, "authz",        0,              0,          "permission to search"),
+SDATAPM (ASN_OCTET_STR, "service",      0,              0,          "Service where to search the permission. If empty print all service's permissions"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_dump_data[] = {
@@ -632,7 +633,12 @@ PRIVATE json_t *cmd_dump_data(hgobj gobj, const char *cmd, json_t *kw, hgobj src
     }
 
     if(slave_id == -1 && size == -1) {
-        log_debug_dump(0, (const char *)priv->slave_data, priv->max_slaves * sizeof(slave_data_t), "");
+        log_debug_dump(
+            0,
+            (const char *)priv->slave_data,
+            priv->max_slaves * sizeof(slave_data_t),
+            "slaves"
+        );
         return msg_iev_build_webix(
             gobj,
             0,
@@ -1393,7 +1399,7 @@ PRIVATE int poll_modbus(hgobj gobj)
     }
 
     if(gobj_trace_level(gobj) & TRACE_POLLING) {
-        log_debug_json(0, priv->cur_map_, "");
+        log_debug_json(0, priv->cur_map_, "polling");
     }
 
     GBUFFER *gbuf = build_modbus_request_read_message(gobj, priv->cur_slave_, priv->cur_map_);
@@ -2709,7 +2715,7 @@ PRIVATE int ac_rx_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
      *---------------------------------------------*/
     GBUFFER *gbuf = (GBUFFER *)(size_t)kw_get_int(kw, "gbuffer", 0, 0);
     if(gobj_trace_level(gobj) & TRACE_TRAFFIC) {
-        log_debug_gbuf(LOG_DUMP_INPUT, gbuf, gobj_short_name(src));
+        log_debug_gbuf(LOG_DUMP_INPUT, gbuf, "%s", gobj_short_name(src));
     }
 
     /*---------------------------------------------*

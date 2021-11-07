@@ -839,7 +839,7 @@ PRIVATE int ac_mt_stats(hgobj gobj, const char *event, json_t *kw, hgobj src)
             msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Only authenticated users can request stats"),
+                json_sprintf("Only authenticated users can request stats"),
                 0,
                 0,
                 kw
@@ -862,7 +862,7 @@ PRIVATE int ac_mt_stats(hgobj gobj, const char *event, json_t *kw, hgobj src)
                 msg_iev_build_webix(
                     gobj,
                     -1,
-                    json_local_sprintf("Service '%s' not found.", service),
+                    json_sprintf("Service '%s' not found.", service),
                     0,
                     0,
                     kw
@@ -918,7 +918,7 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
             msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Only authenticated users can request commands"),
+                json_sprintf("Only authenticated users can request commands"),
                 0,
                 0,
                 kw
@@ -940,7 +940,7 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
                 msg_iev_build_webix(
                     gobj,
                     -1,
-                    json_local_sprintf("Service '%s' not found.", service),
+                    json_sprintf("Service '%s' not found.", service),
                     0,
                     0,
                     kw

@@ -314,7 +314,7 @@ PRIVATE json_t *cmd_reset_maxtxrx(hgobj gobj, const char *cmd, json_t *kw, hgobj
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("Max tx rx reset done."),
+        json_sprintf("Max tx rx reset done."),
         0,
         0,
         kw  // owned
@@ -332,7 +332,7 @@ PRIVATE json_t *cmd_queue_mark_pending(hgobj gobj, const char *cmd, json_t *kw, 
         return msg_iev_build_webix(
             gobj,
             0,
-            json_local_sprintf("you must PAUSE the yuno before executing this command."),
+            json_sprintf("you must PAUSE the yuno before executing this command."),
             0,
             0,
             kw  // owned
@@ -346,7 +346,7 @@ PRIVATE json_t *cmd_queue_mark_pending(hgobj gobj, const char *cmd, json_t *kw, 
         return msg_iev_build_webix(
             gobj,
             0,
-            json_local_sprintf("Please, specify some from-rowid."),
+            json_sprintf("Please, specify some from-rowid."),
             0,
             0,
             kw  // owned
@@ -378,7 +378,7 @@ PRIVATE json_t *cmd_queue_mark_pending(hgobj gobj, const char *cmd, json_t *kw, 
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("%d messages marked as PENDING", count),
+        json_sprintf("%d messages marked as PENDING", count),
         0,
         0,
         kw  // owned
@@ -397,7 +397,7 @@ PRIVATE json_t *cmd_queue_mark_notpending(hgobj gobj, const char *cmd, json_t *k
         return msg_iev_build_webix(
             gobj,
             0,
-            json_local_sprintf("you must PAUSE the yuno before executing this command."),
+            json_sprintf("you must PAUSE the yuno before executing this command."),
             0,
             0,
             kw  // owned
@@ -411,7 +411,7 @@ PRIVATE json_t *cmd_queue_mark_notpending(hgobj gobj, const char *cmd, json_t *k
         return msg_iev_build_webix(
             gobj,
             0,
-            json_local_sprintf("Please, specify some from-rowid."),
+            json_sprintf("Please, specify some from-rowid."),
             0,
             0,
             kw  // owned
@@ -443,7 +443,7 @@ PRIVATE json_t *cmd_queue_mark_notpending(hgobj gobj, const char *cmd, json_t *k
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("%d messages marked as NOT-PENDING", count),
+        json_sprintf("%d messages marked as NOT-PENDING", count),
         0,
         0,
         kw  // owned
