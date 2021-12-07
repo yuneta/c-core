@@ -28,12 +28,12 @@ PRIVATE void on_close_cb(uv_handle_t* handle);
  *      Attributes - order affect to oid's
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
-SDATA (ASN_OCTET_STR,   "url",              SDF_RD,  0, "url of udp server"),
-SDATA (ASN_OCTET_STR,   "lHost",            SDF_RD,  0, "Local ip, got from url"),
-SDATA (ASN_OCTET_STR,   "lPort",            SDF_RD,  0, "Local port, got from url."),
-SDATA (ASN_OCTET_STR,   "sockname",         SDF_RD,  0, "Sockname"),
-SDATA (ASN_COUNTER,     "txBytes",          SDF_RD, 0, "Bytes transmitted"),
-SDATA (ASN_COUNTER,     "rxBytes",          SDF_RD, 0, "Bytes received"),
+SDATA (ASN_OCTET_STR,   "url",                  SDF_RD,  0, "url of udp server"),
+SDATA (ASN_OCTET_STR,   "lHost",                SDF_RD,  0, "Local ip, got from url"),
+SDATA (ASN_OCTET_STR,   "lPort",                SDF_RD,  0, "Local port, got from url."),
+SDATA (ASN_OCTET_STR,   "sockname",             SDF_RD,  0, "Sockname"),
+SDATA (ASN_COUNTER64,   "txBytes",              SDF_RD,  0,      "Bytes transmitted by this socket"),
+SDATA (ASN_COUNTER64,   "rxBytes",              SDF_RD,  0,      "Bytes received by this socket"),
 SDATA (ASN_OCTET_STR,   "stopped_event_name",   SDF_RD,  "EV_STOPPED", "Stopped event name"),
 SDATA (ASN_OCTET_STR,   "tx_ready_event_name",  SDF_RD,  "EV_TX_READY", "Must be empty if you don't want receive this event"),
 SDATA (ASN_OCTET_STR,   "rx_data_event_name",   SDF_RD,  "EV_RX_DATA", "Must be empty if you don't want receive this event"),
@@ -68,8 +68,8 @@ typedef struct _PRIVATE_DATA {
     BOOL exitOnError;
 
     // Data oid
-    uint32_t *ptxBytes;
-    uint32_t *prxBytes;
+    uint64_t *ptxBytes;
+    uint64_t *prxBytes;
 
     uv_udp_t uv_udp;
     uv_udp_send_t req_send;
