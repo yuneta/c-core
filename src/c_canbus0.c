@@ -188,7 +188,25 @@ PRIVATE int mt_start(hgobj gobj)
         }
     }
     int flags = fcntl(priv->m_socket, F_GETFL, 0);
-    fcntl(priv->m_socket, F_SETFL, flags | O_NONBLOCK);
+    int ret = fcntl(priv->m_socket, F_SETFL, flags | O_NONBLOCK);
+    if(ret < 0) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msg",          "%s", "fcntl() FAILED",
+            "error",        "%d", errno,
+            "strerror",     "%s", strerror(errno),
+            NULL
+        );
+        close(priv->m_socket);
+        priv->m_socket = -1;
+        if(priv->exitOnError) {
+            exit(0); // WARNING exit with 0 to stop daemon watcher!
+        } else {
+            return -1;
+        }
+    }
 
     if(priv->use_canfd_frame) {
         int can_raw_fd_frames = 1;
@@ -422,17 +440,20 @@ PRIVATE void on_poll_cb(uv_poll_t *req, int status, int events)
             } else if(nread == 0) {
                 break;
             } else if(nread < 0) {
-                log_error(0,
-                    "gobj",         "%s", gobj_full_name(gobj),
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-                    "msg",          "%s", "read FAILED",
-                    "error",        "%d", errno,
-                    "strerror",     "%s", strerror(errno),
-                    NULL
-                );
-                gobj_stop(gobj);
-                return;
+                if(errno != EAGAIN) {
+                    log_error(0,
+                        "gobj",         "%s", gobj_full_name(gobj),
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+                        "msg",          "%s", "read FAILED",
+                        "error",        "%d", errno,
+                        "strerror",     "%s", strerror(errno),
+                        NULL
+                    );
+                    gobj_stop(gobj);
+                    return;
+                }
+                break;
             }
         } while(1);
     }
@@ -529,7 +550,8 @@ PRIVATE int ac_tx_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
-    {"EV_TX_DATA",      0},
+    {"EV_TX_DATA",          0},
+    {"EV_STOPPED",          0},
     {NULL, 0}
 };
 PRIVATE const EVENT output_events[] = {
@@ -552,6 +574,7 @@ PRIVATE EV_ACTION ST_STOPPED[] = {
 };
 
 PRIVATE EV_ACTION ST_WAIT_STOPPED[] = {
+    {"EV_STOPPED",        0,        0},     // From timer
     {0,0,0}
 };
 

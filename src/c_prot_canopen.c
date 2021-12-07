@@ -89,10 +89,11 @@ PRIVATE void mt_create(hgobj gobj)
      */
     SET_PRIV(timeout_base,          gobj_read_int32_attr)
 
-    json_t *kw_canbus = json_pack("{s:s}"
+    json_t *kw_canbus = json_pack("{s:s}",
         "device", gobj_read_str_attr(gobj, "device")
     );
     priv->gobj_canbus = gobj_create(gobj_name(gobj), GCLASS_CANBUS0, kw_canbus, gobj);
+    gobj_subscribe_event(priv->gobj_canbus, NULL, NULL, gobj);
 
     hgobj subscriber = (hgobj)gobj_read_pointer_attr(gobj, "subscriber");
     if(!subscriber)
@@ -165,7 +166,6 @@ PRIVATE int ac_connected(hgobj gobj, const char *event, json_t *kw, hgobj src)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     gobj_write_bool_attr(gobj, "connected", TRUE);
-    gobj_change_state(gobj, "ST_SESSION");
 
     priv->inform_on_close = TRUE;
     gobj_publish_event(gobj, "EV_ON_OPEN", 0);
