@@ -4,7 +4,7 @@
  *
  *          Mixin uv-gobj
  *
- *          Copyright (c) 2014 Niyamaka.
+ *          Copyright (c) 2014-2021 Niyamaka.
  *          All Rights Reserved.
  ***********************************************************************/
 #include <string.h>
