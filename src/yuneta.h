@@ -64,6 +64,8 @@ extern "C"{
 #include "c_prot_http_cli.h"
 #include "c_prot_modbus_master.h"
 #include "c_serial.h"
+#include "c_prot_canopen.h"
+
 // #include "c_serverlink.h"
 // #include "c_tlv.h"
 
@@ -75,6 +77,7 @@ extern "C"{
 #include "c_tcp_s0.h"
 #include "c_udp_s0.h"
 #include "c_udp0.h"
+#include "c_canbus0.h"
 #include "c_timer.h"
 #include "c_fs.h"
 

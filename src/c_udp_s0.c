@@ -32,8 +32,8 @@ SDATA (ASN_OCTET_STR,   "url",                  SDF_RD,  0, "url of udp server")
 SDATA (ASN_OCTET_STR,   "lHost",                SDF_RD,  0, "Local ip, got from url"),
 SDATA (ASN_OCTET_STR,   "lPort",                SDF_RD,  0, "Local port, got from url."),
 SDATA (ASN_OCTET_STR,   "sockname",             SDF_RD,  0, "Sockname"),
-SDATA (ASN_COUNTER64,   "txBytes",              SDF_RD,  0,      "Bytes transmitted by this socket"),
-SDATA (ASN_COUNTER64,   "rxBytes",              SDF_RD,  0,      "Bytes received by this socket"),
+SDATA (ASN_COUNTER64,   "txBytes",              SDF_RD,  0, "Bytes transmitted by this socket"),
+SDATA (ASN_COUNTER64,   "rxBytes",              SDF_RD,  0, "Bytes received by this socket"),
 SDATA (ASN_OCTET_STR,   "stopped_event_name",   SDF_RD,  "EV_STOPPED", "Stopped event name"),
 SDATA (ASN_OCTET_STR,   "tx_ready_event_name",  SDF_RD,  "EV_TX_READY", "Must be empty if you don't want receive this event"),
 SDATA (ASN_OCTET_STR,   "rx_data_event_name",   SDF_RD,  "EV_RX_DATA", "Must be empty if you don't want receive this event"),
@@ -172,6 +172,7 @@ PRIVATE void mt_destroy(hgobj gobj)
 PRIVATE int mt_start(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
     uv_loop_t *loop = yuno_uv_event_loop();
     struct addrinfo hints;
     int r;
