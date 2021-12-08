@@ -1,6 +1,6 @@
 /****************************************************************************
  *              YUNETA_VERSION.H
- *              Copyright (c) 2013,2018 Niyamaka.
+ *              Copyright (c) 2013,2021 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
 #pragma once
@@ -12,7 +12,7 @@ extern "C"{
 /*********************************************************************
  *      Version
  *********************************************************************/
-#define __yuneta_version__  "5.0.4"
+#define __yuneta_version__  "5.0.6"
 #define __yuneta_date__     __DATE__ " " __TIME__
 
 #define __yuneta_long_version__ "yuneta:" __yuneta_version__ " " \
