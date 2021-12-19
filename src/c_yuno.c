@@ -361,8 +361,7 @@ SDATACM (ASN_SCHEMA,    "reset-log-counters",       0,      0,              cmd_
 SDATACM (ASN_SCHEMA,    "spawn",                    0,      pm_spawn,       cmd_spawn,                  "Spawn a new process"),
 
 SDATACM (ASN_SCHEMA,    "set-daemon-debug",         0,      pm_set_daemon_debug,cmd_set_daemon_debug,   "Set daemon debug"),
-SDATACM (ASN_SCHEMA,    "set-deep-trace",         0,      pm_set_deep_trace,cmd_set_deep_trace,   "Set deep trace, all traces active"),
-
+SDATACM (ASN_SCHEMA,    "set-deep-trace",         0,        pm_set_deep_trace,cmd_set_deep_trace,   "Set deep trace, all traces active"),
 
 SDATACM (ASN_SCHEMA,    "add-log-handler",          0,      pm_add_log_handler,cmd_add_log_handler,     "Add log handler"),
 SDATACM (ASN_SCHEMA,    "delete-log-handler",       0,      pm_del_log_handler,cmd_del_log_handler,     "Delete log handler"),
@@ -478,6 +477,7 @@ SDATA (ASN_COUNTER64,   "qs_repeated",      SDF_RD|SDF_STATS,           0,      
 SDATA (ASN_COUNTER64,   "cpu_ticks",        SDF_RD|SDF_STATS,           0,              "Cpu ticks"),
 SDATA (ASN_UNSIGNED,    "cpu",              SDF_RD|SDF_STATS,           0,              "Cpu percent"),
 SDATA (ASN_UNSIGNED,    "timeout_restart",  SDF_WR|SDF_STATS|SDF_PERSIST,0,             "timeout (seconds) to restart"),
+SDATA (ASN_INTEGER,     "deep_trace",       SDF_RD|SDF_STATS,           0,              "Deep trace set or not set"),
 SDATA (ASN_JSON,        "trace_levels",     SDF_WR|SDF_PERSIST,         0,              "Trace levels"),
 SDATA (ASN_JSON,        "no_trace_levels",  SDF_WR|SDF_PERSIST,         0,              "No trace levels"),
 SDATA (ASN_JSON,        "allowed_ips",      SDF_RD|SDF_PERSIST,         "{}",           "Allowed peer ip's if true, false not allowed"),
@@ -732,6 +732,8 @@ PRIVATE int mt_start(hgobj gobj)
     if(priv->timeout_restart) {
         priv->t_restart = start_sectimer(priv->timeout_restart);
     }
+
+    gobj_write_int32_attr(gobj, "deep_trace", gobj_get_deep_tracing());
 
     return 0;
 }
@@ -2744,6 +2746,7 @@ PRIVATE json_t* cmd_set_deep_trace(hgobj gobj, const char* cmd, json_t* kw, hgob
         trace = atoi(trace_value);
     }
 
+    gobj_write_int32_attr(gobj, "deep_trace", trace);
     gobj_set_deep_tracing(trace);
 
     return msg_iev_build_webix(
