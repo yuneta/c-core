@@ -386,6 +386,8 @@ PRIVATE const char *_calculate_uuid_by_disk(void)
         return "";
     }
 
+    // TODO por fecha falla en las virtuales de sfs. Cambia y busca la particion /
+
     new_uuid[0] = 0;
 
     while ((dent = readdir(dir))) {
