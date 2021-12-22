@@ -267,7 +267,7 @@ PRIVATE int mt_start(hgobj gobj)
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "bind() FAILED",
+            "msg",          "%s", "bind() Canbus socket FAILED",
             "error",        "%d", errno,
             "strerror",     "%s", strerror(errno),
             NULL
