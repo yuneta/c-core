@@ -84,8 +84,6 @@ set (SRCS
     src/c_prot_http.c
     src/c_prot_http_srv.c
     src/c_prot_http_cli.c
-    src/c_prot_modbus_master.c
-    src/c_prot_canopen.c
     src/c_serial.c
 
     # gossamer
@@ -98,7 +96,6 @@ set (SRCS
     src/c_udp_s0.c
     src/c_timer.c
     src/c_fs.c
-    src/c_canbus0.c
 
     # Protocols, decoders
     src/ghttp_parser.c
@@ -152,8 +149,6 @@ set (HDRS
     src/c_prot_http.h
     src/c_prot_http_srv.h
     src/c_prot_http_cli.h
-    src/c_prot_modbus_master.h
-    src/c_prot_canopen.h
     src/c_serial.h
 
     # gossamer
@@ -166,7 +161,6 @@ set (HDRS
     src/c_udp_s0.h
     src/c_timer.h
     src/c_fs.h
-    src/c_canbus0.h
 
     # Protocols, decoders
     src/ghttp_parser.h

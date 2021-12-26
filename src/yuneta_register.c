@@ -59,9 +59,7 @@ PUBLIC int yuneta_register_c_core(void)
     gobj_register_gclass(GCLASS_PROT_HTTP);
     gobj_register_gclass(GCLASS_PROT_HTTP_SRV);
     gobj_register_gclass(GCLASS_PROT_HTTP_CLI);
-    gobj_register_gclass(GCLASS_PROT_MODBUS_MASTER);
     gobj_register_gclass(GCLASS_SERIAL);
-    gobj_register_gclass(GCLASS_PROT_CANOPEN);
 
     /*
      *  Mixin uv-gobj
@@ -71,7 +69,6 @@ PUBLIC int yuneta_register_c_core(void)
     gobj_register_gclass(GCLASS_TCP_S0);
     gobj_register_gclass(GCLASS_UDP_S0);
     gobj_register_gclass(GCLASS_UDP0);
-    gobj_register_gclass(GCLASS_CANBUS0);
     gobj_register_gclass(GCLASS_TIMETRANSITION);
     gobj_register_gclass(GCLASS_TIMER);
     gobj_register_gclass(GCLASS_FS);
