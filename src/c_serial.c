@@ -562,7 +562,7 @@ PRIVATE int open_tty(hgobj gobj)
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "tty port empty",
+            "msg",          "%s", "tty port (rHost attr) EMPTY",
             NULL
         );
         return -1;
