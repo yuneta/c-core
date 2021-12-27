@@ -209,6 +209,7 @@ PRIVATE void mt_destroy(hgobj gobj)
 PRIVATE int mt_start(hgobj gobj)
 {
     if(open_tty(gobj) < 0) {
+        do_close(gobj);
         return -1;
     }
     return 0;
@@ -613,7 +614,8 @@ PRIVATE int open_tty(hgobj gobj)
         }
 
         if(configure_tty(gobj)<0) {
-            do_close(gobj);
+            // Error already logged
+            return -1;
         } else {
             log_info(0,
                 "gobj",         "%s", gobj_full_name(gobj),
