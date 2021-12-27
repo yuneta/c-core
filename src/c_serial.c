@@ -354,8 +354,8 @@ PRIVATE int configure_tty(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    struct termios old_termios;
-    if(tcgetattr(priv->tty_fd, &old_termios)<0) {
+    struct termios termios_settings;
+    if(tcgetattr(priv->tty_fd, &termios_settings)<0) {
         log_error(0,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
@@ -473,12 +473,6 @@ PRIVATE int configure_tty(hgobj gobj)
     int xonxoff = gobj_read_bool_attr(gobj, "xonxoff");
     int rtscts = gobj_read_bool_attr(gobj, "rtscts");
 
-    /*-----------------------------*
-     *      termios
-     *-----------------------------*/
-    struct termios termios_settings;
-    memset(&termios_settings, 0, sizeof(termios_settings));
-
     /* c_iflag */
 
     /* Ignore break characters */
@@ -492,14 +486,14 @@ PRIVATE int configure_tty(hgobj gobj)
         termios_settings.c_iflag |= (IXON | IXOFF);
 
     /* c_oflag */
-    termios_settings.c_oflag = 0;
+    //termios_settings.c_oflag = 0;
 
     /* c_lflag */
-    termios_settings.c_lflag = 0;
+    //termios_settings.c_lflag &= ~((tcflag_t) ECHO);
 
     /* c_cflag */
     /* Enable receiver, ignore modem control lines */
-    termios_settings.c_cflag = CREAD | CLOCAL;
+    //termios_settings.c_cflag = CREAD | CLOCAL;
 
     /* Databits */
     if (bytesize == 5)
@@ -541,8 +535,6 @@ PRIVATE int configure_tty(hgobj gobj)
             "strerror",     "%s", strerror(errno),
             NULL
         );
-        tcsetattr(priv->tty_fd, TCSANOW, &old_termios);
-
         return -1;
     }
 
@@ -598,7 +590,7 @@ PRIVATE int open_tty(hgobj gobj)
                 "msg",          "%s", "uv_tty_init() FAILED",
                 "tty",          "%s", priv->port,
                 "error",        "%d", e,
-                "uv_strerror",     "%s", uv_strerror(e),
+                "uv_strerror",  "%s", uv_strerror(e),
                 NULL
             );
             return -1;
@@ -606,7 +598,19 @@ PRIVATE int open_tty(hgobj gobj)
         priv->uv_tty.data = gobj;
         priv->uv_handler_active = 1;
 
-        uv_tty_set_mode(&priv->uv_tty, UV_TTY_MODE_IO);
+        if((e=uv_tty_set_mode(&priv->uv_tty, UV_TTY_MODE_RAW))<0) {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PROTOCOL_ERROR,
+                "msg",          "%s", "uv_tty_set_mode() FAILED",
+                "tty",          "%s", priv->port,
+                "error",        "%d", e,
+                "uv_strerror",  "%s", uv_strerror(e),
+                NULL
+            );
+            return -1;
+        }
 
         if(configure_tty(gobj)<0) {
             do_close(gobj);
