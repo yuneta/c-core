@@ -571,7 +571,7 @@ PRIVATE int open_tty(hgobj gobj)
     snprintf(priv->port, sizeof(priv->port), "/dev/%s", port);
 
     do {
-        priv->tty_fd = open(priv->port, O_RDWR, 0);
+        priv->tty_fd = open(priv->port, O_RDWR, O_NOCTTY|O_NONBLOCK);
         if(priv->tty_fd < 0) {
             log_error(0,
                 "gobj",         "%s", gobj_full_name(gobj),
@@ -682,7 +682,6 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
             );
         }
 
-        set_disconnected(gobj);
         do_close(gobj); // hay que reintentar el open: pueden meter/sacar un usb
         return;
     }
@@ -741,13 +740,9 @@ PRIVATE void on_close_cb(uv_handle_t* handle)
     priv->uv_handler_active = 0;
 
     close(priv->tty_fd);
+    priv->tty_fd = -1;
 
-    gobj_change_state(gobj, "ST_STOPPED");
-
-    if(priv->inform_disconnection) {
-        priv->inform_disconnection = FALSE;
-        gobj_publish_event(gobj, priv->disconnected_event_name, 0);
-    }
+    set_disconnected(gobj);
 
     if(gobj_is_volatil(gobj)) {
         gobj_destroy(gobj);
@@ -771,6 +766,7 @@ PRIVATE void do_close(hgobj gobj)
             "msg",          "%s", "UV handler NOT ACTIVE!",
             NULL
         );
+        set_disconnected(gobj);
         return;
     }
     if(priv->uv_read_active) {
@@ -868,7 +864,7 @@ PRIVATE int do_write(hgobj gobj, GBUFFER *gbuf)
             "ln",           "%d", ln,
             NULL
         );
-        set_disconnected(gobj);
+        do_close(gobj);
         return -1;
     }
 
@@ -916,7 +912,6 @@ PRIVATE int ac_tx_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_drop(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    set_disconnected(gobj);
     do_close(gobj);
     KW_DECREF(kw);
     return 0;
