@@ -157,32 +157,40 @@ SDATA_END()
 PRIVATE sdata_desc_t pm_gclass_name[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "gclass_name",  0,              0,          "gclass-name"),
+SDATAPM (ASN_OCTET_STR, "gclass",       0,              0,          "gclass-name"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_gobj_root_name[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__yuno__", "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "gobj",         0,              "__yuno__", "named-gobj or full gobj name"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_gobj_def_name[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "gobj",         0,              "__default_service__", "named-gobj or full gobj name"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_list_persistent_attrs[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj or full gobj"), SDATAPM (ASN_OCTET_STR, "attribute",    0,              0,          "Attribute to list/remove"),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj or full gobj"),
+SDATAPM (ASN_OCTET_STR, "gobj",         0,              0,          "named-gobj or full gobj"),
+SDATAPM (ASN_OCTET_STR, "attribute",    0,              0,          "Attribute to list/remove"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_remove_persistent_attrs[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj or full gobj"), SDATAPM (ASN_OCTET_STR, "attribute",    0,              0,          "Attribute to list/remove"),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj or full gobj"),
+SDATAPM (ASN_OCTET_STR, "gobj",         0,              0,          "named-gobj or full gobj"),
+SDATAPM (ASN_OCTET_STR, "attribute",    0,              0,          "Attribute to list/remove"),
 SDATAPM (ASN_BOOLEAN,   "__all__",      0,              0,          "Remove all persistent attrs"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_list_childs[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj"),
+SDATAPM (ASN_OCTET_STR, "gobj",         0,              0,          "named-gobj"),
 SDATAPM (ASN_OCTET_STR, "child_gclass", 0,              0,          "Child gclass-name (list separated by blank or |,;)"),
 SDATAPM (ASN_OCTET_STR, "attributes",   0,              0,          "Attributes to see (list separated by blank or |,;)"),
 SDATA_END()
@@ -190,20 +198,23 @@ SDATA_END()
 
 PRIVATE sdata_desc_t pm_wr_attr[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "gobj",         0,              "__default_service__", "named-gobj or full gobj name"),
 SDATAPM (ASN_OCTET_STR, "attribute",    0,              0,          "attribute name"),
 SDATAPM (ASN_OCTET_STR, "value",        0,              0,          "value"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_rd_attr[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "gobj",         0,              "__default_service__", "named-gobj or full gobj name"),
 SDATAPM (ASN_OCTET_STR, "attribute",    0,              0,          "attribute name"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_set_gobj_tr[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "gobj",         0,              "",         "named-gobj or full gobj name"),
 SDATAPM (ASN_OCTET_STR, "level",        0,              0,          "attribute name"),
 SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value"),
 SDATA_END()
@@ -218,6 +229,7 @@ SDATA_END()
 PRIVATE sdata_desc_t pm_set_gclass_tr[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "gclass_name",  0,              0,          "gclass-name"),
+SDATAPM (ASN_OCTET_STR, "gclass",       0,              0,          "gclass-name"),
 SDATAPM (ASN_OCTET_STR, "level",        0,              0,          "attribute name"),
 SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value"),
 SDATA_END()
@@ -253,7 +265,8 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_subscribe_event[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "gobj",         0,              "__default_service__", "named-gobj or full gobj name"),
 SDATAPM (ASN_OCTET_STR, "event_name",   0,              0,          "Event name"),
 SDATAPM (ASN_OCTET_STR, "rename_event_name",0,          0,          "Rename event name"),
 SDATAPM (ASN_BOOLEAN,   "first_shot",   0,              0,          "First shot (send all records on subcribing"),
@@ -263,7 +276,8 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_list_subscriptions[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              "__default_service__", "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "gobj",         0,              "__default_service__", "named-gobj or full gobj name"),
 SDATAPM (ASN_BOOLEAN,   "recursive",    0,              0,          "Walk over childs"),
 SDATAPM (ASN_BOOLEAN,   "full-names",   0,              0,          "Show full names"),
 SDATA_END()
@@ -966,7 +980,12 @@ PRIVATE GCLASS *_get_gclass_from_gobj(const char *gobj_name)
  ***************************************************************************/
 PRIVATE json_t *cmd_view_gclass(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gclass_name_ = kw_get_str(kw, "gclass_name", "", 0);
+    const char *gclass_name_ = kw_get_str(
+        kw,
+        "gclass_name",
+        kw_get_str(kw, "gclass", "", 0),
+        0
+    );
     GCLASS *gclass = gobj_find_gclass(gclass_name_, FALSE);
     if(!gclass) {
         gclass = _get_gclass_from_gobj(gclass_name_);
@@ -1001,7 +1020,12 @@ PRIVATE json_t *cmd_view_gclass(hgobj gobj, const char *cmd, json_t *kw, hgobj s
  ***************************************************************************/
 PRIVATE json_t *cmd_view_gobj(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *gobj_name_ = kw_get_str( // __default_service__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
         gobj2view = gobj_find_gobj(gobj_name_);
@@ -1035,7 +1059,12 @@ PRIVATE json_t *cmd_view_gobj(hgobj gobj, const char *cmd, json_t *kw, hgobj src
  ***************************************************************************/
 PRIVATE json_t *cmd_public_attrs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gclass_name_ = kw_get_str(kw, "gclass_name", "", 0);
+    const char *gclass_name_ = kw_get_str(
+        kw,
+        "gclass_name",
+        kw_get_str(kw, "gclass", "", 0),
+        0
+    );
     GCLASS *gclass = gobj_find_gclass(gclass_name_, FALSE);
     if(!gclass) {
         gclass = _get_gclass_from_gobj(gclass_name_);
@@ -1058,7 +1087,12 @@ PRIVATE json_t *cmd_public_attrs(hgobj gobj, const char *cmd, json_t *kw, hgobj 
  ***************************************************************************/
 PRIVATE json_t *cmd_view_attrs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *gobj_name_ = kw_get_str( // __default_service__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
         gobj2view = gobj_find_gobj(gobj_name_);
@@ -1093,7 +1127,12 @@ PRIVATE json_t *cmd_view_attrs(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
  ***************************************************************************/
 PRIVATE json_t *cmd_view_attrs2(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *gobj_name_ = kw_get_str( // __default_service__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
         gobj2view = gobj_find_gobj(gobj_name_);
@@ -1127,7 +1166,12 @@ PRIVATE json_t *cmd_view_attrs2(hgobj gobj, const char *cmd, json_t *kw, hgobj s
  ***************************************************************************/
 PRIVATE json_t *cmd_webix_gobj_tree(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0); //" __yuno__"
+    const char *gobj_name_ = kw_get_str( // __yuno__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
         gobj2view = gobj_find_gobj(gobj_name_);
@@ -1161,7 +1205,12 @@ PRIVATE json_t *cmd_webix_gobj_tree(hgobj gobj, const char *cmd, json_t *kw, hgo
  ***************************************************************************/
 PRIVATE json_t *cmd_view_gobj_tree(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0); //" __yuno__"
+    const char *gobj_name_ = kw_get_str( // __yuno__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
         gobj2view = gobj_find_gobj(gobj_name_);
@@ -1195,7 +1244,12 @@ PRIVATE json_t *cmd_view_gobj_tree(hgobj gobj, const char *cmd, json_t *kw, hgob
  ***************************************************************************/
 PRIVATE json_t *cmd_view_gobj_treedb(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0); //" __yuno__"
+    const char *gobj_name_ = kw_get_str( // __yuno__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
         gobj2view = gobj_find_gobj(gobj_name_);
@@ -1244,7 +1298,12 @@ PRIVATE json_t *cmd_view_gclass_register(hgobj gobj, const char *cmd, json_t *kw
  ***************************************************************************/
 PRIVATE json_t *cmd_view_service_register(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gclass_name = kw_get_str(kw, "gclass_name", "", 0);
+    const char *gclass_name = kw_get_str(
+        kw,
+        "gclass_name",
+        kw_get_str(kw, "gclass", "", 0),
+        0
+    );
 
 
     return msg_iev_build_webix(
@@ -1277,7 +1336,12 @@ PRIVATE json_t *cmd_view_unique_register(hgobj gobj, const char *cmd, json_t *kw
  ***************************************************************************/
 PRIVATE json_t *cmd_list_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);
+    const char *gobj_name_ = kw_get_str(
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     const char *child_gclass = kw_get_str(kw, "child_gclass", "", 0);
     const char *_attributes = kw_get_str(kw, "attributes", "", 0);
 
@@ -1363,7 +1427,12 @@ PRIVATE json_t *cmd_list_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj s
  ***************************************************************************/
 PRIVATE json_t *cmd_write_bool(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0); // __default_service__
+    const char *gobj_name_ = kw_get_str( // __default_service__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2write = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2write) {
         gobj2write = gobj_find_gobj(gobj_name_);
@@ -1489,7 +1558,12 @@ PRIVATE json_t *cmd_write_bool(hgobj gobj, const char *cmd, json_t *kw, hgobj sr
  ***************************************************************************/
 PRIVATE json_t *cmd_write_str(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *gobj_name_ = kw_get_str( // __default_service__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2write = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2write) {
         gobj2write = gobj_find_gobj(gobj_name_);
@@ -1606,7 +1680,12 @@ PRIVATE json_t *cmd_write_str(hgobj gobj, const char *cmd, json_t *kw, hgobj src
  ***************************************************************************/
 PRIVATE json_t *cmd_write_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *gobj_name_ = kw_get_str( // __default_service__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2write = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2write) {
         gobj2write = gobj_find_gobj(gobj_name_);
@@ -1746,7 +1825,12 @@ PRIVATE json_t *cmd_write_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src
  ***************************************************************************/
 PRIVATE json_t *cmd_read_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *gobj_name_ = kw_get_str( // __default_service__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2read = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2read) {
         gobj2read = gobj_find_gobj(gobj_name_);
@@ -2051,7 +2135,12 @@ PRIVATE json_t *cmd_get_global_trace(hgobj gobj, const char *cmd, json_t *kw, hg
  ***************************************************************************/
 PRIVATE json_t *cmd_info_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gclass_name_ = kw_get_str(kw, "gclass_name", "", 0);
+    const char *gclass_name_ = kw_get_str(
+        kw,
+        "gclass_name",
+        kw_get_str(kw, "gclass", "", 0),
+        0
+    );
     if(!empty_string(gclass_name_)) {
         GCLASS *gclass = gobj_find_gclass(gclass_name_, FALSE);
         if(!gclass) {
@@ -2086,7 +2175,12 @@ PRIVATE json_t *cmd_info_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, h
  ***************************************************************************/
 PRIVATE json_t *cmd_get_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gclass_name_ = kw_get_str(kw, "gclass_name", "", 0);
+    const char *gclass_name_ = kw_get_str(
+        kw,
+        "gclass_name",
+        kw_get_str(kw, "gclass", "", 0),
+        0
+    );
     GCLASS *gclass = 0;
     if(!empty_string(gclass_name_)) {
         gclass = gobj_find_gclass(gclass_name_, FALSE);
@@ -2123,7 +2217,12 @@ PRIVATE json_t *cmd_get_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hg
  ***************************************************************************/
 PRIVATE json_t *cmd_get_gclass_no_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gclass_name_ = kw_get_str(kw, "gclass_name", "", 0);
+    const char *gclass_name_ = kw_get_str(
+        kw,
+        "gclass_name",
+        kw_get_str(kw, "gclass", "", 0),
+        0
+    );
     GCLASS *gclass = 0;
     if(!empty_string(gclass_name_)) {
         gclass = gobj_find_gclass(gclass_name_, FALSE);
@@ -2160,7 +2259,12 @@ PRIVATE json_t *cmd_get_gclass_no_trace(hgobj gobj, const char *cmd, json_t *kw,
  ***************************************************************************/
 PRIVATE json_t *cmd_info_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __yuno__
+    const char *gobj_name_ = kw_get_str( // __yuno__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
         gobj2view = gobj_find_gobj(gobj_name_);
@@ -2193,7 +2297,12 @@ PRIVATE json_t *cmd_info_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgo
  ***************************************************************************/
 PRIVATE json_t *cmd_get_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __yuno__
+    const char *gobj_name_ = kw_get_str( // __yuno__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
         gobj2view = gobj_find_gobj(gobj_name_);
@@ -2227,7 +2336,12 @@ PRIVATE json_t *cmd_get_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgob
  ***************************************************************************/
 PRIVATE json_t *cmd_get_gobj_no_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0); // __yuno__
+    const char *gobj_name_ = kw_get_str( // __yuno__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
         gobj2view = gobj_find_gobj(gobj_name_);
@@ -2318,7 +2432,12 @@ PRIVATE json_t *cmd_set_global_trace(hgobj gobj, const char *cmd, json_t *kw, hg
  ***************************************************************************/
 PRIVATE json_t *cmd_set_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gclass_name_ = kw_get_str(kw, "gclass_name", 0, 0);
+    const char *gclass_name_ = kw_get_str(
+        kw,
+        "gclass_name",
+        kw_get_str(kw, "gclass", "", 0),
+        0
+    );
     GCLASS *gclass = gobj_find_gclass(gclass_name_, FALSE);
     if(!gclass) {
         gclass = _get_gclass_from_gobj(gclass_name_);
@@ -2393,7 +2512,12 @@ PRIVATE json_t *cmd_set_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hg
  ***************************************************************************/
 PRIVATE json_t *cmd_set_no_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gclass_name_ = kw_get_str(kw, "gclass_name", 0, 0);
+    const char *gclass_name_ = kw_get_str(
+        kw,
+        "gclass_name",
+        kw_get_str(kw, "gclass", "", 0),
+        0
+    );
     GCLASS *gclass = gobj_find_gclass(gclass_name_, FALSE);
     if(!gclass) {
         gclass = _get_gclass_from_gobj(gclass_name_);
@@ -2468,7 +2592,12 @@ PRIVATE json_t *cmd_set_no_gclass_trace(hgobj gobj, const char *cmd, json_t *kw,
  ***************************************************************************/
 PRIVATE json_t *cmd_set_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);
+    const char *gobj_name_ = kw_get_str(
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2trace = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2trace) {
         gobj2trace = gobj_find_gobj(gobj_name_);
@@ -2544,7 +2673,12 @@ PRIVATE json_t *cmd_set_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgob
  ***************************************************************************/
 PRIVATE json_t *cmd_set_no_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);
+    const char *gobj_name_ = kw_get_str(
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2trace = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2trace) {
         gobj2trace = gobj_find_gobj(gobj_name_);
@@ -2921,7 +3055,12 @@ PRIVATE json_t* cmd_list_log_handler(hgobj gobj, const char* cmd, json_t* kw, hg
  ***************************************************************************/
 PRIVATE json_t* cmd_list_persistent_attrs(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", 0, 0);
+    const char *gobj_name_ = kw_get_str(
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     const char *attribute = kw_get_str(kw, "attribute", 0, 0);
     json_t *jn_attrs = attribute?json_string(attribute):0;
 
@@ -2973,7 +3112,12 @@ PRIVATE json_t* cmd_list_persistent_attrs(hgobj gobj, const char* cmd, json_t* k
  ***************************************************************************/
 PRIVATE json_t* cmd_remove_persistent_attrs(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);
+    const char *gobj_name_ = kw_get_str(
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     const char *attribute = kw_get_str(kw, "attribute", 0, 0);
     BOOL all = kw_get_bool(kw, "__all__", 0, KW_WILD_NUMBER);
 
@@ -3032,7 +3176,12 @@ PRIVATE json_t* cmd_remove_persistent_attrs(hgobj gobj, const char* cmd, json_t*
  ***************************************************************************/
 PRIVATE json_t* cmd_start_gobj_tree(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *gobj_name_ = kw_get_str( // __default_service__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
         gobj2view = gobj_find_gobj(gobj_name_);
@@ -3078,7 +3227,12 @@ PRIVATE json_t* cmd_start_gobj_tree(hgobj gobj, const char* cmd, json_t* kw, hgo
  ***************************************************************************/
 PRIVATE json_t* cmd_stop_gobj_tree(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *gobj_name_ = kw_get_str( // __default_service__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
         gobj2view = gobj_find_gobj(gobj_name_);
@@ -3124,7 +3278,12 @@ PRIVATE json_t* cmd_stop_gobj_tree(hgobj gobj, const char* cmd, json_t* kw, hgob
  ***************************************************************************/
 PRIVATE json_t* cmd_enable_gobj(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *gobj_name_ = kw_get_str( // __default_service__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
         gobj2view = gobj_find_gobj(gobj_name_);
@@ -3170,7 +3329,12 @@ PRIVATE json_t* cmd_enable_gobj(hgobj gobj, const char* cmd, json_t* kw, hgobj s
  ***************************************************************************/
 PRIVATE json_t* cmd_disable_gobj(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *gobj_name_ = kw_get_str( // __default_service__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     hgobj gobj2view = gobj_find_unique_gobj(gobj_name_, FALSE);
     if(!gobj2view) {
         gobj2view = gobj_find_gobj(gobj_name_);
@@ -3216,7 +3380,12 @@ PRIVATE json_t* cmd_disable_gobj(hgobj gobj, const char* cmd, json_t* kw, hgobj 
  ***************************************************************************/
 PRIVATE json_t* cmd_subscribe_event(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *gobj_name_ = kw_get_str( // __default_service__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     const char *event_name = kw_get_str(kw, "event_name", 0, 0);
     const char *rename_event_name = kw_get_str(kw, "rename_event_name", 0, 0);
     BOOL first_shot = kw_get_bool(kw, "first_shot", 0, 0);
@@ -3301,7 +3470,12 @@ PRIVATE json_t* cmd_subscribe_event(hgobj gobj, const char* cmd, json_t* kw, hgo
  ***************************************************************************/
 PRIVATE json_t* cmd_unsubscribe_event(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *gobj_name_ = kw_get_str( // __default_service__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     const char *event_name = kw_get_str(kw, "event_name", 0, 0);
     json_t *__filter__ = kw_get_dict(kw, "__filter__", 0, 0);
 
@@ -3411,7 +3585,12 @@ PRIVATE int cb_list_subscriptions(
  ***************************************************************************/
 PRIVATE json_t* cmd_list_subscriptions(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *gobj_name_ = kw_get_str( // __default_service__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     BOOL recursive = kw_get_bool(kw, "recursive", 0, KW_WILD_NUMBER);
     BOOL full_names = kw_get_bool(kw, "full-names", 0, KW_WILD_NUMBER);
 
@@ -3519,7 +3698,12 @@ PRIVATE int cb_list_subscribings(
  ***************************************************************************/
 PRIVATE json_t* cmd_list_subscribings(hgobj gobj, const char* cmd, json_t* kw, hgobj src)
 {
-    const char *gobj_name_ = kw_get_str(kw, "gobj_name", "", 0);  // __default_service__
+    const char *gobj_name_ = kw_get_str( // __default_service__
+        kw,
+        "gobj_name",
+        kw_get_str(kw, "gobj", "", 0),
+        0
+    );
     BOOL recursive = kw_get_bool(kw, "recursive", 0, KW_WILD_NUMBER);
     BOOL full_names = kw_get_bool(kw, "full-names", 0, KW_WILD_NUMBER);
 
