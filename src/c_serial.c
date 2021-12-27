@@ -571,7 +571,7 @@ PRIVATE int open_tty(hgobj gobj)
     snprintf(priv->port, sizeof(priv->port), "/dev/%s", port);
 
     do {
-        priv->tty_fd = open(priv->port, O_RDWR, O_NOCTTY|O_NONBLOCK);
+        priv->tty_fd = open(priv->port, O_RDWR, 0);
         if(priv->tty_fd < 0) {
             log_error(0,
                 "gobj",         "%s", gobj_full_name(gobj),
