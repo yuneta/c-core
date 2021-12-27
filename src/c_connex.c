@@ -33,6 +33,7 @@ PRIVATE sdata_desc_t tattr_desc[] = {
 SDATA (ASN_UNSIGNED,    "connxs",           SDF_RD,                     0,              "connection counter"),
 SDATA (ASN_BOOLEAN,     "connected",        SDF_RD|SDF_STATS,           0,              "Connection state. Important filter!"),
 
+SDATA (ASN_BOOLEAN,     "character_device",             SDF_RD,         0,              "Set true with caracter device (Url example: 'tty://ttyUSB2', /dev/ must be not included"),
 SDATA (ASN_BOOLEAN,     "manual",                       SDF_RD,         0,              "Set true if you want connect manually"),
 SDATA (ASN_OCTET_STR,   "connected_event_name",         SDF_RD,         "EV_CONNECTED", "Must be empty if you don't want receive this event"),
 SDATA (ASN_OCTET_STR,   "disconnected_event_name",      SDF_RD,         "EV_DISCONNECTED", "Must be empty if you don't want receive this event"),
@@ -44,7 +45,7 @@ SDATA (ASN_INTEGER,     "timeout_between_connections",  SDF_WR|SDF_PERSIST, 2*10
 SDATA (ASN_INTEGER,     "timeout_inactivity",           SDF_WR|SDF_PERSIST, -1,
        "Inactivity timeout to close the connection."
         "Reconnect when new data arrived. With -1 never close."),
-SDATA (ASN_JSON,        "urls",                         SDF_WR|SDF_PERSIST, 0,          "list of destination urls: [rUrl^lUrl, ...]"),
+SDATA (ASN_JSON,        "urls",                         SDF_WR|SDF_PERSIST, 0,          "list of destination urls: [rUrl^lUrl, ...], Url can be too a character device, ie: 'tty://ttyUSB2', /dev/ must be not included"),
 SDATA (ASN_OCTET_STR,   "lHost",                        SDF_RD,         0,              "Bind to a particular local ip"),
 SDATA (ASN_OCTET_STR,   "lPort",                        SDF_RD,         0,              "Bind to a particular local port"),
 SDATA (ASN_POINTER,     "user_data",                    0,              0,              "user data"),
@@ -313,14 +314,16 @@ PRIVATE int ac_connect(hgobj gobj, const char *event, json_t *kw, hgobj src)
             NULL
         );
     }
-    if(empty_string(rPort)) {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "Not remote PORT has been configured!",
-            NULL
-        );
+    if(!gobj_read_bool_attr(gobj, "character_device")) {
+        if(empty_string(rPort)) {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "Not remote PORT has been configured!",
+                NULL
+            );
+        }
     }
 
     /*
