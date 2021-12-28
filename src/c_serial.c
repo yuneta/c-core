@@ -490,7 +490,7 @@ PRIVATE int configure_tty(hgobj gobj)
     //termios_settings.c_oflag = 0;
 
     /* c_lflag */
-    //termios_settings.c_lflag &= ~((tcflag_t) ECHO);
+    termios_settings.c_lflag &= ~((tcflag_t) ECHO); // No echo
 
     /* c_cflag */
     /* Enable receiver, ignore modem control lines */

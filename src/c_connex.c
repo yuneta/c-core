@@ -336,11 +336,13 @@ PRIVATE int ac_connect(hgobj gobj, const char *event, json_t *kw, hgobj src)
         gobj_write_str_attr(bottom_gobj, "rHost", rHost);
         gobj_write_str_attr(bottom_gobj, "rPort", rPort);
 
+        // HACK firstly set timeout, EV_CONNECTED can be received inside of gobj_start()
+        set_timeout(priv->timer, gobj_read_int32_attr(gobj, "timeout_waiting_connected"));
+
         if(gobj_start(bottom_gobj)<0) {
             set_timeout(priv->timer, gobj_read_int32_attr(gobj, "timeout_between_connections"));
-        } else {
-            set_timeout(priv->timer, gobj_read_int32_attr(gobj, "timeout_waiting_connected"));
         }
+
     } else {
         log_error(0,
             "gobj",         "%s", gobj_full_name(gobj),
