@@ -107,15 +107,12 @@ PRIVATE json_t *cmd_set_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hg
 PRIVATE json_t *cmd_set_no_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_set_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_set_no_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-
+PRIVATE json_t *cmd_set_daemon_debug(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_set_deep_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_spawn(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE json_t *cmd_trunk_rotatory_file(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_reset_log_counters(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-
-PRIVATE json_t *cmd_spawn(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_set_daemon_debug(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_set_deep_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-
 PRIVATE json_t* cmd_add_log_handler(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 PRIVATE json_t* cmd_del_log_handler(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
 PRIVATE json_t* cmd_list_log_handler(hgobj gobj, const char* cmd, json_t* kw, hgobj src);
@@ -317,6 +314,7 @@ SDATA_END()
 
 PRIVATE const char *a_help[] = {"h", "?", 0};
 PRIVATE const char *a_services[] = {"services", "list-services", 0};
+PRIVATE const char *a_pers_attrs[] = {"persistent-attrs", 0};
 PRIVATE const char *a_read_attrs[] = {"read-attrs", 0};
 PRIVATE const char *a_read_attrs2[] = {"read-attrs2", 0};
 
@@ -367,20 +365,18 @@ SDATACM (ASN_SCHEMA,    "get-gobj-trace",           0,      pm_gobj_root_name, c
 SDATACM (ASN_SCHEMA,    "get-gobj-no-trace",        0,      pm_gobj_root_name, cmd_get_gobj_no_trace,    "Get no gobj's trace  and his childs"),
 SDATACM (ASN_SCHEMA,    "set-gobj-trace",           0,      pm_set_gobj_tr, cmd_set_gobj_trace,         "Set trace of a named-gobj"),
 SDATACM (ASN_SCHEMA,    "set-gobj-no-trace",        0,      pm_set_gobj_tr, cmd_set_no_gobj_trace,      "Set no-trace of a named-gobj"),
-
-SDATACM (ASN_SCHEMA,    "trunk-rotatory-file",      0,      0,              cmd_trunk_rotatory_file,    "Trunk rotatory files"),
-SDATACM (ASN_SCHEMA,    "reset-log-counters",       0,      0,              cmd_reset_log_counters,     "Reset log counters"),
+SDATACM (ASN_SCHEMA,    "set-deep-trace",           0,      pm_set_deep_trace,cmd_set_deep_trace,   "Set deep trace, all traces active"),
+SDATACM (ASN_SCHEMA,    "set-daemon-debug",         0,      pm_set_daemon_debug,cmd_set_daemon_debug,   "Set daemon debug"),
 
 // HACK DANGER backdoor, use Yuneta only in private networks, or public but encrypted and assured connections.
 SDATACM (ASN_SCHEMA,    "spawn",                    0,      pm_spawn,       cmd_spawn,                  "Spawn a new process"),
 
-SDATACM (ASN_SCHEMA,    "set-daemon-debug",         0,      pm_set_daemon_debug,cmd_set_daemon_debug,   "Set daemon debug"),
-SDATACM (ASN_SCHEMA,    "set-deep-trace",         0,        pm_set_deep_trace,cmd_set_deep_trace,   "Set deep trace, all traces active"),
-
+SDATACM (ASN_SCHEMA,    "trunk-rotatory-file",      0,      0,              cmd_trunk_rotatory_file,    "Trunk rotatory files"),
+SDATACM (ASN_SCHEMA,    "reset-log-counters",       0,      0,              cmd_reset_log_counters,     "Reset log counters"),
 SDATACM (ASN_SCHEMA,    "add-log-handler",          0,      pm_add_log_handler,cmd_add_log_handler,     "Add log handler"),
 SDATACM (ASN_SCHEMA,    "delete-log-handler",       0,      pm_del_log_handler,cmd_del_log_handler,     "Delete log handler"),
 SDATACM (ASN_SCHEMA,    "list-log-handler",         0,      0,              cmd_list_log_handler,       "List log handlers"),
-SDATACM (ASN_SCHEMA,    "list-persistent-attrs",    0,      pm_list_persistent_attrs,cmd_list_persistent_attrs,  "List persistent attributes of yuno"),
+SDATACM (ASN_SCHEMA,    "list-persistent-attrs",    a_pers_attrs,      pm_list_persistent_attrs,cmd_list_persistent_attrs,  "List persistent attributes of yuno"),
 SDATACM (ASN_SCHEMA,    "remove-persistent-attrs",  0,      pm_remove_persistent_attrs,cmd_remove_persistent_attrs,  "List persistent attributes of yuno"),
 SDATACM (ASN_SCHEMA,    "start-gobj-tree",          0,      pm_gobj_def_name,cmd_start_gobj_tree,       "Start named-gobj tree"),
 SDATACM (ASN_SCHEMA,    "stop-gobj-tree",           0,      pm_gobj_def_name,cmd_stop_gobj_tree,        "Stop named-gobj tree"),
@@ -400,8 +396,8 @@ SDATACM (ASN_SCHEMA,    "remove-denied-ip",         0,      pm_remove_denied_ip,
 SDATACM (ASN_SCHEMA,    "get-2key-schema",          0,      0, cmd_2key_get_schema, "Get 2key schema"),
 SDATACM (ASN_SCHEMA,    "get-2key-value",           0,      pm_2key_get_value, cmd_2key_get_value, "Get 2key value"),
 SDATACM (ASN_SCHEMA,    "get-2key-subvalue",        0,      pm_2key_get_value, cmd_2key_get_subvalue, "Get 2key sub-value"),
-SDATACM (ASN_SCHEMA,    "system-schema",      0, 0,  cmd_system_topic_schema, "Get system topic schema"),
-SDATACM (ASN_SCHEMA,    "global-variables",         0, 0,  cmd_global_variables, "Get global variables"),
+SDATACM (ASN_SCHEMA,    "system-schema",            0,      0, cmd_system_topic_schema, "Get system topic schema"),
+SDATACM (ASN_SCHEMA,    "global-variables",         0,      0, cmd_global_variables, "Get global variables"),
 SDATA_END()
 };
 
@@ -491,7 +487,7 @@ SDATA (ASN_COUNTER64,   "qs_repeated",      SDF_RD|SDF_STATS,           0,      
 SDATA (ASN_COUNTER64,   "cpu_ticks",        SDF_RD|SDF_STATS,           0,              "Cpu ticks"),
 SDATA (ASN_UNSIGNED,    "cpu",              SDF_RD|SDF_STATS,           0,              "Cpu percent"),
 SDATA (ASN_UNSIGNED,    "timeout_restart",  SDF_WR|SDF_STATS|SDF_PERSIST,0,             "timeout (seconds) to restart"),
-SDATA (ASN_INTEGER,     "deep_trace",       SDF_RD|SDF_STATS,           0,              "Deep trace set or not set"),
+SDATA (ASN_INTEGER,     "deep_trace",       SDF_WR|SDF_STATS|SDF_PERSIST,0,             "Deep trace set or not set"),
 SDATA (ASN_JSON,        "trace_levels",     SDF_WR|SDF_PERSIST,         0,              "Trace levels"),
 SDATA (ASN_JSON,        "no_trace_levels",  SDF_WR|SDF_PERSIST,         0,              "No trace levels"),
 SDATA (ASN_JSON,        "allowed_ips",      SDF_RD|SDF_PERSIST,         "{}",           "Allowed peer ip's if true, false not allowed"),
@@ -747,7 +743,7 @@ PRIVATE int mt_start(hgobj gobj)
         priv->t_restart = start_sectimer(priv->timeout_restart);
     }
 
-    gobj_write_int32_attr(gobj, "deep_trace", gobj_get_deep_tracing());
+    gobj_set_deep_tracing(gobj_read_int32_attr(gobj, "deep_trace"));
 
     return 0;
 }
@@ -2882,6 +2878,7 @@ PRIVATE json_t* cmd_set_deep_trace(hgobj gobj, const char* cmd, json_t* kw, hgob
 
     gobj_write_int32_attr(gobj, "deep_trace", trace);
     gobj_set_deep_tracing(trace);
+    gobj_save_persistent_attrs(gobj, json_string("deep_trace"));
 
     return msg_iev_build_webix(
         gobj,

@@ -223,6 +223,7 @@ PRIVATE void on_timer_cb(uv_timer_t* handle)
         }
         gobj_pause(gobj);
     }
+
     gobj_send_event(
         gobj_parent(gobj),
         gobj_read_str_attr(gobj, "timeout_event_name"),
@@ -403,7 +404,16 @@ PUBLIC GCLASS *gclass_timer(void)
  ***************************************************************************/
 PUBLIC void set_timeout(hgobj gobj, int msec)
 {
-    clear_timeout(gobj);
+    if(gobj_get_deep_tracing()) {
+        trace_machine("⏲ ✅ set_timeout: %s",
+            gobj_full_name(gobj)
+        );
+    }
+
+    if(gobj_is_playing(gobj)) { // clear_timeout(gobj);
+        gobj_pause(gobj);
+    }
+
     gobj_write_int32_attr(gobj, "msec", msec);
     gobj_write_bool_attr(gobj, "periodic", FALSE);
     gobj_play(gobj);
@@ -414,7 +424,16 @@ PUBLIC void set_timeout(hgobj gobj, int msec)
  ***************************************************************************/
 PUBLIC void set_timeout_periodic(hgobj gobj, int msec)
 {
-    clear_timeout(gobj);
+    if(gobj_get_deep_tracing()) {
+        trace_machine("⏲ ⏲ ✅ set_timeout_periodic: %s",
+            gobj_full_name(gobj)
+        );
+    }
+
+    if(gobj_is_playing(gobj)) { // clear_timeout(gobj);
+        gobj_pause(gobj);
+    }
+
     gobj_write_int32_attr(gobj, "msec", msec);
     gobj_write_bool_attr(gobj, "periodic", TRUE);
     gobj_play(gobj);
@@ -425,6 +444,13 @@ PUBLIC void set_timeout_periodic(hgobj gobj, int msec)
  ***************************************************************************/
 PUBLIC void clear_timeout(hgobj gobj)
 {
-    if(gobj_is_playing(gobj))
+    if(gobj_get_deep_tracing()) {
+        trace_machine("⏲ ❎ clear_timeout: %s",
+            gobj_full_name(gobj)
+        );
+    }
+
+    if(gobj_is_playing(gobj)) {
         gobj_pause(gobj);
+    }
 }
