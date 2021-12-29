@@ -1610,6 +1610,7 @@ PRIVATE int send_all(hgobj gobj, const char *event, json_t *kw, hgobj src)
     );
     dl_list_t *iter_open = sdata_iter_match(iter, -1, 0, jn_filter, 0);
 
+    int some = 0;
     hsdata hs=0; rc_instance_t* i_hs=0;
     i_hs = rc_first_instance(iter_open, (rc_resource_t **)&hs); // first time
     while(i_hs) {
@@ -1638,6 +1639,7 @@ PRIVATE int send_all(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
             int ret = gobj_send_event(channel_gobj, event, kw_incref(kw), gobj);
             if(ret == 0) {
+                some++;
                 (*priv->ptxMsgs)++;
             }
             i_hs = rc_next_instance(i_hs, (rc_resource_t **)&hs);
@@ -1645,6 +1647,17 @@ PRIVATE int send_all(hgobj gobj, const char *event, json_t *kw, hgobj src)
     }
     rc_free_iter(iter_open, TRUE, 0);
     rc_free_iter(iter, TRUE, 0);
+
+    if(!some) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "No channel FOUND to send",
+            "event",        "%s", event,
+            NULL
+        );
+    }
 
     KW_DECREF(kw);
     return 0;
@@ -2095,12 +2108,12 @@ PRIVATE const char *state_names[] = {
 
 PRIVATE EV_ACTION ST_IDLE[] = {
     {"EV_ON_MESSAGE",           ac_on_message,      0},
+    {"EV_SEND_MESSAGE",         ac_send_message,    0},
     {"EV_IEV_MESSAGE",          ac_iev_message,     0},
+    {"EV_SEND_IEV",             ac_send_iev,        0},
     {"EV_ON_COMMAND",           ac_on_message,      0},
     {"EV_ON_ID",                ac_on_message,      0},
     {"EV_ON_ID_NAK",            ac_on_message,      0},
-    {"EV_SEND_MESSAGE",         ac_send_message,    0},
-    {"EV_SEND_IEV",             ac_send_iev,        0},
     {"EV_DROP",                 ac_drop,            0},
     {"EV_ON_OPEN",              ac_on_open,         0},
     {"EV_ON_CLOSE",             ac_on_close,        0},
