@@ -186,7 +186,7 @@ PRIVATE int mt_start(hgobj gobj)
     char schema[20], host[120], port[40];
     r = parse_http_url(priv->url, schema, sizeof(schema), host, sizeof(host), port, sizeof(port), FALSE);
     if(r<0) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
