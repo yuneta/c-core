@@ -606,6 +606,7 @@ PRIVATE void mt_create(hgobj gobj)
 
     set_user_gclass_traces(gobj);
     set_user_gclass_no_traces(gobj);
+    gobj_set_deep_tracing(gobj_read_int32_attr(gobj, "deep_trace"));
 
     /*
      *  Create the event loop
@@ -742,8 +743,6 @@ PRIVATE int mt_start(hgobj gobj)
     if(priv->timeout_restart) {
         priv->t_restart = start_sectimer(priv->timeout_restart);
     }
-
-    gobj_set_deep_tracing(gobj_read_int32_attr(gobj, "deep_trace"));
 
     return 0;
 }

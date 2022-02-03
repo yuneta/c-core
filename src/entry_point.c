@@ -45,6 +45,7 @@ PRIVATE BOOL __quick_death__ = 0;
 PRIVATE BOOL __ordered_death__ = 1;  // WARNING Vamos a probar otra vez las muertes ordenadas 22/03/2017
 
 PRIVATE int __print__ = 0;
+PRIVATE int __deep_trace__ = 0;
 
 PRIVATE void *(*__global_startup_persistent_attrs_fn__)(void) = 0;
 PRIVATE void (*__global_end_persistent_attrs_fn__)(void) = 0;
@@ -474,11 +475,12 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
             if(strcmp(handler_type, "stdout")==0) {
                 if(arguments.verbose_log) {
                     handler_options = arguments.verbose_log;
-                    if(handler_options & LOG_HND_OPT_DEEP_TRACE) {
-                        gobj_set_deep_tracing(TRUE);
-                    }
                 }
-                log_add_handler(key, handler_type, handler_options, 0);
+                log_add_handler(key, handler_type, handler_options, 0); // HACK until now: no output
+
+                if(handler_options & LOG_HND_OPT_DEEP_TRACE) {
+                    __deep_trace__ = TRUE;
+                }
 
             } else if(strcmp(handler_type, "file")==0) {
                 const char *filename_mask = kw_get_str(kw, "filename_mask", 0, 0);
@@ -953,6 +955,10 @@ PRIVATE void process(const char *process_name, const char *work_dir, const char 
                 );
             }
         }
+    }
+
+    if(__deep_trace__) {
+        gobj_set_deep_tracing(TRUE);
     }
 
     /*------------------------*
