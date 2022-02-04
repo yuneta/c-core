@@ -44,19 +44,22 @@ PRIVATE int set_user_gobj_no_traces(hgobj gobj);
 PRIVATE int save_global_trace(
     hgobj gobj,
     const char *level,
-    BOOL set
+    BOOL set,
+    BOOL persistent
 );
 PRIVATE int save_user_trace(
     hgobj gobj,
     const char *name,
     const char *level,
-    BOOL set
+    BOOL set,
+    BOOL persistent
 );
 PRIVATE int save_user_no_trace(
     hgobj gobj,
     const char *name,
     const char *level,
-    BOOL set
+    BOOL set,
+    BOOL persistent
 );
 PRIVATE void inform_cb(int priority, uint32_t count, void *user_data);
 
@@ -107,6 +110,7 @@ PRIVATE json_t *cmd_set_global_trace(hgobj gobj, const char *cmd, json_t *kw, hg
 PRIVATE json_t *cmd_set_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_set_no_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_set_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_reset_all_traces(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_set_no_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_set_daemon_debug(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_set_deep_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -228,7 +232,6 @@ SDATAPM (ASN_OCTET_STR, "level",        0,              0,          "attribute n
 SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value"),
 SDATA_END()
 };
-
 PRIVATE sdata_desc_t pm_set_gclass_tr[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "gclass_name",  0,              0,          "gclass-name"),
@@ -237,6 +240,13 @@ SDATAPM (ASN_OCTET_STR, "level",        0,              0,          "attribute n
 SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value"),
 SDATA_END()
 };
+PRIVATE sdata_desc_t pm_reset_all_tr[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "gobj",         0,              "",         "named-gobj or full gobj name"),
+SDATAPM (ASN_OCTET_STR, "gclass",       0,              0,          "gclass-name"),
+SDATA_END()
+};
+
 PRIVATE sdata_desc_t pm_spawn[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "process",      0,              0,          "Process to execute"),
@@ -373,6 +383,7 @@ SDATACM (ASN_SCHEMA,    "get-gobj-trace",           0,      pm_gobj_root_name, c
 SDATACM (ASN_SCHEMA,    "get-gobj-no-trace",        0,      pm_gobj_root_name, cmd_get_gobj_no_trace,    "Get no gobj's trace  and his childs"),
 SDATACM (ASN_SCHEMA,    "set-gobj-trace",           0,      pm_set_gobj_tr, cmd_set_gobj_trace,         "Set trace of a named-gobj"),
 SDATACM (ASN_SCHEMA,    "set-gobj-no-trace",        0,      pm_set_gobj_tr, cmd_set_no_gobj_trace,      "Set no-trace of a named-gobj"),
+SDATACM (ASN_SCHEMA,    "reset-all-traces",         0,      pm_reset_all_tr, cmd_reset_all_traces,         "Reset all traces of a named-gobj of gclass"),
 SDATACM (ASN_SCHEMA,    "set-deep-trace",           0,      pm_set_deep_trace,cmd_set_deep_trace,   "Set deep trace, all traces active"),
 SDATACM (ASN_SCHEMA,    "set-daemon-debug",         0,      pm_set_daemon_debug,cmd_set_daemon_debug,   "Set daemon debug"),
 
@@ -2446,7 +2457,7 @@ PRIVATE json_t *cmd_set_global_trace(hgobj gobj, const char *cmd, json_t *kw, hg
     }
 
     if(gobj_set_global_trace(level, trace)==0) {
-        save_global_trace(gobj, level, trace?1:0);
+        save_global_trace(gobj, level, trace?1:0, TRUE);
     }
 
     json_t *jn_data = gobj_get_global_trace_level();
@@ -2526,7 +2537,7 @@ PRIVATE json_t *cmd_set_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hg
     }
 
     if(gobj_set_gclass_trace(gclass, level, trace)==0) {
-        save_user_trace(gobj, gclass_name_, level, trace?1:0);
+        save_user_trace(gobj, gclass_name_, level, trace?1:0, TRUE);
     }
 
     json_t *jn_data = gobj_get_gclass_trace_level(gclass);
@@ -2536,6 +2547,105 @@ PRIVATE json_t *cmd_set_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hg
         0,
         0,
         jn_data,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *  Reset all gclass or gobj trace levels
+ ***************************************************************************/
+PRIVATE json_t *cmd_reset_all_traces(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    const char *gclass_name_ = kw_get_str(kw, "gclass", "", 0);
+    const char *gobj_name_ = kw_get_str(kw, "gobj", "", 0);
+
+    if(!empty_string(gclass_name_)) {
+        GCLASS *gclass = gobj_find_gclass(gclass_name_, FALSE);
+        if(!gclass) {
+            gclass = _get_gclass_from_gobj(gclass_name_);
+            if(!gclass) {
+                return msg_iev_build_webix(
+                    gobj,
+                    -1,
+                    json_sprintf(
+                        "%s: what gclass is '%s'?", gobj_short_name(gobj), gclass_name_
+                    ),
+                    0,
+                    0,
+                    kw  // owned
+                );
+            }
+        }
+
+        json_t *levels = gobj_get_gclass_trace_level(gclass);
+        int idx; json_t *jn_level;
+        json_array_foreach(levels, idx, jn_level) {
+            const char *level = json_string_value(jn_level);
+            gobj_set_gclass_trace(gclass, level, 0);
+            save_user_trace(gobj, gclass_name_, level, 0, FALSE);
+        }
+        json_decref(levels);
+
+        gobj_save_persistent_attrs(gobj, json_string("trace_levels"));
+
+        json_t *jn_data = gobj_get_gclass_trace_level(gclass);
+        return msg_iev_build_webix(
+            gobj,
+            0,
+            0,
+            0,
+            jn_data,
+            kw  // owned
+        );
+    }
+
+    if(!empty_string(gobj_name_)) {
+        hgobj gobj2trace = gobj_find_unique_gobj(gobj_name_, FALSE);
+        if(!gobj2trace) {
+            gobj2trace = gobj_find_gobj(gobj_name_);
+            if(!gobj2trace) {
+                return msg_iev_build_webix(
+                    gobj,
+                    -1,
+                    json_sprintf(
+                        "%s: gobj '%s' not found.", gobj_short_name(gobj), gobj_name_
+                    ),
+                    0,
+                    0,
+                    kw  // owned
+                );
+            }
+        }
+
+        json_t *levels = gobj_get_gobj_trace_level(gobj2trace);
+        int idx; json_t *jn_level;
+        json_array_foreach(levels, idx, jn_level) {
+            const char *level = json_string_value(jn_level);
+            gobj_set_gobj_trace(gobj2trace, level, 0, 0);
+            gobj_set_gclass_trace(gobj_gclass(gobj2trace), level, 0);
+            save_user_trace(gobj, gobj_name_, level, 0, FALSE);
+        }
+        json_decref(levels);
+
+        gobj_save_persistent_attrs(gobj, json_string("trace_levels"));
+
+        json_t *jn_data = gobj_get_gobj_trace_level(gobj2trace);
+        return msg_iev_build_webix(
+            gobj,
+            0,
+            0,
+            0,
+            jn_data,
+            kw  // owned
+        );
+    }
+
+    return msg_iev_build_webix(
+        gobj,
+        -1,
+        json_sprintf("What gclass or gobj?"),
+        0,
+        0,
         kw  // owned
     );
 }
@@ -2606,7 +2716,7 @@ PRIVATE json_t *cmd_set_no_gclass_trace(hgobj gobj, const char *cmd, json_t *kw,
     }
 
     if(gobj_set_gclass_no_trace(gclass, level, trace)==0) {
-        save_user_no_trace(gobj, gclass_name_, level, trace?1:0);
+        save_user_no_trace(gobj, gclass_name_, level, trace?1:0, TRUE);
     }
 
     json_t *jn_data = gobj_get_gclass_no_trace_level(gclass);
@@ -2687,7 +2797,7 @@ PRIVATE json_t *cmd_set_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgob
 
     KW_INCREF(kw);
     if(gobj_set_gobj_trace(gobj2trace, level, trace?1:0, kw)==0) {
-        save_user_trace(gobj, gobj_name_, level, trace?1:0);
+        save_user_trace(gobj, gobj_name_, level, trace?1:0, TRUE);
     }
 
     json_t *jn_data = gobj_get_gobj_trace_level(gobj2trace);
@@ -2767,7 +2877,7 @@ PRIVATE json_t *cmd_set_no_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, h
     }
 
     if(gobj_set_gobj_no_trace(gobj2trace, level, trace)==0) {
-        save_user_no_trace(gobj, gobj_name_, level, trace?1:0);
+        save_user_no_trace(gobj, gobj_name_, level, trace?1:0, TRUE);
     }
 
     json_t *jn_data = gobj_get_gobj_no_trace_level(gobj2trace);
@@ -4661,7 +4771,8 @@ PRIVATE int set_user_gobj_no_traces(hgobj gobj)
 PRIVATE int save_global_trace(
     hgobj gobj,
     const char *level,
-    BOOL set
+    BOOL set,
+    BOOL persistent
 )
 {
     json_t *jn_trace_levels = gobj_read_json_attr(gobj, "trace_levels");
@@ -4699,13 +4810,23 @@ PRIVATE int save_global_trace(
         }
     }
 
-    return gobj_save_persistent_attrs(gobj, json_string("trace_levels"));
+    if(persistent) {
+        return gobj_save_persistent_attrs(gobj, json_string("trace_levels"));
+    } else {
+        return 0;
+    }
 }
 
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int save_user_trace(hgobj gobj, const char* name, const char* level, BOOL set)
+PRIVATE int save_user_trace(
+    hgobj gobj,
+    const char* name,
+    const char* level,
+    BOOL set,
+    BOOL persistent
+)
 {
     json_t *jn_trace_levels = gobj_read_json_attr(gobj, "trace_levels");
 
@@ -4742,13 +4863,23 @@ PRIVATE int save_user_trace(hgobj gobj, const char* name, const char* level, BOO
         }
     }
 
-    return gobj_save_persistent_attrs(gobj, json_string("trace_levels"));
+    if(persistent) {
+        return gobj_save_persistent_attrs(gobj, json_string("trace_levels"));
+    } else {
+        return 0;
+    }
 }
 
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int save_user_no_trace(hgobj gobj, const char* name, const char* level, BOOL set)
+PRIVATE int save_user_no_trace(
+    hgobj gobj,
+    const char* name,
+    const char* level,
+    BOOL set,
+    BOOL persistent
+)
 {
     json_t *jn_no_trace_levels = gobj_read_json_attr(gobj, "no_trace_levels");
 
@@ -4785,7 +4916,11 @@ PRIVATE int save_user_no_trace(hgobj gobj, const char* name, const char* level, 
         }
     }
 
-    return gobj_save_persistent_attrs(gobj, json_string("no_trace_levels"));
+    if(persistent) {
+        return gobj_save_persistent_attrs(gobj, json_string("no_trace_levels"));
+    } else {
+        return 0;
+    }
 }
 
 /***************************************************************************
