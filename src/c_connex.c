@@ -24,6 +24,33 @@
 /***************************************************************************
  *          Data: config, public data, private data
  ***************************************************************************/
+PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_list_urls(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_add_url(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_remove_url(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+
+PRIVATE sdata_desc_t pm_help[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "cmd",          0,              0,          "command about you want help."),
+SDATAPM (ASN_UNSIGNED,  "level",        0,              0,          "command search level in childs"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_url[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "url",          0,              0,          "Url"),
+SDATA_END()
+};
+
+PRIVATE const char *a_help[] = {"h", "?", 0};
+
+PRIVATE sdata_desc_t command_table[] = {
+/*-CMD---type-----------name------------alias-------items-----------json_fn---------description---------- */
+SDATACM (ASN_SCHEMA,    "help",         a_help,     pm_help,        cmd_help,       "Command's help"),
+SDATACM (ASN_SCHEMA,    "list-urls",    0,          0,              cmd_list_urls,  "List urls"),
+SDATACM (ASN_SCHEMA,    "add-url",      0,          pm_url,         cmd_add_url,    "Add url"),
+SDATACM (ASN_SCHEMA,    "remove-url",   0,          pm_url,         cmd_remove_url, "Delete url"),
+SDATA_END()
+};
 
 /*---------------------------------------------*
  *      Attributes - order affect to oid's
@@ -220,6 +247,125 @@ PRIVATE int mt_stop(hgobj gobj)
     }
 
     return 0;
+}
+
+
+
+
+            /***************************
+             *      Commands
+             ***************************/
+
+
+
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    KW_INCREF(kw);
+    json_t *jn_resp = gobj_build_cmds_doc(gobj, kw);
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        jn_resp,
+        0,
+        0,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_list_urls(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        0,
+        0,
+        json_incref(priv->urls),
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_add_url(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *url = kw_get_str(kw, "url", "", 0);
+    if(empty_string(url)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_sprintf("What url?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *jn_urls = json_deep_copy(gobj_read_json_attr(gobj, "urls"));
+    json_array_append_new(jn_urls, json_string(url));
+    gobj_write_json_attr(gobj, "urls", jn_urls);
+    JSON_DECREF(jn_urls);
+
+    gobj_save_persistent_attrs(gobj, json_string("urls"));
+
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        0,
+        0,
+        json_incref(priv->urls),
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_remove_url(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    const char *url = kw_get_str(kw, "url", "", 0);
+    if(empty_string(url)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_sprintf("What url?"),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    json_t *jn_urls = json_deep_copy(gobj_read_json_attr(gobj, "urls"));
+
+    size_t idx = json_list_str_index(jn_urls, url, TRUE);
+    json_array_remove(jn_urls, idx);
+
+    gobj_write_json_attr(gobj, "urls", jn_urls);
+    JSON_DECREF(jn_urls);
+
+    gobj_save_persistent_attrs(gobj, json_string("urls"));
+
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        0,
+        0,
+        json_incref(priv->urls),
+        kw  // owned
+    );
 }
 
 
@@ -752,7 +898,7 @@ PRIVATE GCLASS _gclass = {
     sizeof(PRIVATE_DATA),
     0,  // acl
     s_user_trace_level,
-    0, // cmds
+    command_table, // cmds
     0, // gcflag
 };
 
