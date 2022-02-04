@@ -158,7 +158,6 @@ PRIVATE json_t *cmd_delete_channel(hgobj gobj, const char *cmd, json_t *kw, hgob
 PRIVATE json_t *cmd_list_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE json_t *cmd_view_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_list_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_enable_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_disable_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_drop_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -226,7 +225,6 @@ SDATACM (ASN_SCHEMA,    "add-channel",              0,      pm_add_channel, cmd_
 SDATACM (ASN_SCHEMA,    "delete-channel",           0,      pm_delete_channel,cmd_delete_channel,   "Delete channel."),
 SDATACM (ASN_SCHEMA,    "list-db",                  0,      pm_list_db,     cmd_list_db,            "List channel db."),
 SDATACM (ASN_SCHEMA,    "",                         0,      0,              0,                      "\nOperation\n-----------"),
-SDATACM (ASN_SCHEMA,    "list-channels",            0,      0,              cmd_list_channels,      "List channels __input_side__ __output_side__ (GUI usage)."),
 SDATACM (ASN_SCHEMA,    "view-channels",            0,      pm_channel,     cmd_view_channels,      "View channels."),
 SDATACM (ASN_SCHEMA,    "enable-channel",           0,      pm_channel,     cmd_enable_channels,    "Enable channel."),
 SDATACM (ASN_SCHEMA,    "disable-channel",          0,      pm_channel,     cmd_disable_channels,   "Disable channel."),
@@ -997,32 +995,6 @@ PRIVATE json_t *cmd_list_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     rc_free_iter(iter, TRUE, 0);
 
     return webix;
-}
-
-/***************************************************************************
- *  GUI usage
- ***************************************************************************/
-PRIVATE json_t *cmd_list_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    if(!priv->resource) {
-        return msg_iev_build_webix(gobj,
-            -1,
-            json_sprintf("Channel resource not in use."),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
-    json_t *kw_list = json_pack("{s:s, s:s, s:s}",
-        "gobj_name", "__input_side__ __output_side__",
-        "child_gclass", "Channel",
-        "attributes", "opened txMsgs rxMsgs txMsgsec rxMsgsec disabled sockname peername"
-    );
-    KW_DECREF(kw);
-    return gobj_command(gobj_yuno(), "list-childs", kw_list, src);
 }
 
 /***************************************************************************

@@ -83,6 +83,7 @@ PRIVATE json_t *cmd_view_service_register(hgobj gobj, const char *cmd, json_t *k
 PRIVATE json_t *cmd_view_unique_register(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE json_t *cmd_list_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_list_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_write_bool(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_write_str(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_write_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -190,6 +191,11 @@ SDATAPM (ASN_OCTET_STR, "gobj_name",    0,              0,          "named-gobj"
 SDATAPM (ASN_OCTET_STR, "gobj",         0,              0,          "named-gobj"),
 SDATAPM (ASN_OCTET_STR, "child_gclass", 0,              0,          "Child gclass-name (list separated by blank or |,;)"),
 SDATAPM (ASN_OCTET_STR, "attributes",   0,              0,          "Attributes to see (list separated by blank or |,;)"),
+SDATA_END()
+};
+PRIVATE sdata_desc_t pm_list_channels[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_BOOLEAN,   "opened",       0,              0,          "Show only opened channels"),
 SDATA_END()
 };
 
@@ -342,6 +348,8 @@ SDATACM (ASN_SCHEMA,    "view-gobj-tree",           0,      pm_gobj_root_name,cm
 SDATACM (ASN_SCHEMA,    "view-gobj-treedb",         0,      pm_gobj_root_name,cmd_view_gobj_treedb,     "View gobj treedb"),
 
 SDATACM (ASN_SCHEMA,    "list-childs",              0,      pm_list_childs, cmd_list_childs,            "List childs of the specified gclass"),
+SDATACM (ASN_SCHEMA,    "list-channels",            0,      pm_list_channels,cmd_list_channels,      "List channels (GUI usage)."),
+
 SDATACM (ASN_SCHEMA,    "write-bool",               0,      pm_wr_attr,     cmd_write_bool,             "Write a boolean attribute)"),
 SDATACM (ASN_SCHEMA,    "write-str",                0,      pm_wr_attr,     cmd_write_str,              "Write a string attribute"),
 SDATACM (ASN_SCHEMA,    "write-number",             0,      pm_wr_attr,     cmd_write_num,              "Write a numeric attribute)"),
@@ -1407,6 +1415,36 @@ PRIVATE json_t *cmd_list_childs(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     split_free(attr_list, max_attr_list);
     split_free(gobj_list, max_gobj_list);
 
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        0,
+        0,
+        jn_data,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *  GUI usage
+ ***************************************************************************/
+PRIVATE json_t *cmd_list_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    BOOL opened = kw_get_bool(kw, "opened", 0, KW_WILD_NUMBER);
+
+    json_t *jn_data = list_gclass_gobjs(gobj_yuno(), "Channel");
+    if(opened) {
+        json_t *jn_data2 = json_array();
+        int idx; json_t *channel;
+        json_array_foreach(jn_data, idx, channel) {
+            BOOL opened_ = kw_get_bool(channel, "attrs`opened", 0, KW_REQUIRED);
+            if(opened_) {
+                json_array_append(jn_data2, channel);
+            }
+        }
+        JSON_DECREF(jn_data);
+        jn_data = jn_data2;
+    }
     return msg_iev_build_webix(
         gobj,
         0,
