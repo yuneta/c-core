@@ -110,6 +110,7 @@ PRIVATE gate_config_t gate_config_pool[MAX_GATE_CONFIGS+1] = {
 /***************************************************************************
  *              Prototypes
  ***************************************************************************/
+PRIVATE int channels_opened(hgobj gobj);
 PRIVATE int trace_on_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE int trace_off_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE gate_config_t *get_tree_config_type(hgobj gobj, const char* type);
@@ -564,7 +565,13 @@ PRIVATE json_t *mt_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src)
     uint64_t rxMsgsec = gobj_read_uint64_attr(gobj, "rxMsgsec");
     uint64_t maxtxMsgsec = gobj_read_uint64_attr(gobj, "maxtxMsgsec");
     uint64_t maxrxMsgsec = gobj_read_uint64_attr(gobj, "maxrxMsgsec");
+    int opened = channels_opened(gobj);
 
+    json_object_set_new(
+        jn_stats,
+        "opened",
+        json_integer(opened)
+    );
     json_object_set_new(
         jn_stats,
         "txMsgs",
