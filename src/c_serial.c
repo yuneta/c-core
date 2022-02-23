@@ -258,7 +258,7 @@ PRIVATE void set_connected(hgobj gobj)
         log_info(0,
             "gobj",         "%s", gobj_full_name(gobj),
             "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
-            "msg",          "%s", "Connected",
+            "msg",          "%s", "Connected🔵",
             "port",         "%s", priv->port,
             NULL
         );
@@ -286,7 +286,7 @@ PRIVATE void set_disconnected(hgobj gobj)
         log_info(0,
             "gobj",         "%s", gobj_full_name(gobj),
             "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
-            "msg",          "%s", "Disconnected",
+            "msg",          "%s", "Disconnected🔴",
             "port",         "%s", priv->port,
             NULL
         );
