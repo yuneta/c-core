@@ -1165,10 +1165,9 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
         /*-------------------------------------------------*
          *  Check AUTHZ
          *-------------------------------------------------*/
-//         const EVENT *output_event_list = gobj_output_event_list(publisher);
-//         while(output_event_list->event) {
-//             if(output_event_list->authz & EV_AUTHZ_INJECT) {
-//                 const char *event = output_event_list->event?output_event_list->event:"";
+//         const EVENT *output_event = gobj_output_event(publisher);
+//             if(output_event->authz & EV_AUTHZ_INJECT) {
+//                 const char *event = output_event->event?output_event->event:"";
 //                 /*
 //                 *  AUTHZ Required
 //                 */
