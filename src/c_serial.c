@@ -259,6 +259,7 @@ PRIVATE void set_connected(hgobj gobj)
             "gobj",         "%s", gobj_full_name(gobj),
             "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
             "msg",          "%s", "Connected",
+            "msg2",         "%s", "Connected🔵",
             "port",         "%s", priv->port,
             NULL
         );
@@ -287,6 +288,7 @@ PRIVATE void set_disconnected(hgobj gobj)
             "gobj",         "%s", gobj_full_name(gobj),
             "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
             "msg",          "%s", "Disconnected",
+            "msg2",         "%s", "Disconnected🔴",
             "port",         "%s", priv->port,
             NULL
         );
@@ -668,6 +670,7 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
                 "gobj",         "%s", gobj_full_name(gobj),
                 "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
                 "msg",          "%s", "Connection Reset",
+                "msg2",         "%s", "Connection Reset🔴",
                 NULL
             );
         } else if(nread == UV_EOF) {
@@ -675,6 +678,7 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
                 "gobj",         "%s", gobj_full_name(gobj),
                 "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
                 "msg",          "%s", "EOF",
+                "msg2",         "%s", "EOF🔴",
                 NULL
             );
         } else {
@@ -683,6 +687,7 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_LIBUV_ERROR,
                 "msg",          "%s", "read FAILED",
+                "msg2",         "%s", "read FAILED🔴",
                 "uv_error",     "%s", uv_err_name(nread),
                 NULL
             );
