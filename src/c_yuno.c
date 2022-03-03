@@ -4627,9 +4627,11 @@ PRIVATE int set_user_gobj_traces(hgobj gobj)
         }
     }
 
+    BOOL save = FALSE;
     const char *key;
     json_t *jn_name;
-    json_object_foreach(jn_trace_levels, key, jn_name) {
+    void *n;
+    json_object_foreach_safe(jn_trace_levels, n, key, jn_name) {
         const char *name = key;
         if(empty_string(name)) {
             continue;
@@ -4663,6 +4665,8 @@ PRIVATE int set_user_gobj_traces(hgobj gobj)
                     "name",         "%s", name,
                     NULL
                 );
+                json_object_del(jn_trace_levels, name);
+                save = TRUE;
                 continue;
             }
         }
@@ -4693,6 +4697,10 @@ PRIVATE int set_user_gobj_traces(hgobj gobj)
         }
     }
 
+    if(save) {
+        gobj_save_persistent_attrs(gobj, json_string("trace_levels"));
+    }
+
     return 0;
 }
 
@@ -4707,9 +4715,12 @@ PRIVATE int set_user_gobj_no_traces(hgobj gobj)
         gobj_write_json_attr(gobj, "no_trace_levels", jn_no_trace_levels);
         json_decref(jn_no_trace_levels);
     }
+
+    BOOL save = FALSE;
     const char *key;
     json_t *jn_name;
-    json_object_foreach(jn_no_trace_levels, key, jn_name) {
+    void *n;
+    json_object_foreach_safe(jn_no_trace_levels, n, key, jn_name) {
         const char *name = key;
         if(empty_string(name)) {
             continue;
@@ -4730,14 +4741,21 @@ PRIVATE int set_user_gobj_no_traces(hgobj gobj)
         if(!gclass) { // Check gclass to check if no gclass and no gobj
             namedgobj = gobj_find_unique_gobj(name, FALSE);
             if(!namedgobj) {
+                char temp[256];
+                snprintf(temp, sizeof(temp), "%s NOT FOUND: %s",
+                    gclass?"named-gobj":"GClass",
+                    name
+                );
                 log_error(0,
                     "gobj",         "%s", gobj_full_name(gobj),
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "GClass or named-gobj NOT FOUND",
+                    "msg",          "%s", temp,
                     "name",         "%s", name,
                     NULL
                 );
+                json_object_del(jn_no_trace_levels, name);
+                save = TRUE;
                 continue;
             }
         }
@@ -4765,6 +4783,10 @@ PRIVATE int set_user_gobj_no_traces(hgobj gobj)
                 gobj_set_gobj_no_trace(namedgobj, level, TRUE);
             }
         }
+    }
+
+    if(save) {
+        gobj_save_persistent_attrs(gobj, json_string("no_trace_levels"));
     }
 
     return 0;
