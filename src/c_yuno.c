@@ -4650,11 +4650,16 @@ PRIVATE int set_user_gobj_traces(hgobj gobj)
         if(!gclass) { // Check gclass to check if no gclass and no gobj
             namedgobj = gobj_find_unique_gobj(name, FALSE);
             if(!namedgobj) {
+                char temp[256];
+                snprintf(temp, sizeof(temp), "%s NOT FOUND: %s",
+                    gclass?"named-gobj":"GClass",
+                    name
+                );
                 log_error(0,
                     "gobj",         "%s", gobj_full_name(gobj),
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "GClass or named-gobj NOT FOUND",
+                    "msg",          "%s", temp,
                     "name",         "%s", name,
                     NULL
                 );
