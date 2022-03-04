@@ -2201,6 +2201,7 @@ PRIVATE json_t *cmd_info_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, h
                     kw  // owned
                 );
             }
+            gclass_name_ = gclass->gclass_name;
         }
     }
 
@@ -5145,7 +5146,7 @@ PRIVATE GCLASS _gclass = {
         0, //mt_add_child_resource_link
         0, //mt_delete_child_resource_link
         0, //mt_get_resource
-        0, //mt_authorization_parser,
+        0, //mt_state_changed,
         0, //mt_authenticate,
         0, //mt_list_childs,
         mt_stats_updated,
