@@ -410,6 +410,7 @@ PRIVATE BOOL get_next_dst(
             parse_http_url(rl_url[1], schema, schema_len, lhost, lhost_len, lport, lport_len, FALSE);
             split_free(rl_url, list_size);
         } else {
+            // TODO se muere con canbus0 aleatoriamente
             parse_http_url(url, schema, schema_len, rhost, rhost_len, rport, rport_len, FALSE);
             const char *p = gobj_read_str_attr(gobj, "lHost");
             snprintf(lhost, lhost_len, "%s", p?p:"");
@@ -442,7 +443,12 @@ PRIVATE BOOL get_next_dst(
 PRIVATE int ac_connect(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-    char schema[20], rHost[120], rPort[40], lHost[120], lPort[40];
+    char schema[20]={0};
+    char rHost[120]={0};
+    char rPort[40]={0};
+    char lHost[120]={0};
+    char lPort[40]={0};
+
     get_next_dst(
         gobj,
         schema, sizeof(schema),
