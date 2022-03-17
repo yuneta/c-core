@@ -78,7 +78,6 @@ PRIVATE char clisrv_config[]= "\
                 {                                               \n\
                     'name': '(^^channel_name^^)-(^^index^^)',   \n\
                     'gclass': '(^^protocol_gclass^^)',          \n\
-                    'no_autostart': true,                       \n\
                     'kw': {                                     \n\
                         'iamServer': true                       \n\
                     }                                           \n\
