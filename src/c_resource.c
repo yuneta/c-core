@@ -512,7 +512,7 @@ PRIVATE int mt_delete_resource(hgobj gobj, hsdata hs)
 /***************************************************************************
  *      Framework Method add_child_resource_link
  ***************************************************************************/
-PRIVATE int mt_add_child_resource_link(hgobj gobj, hsdata hs_parent, hsdata hs_child)
+PRIVATE int mt_future21(hgobj gobj, hsdata hs_parent, hsdata hs_child)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
@@ -618,7 +618,7 @@ PRIVATE int mt_add_child_resource_link(hgobj gobj, hsdata hs_parent, hsdata hs_c
 /***************************************************************************
  *      Framework Method delete_child_resource_link
  ***************************************************************************/
-PRIVATE int mt_delete_child_resource_link(hgobj gobj, hsdata hs_parent, hsdata hs_child)
+PRIVATE int mt_future22(hgobj gobj, hsdata hs_parent, hsdata hs_child)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
@@ -1634,8 +1634,8 @@ PRIVATE GCLASS _gclass = {
         mt_list_resource,
         mt_update_resource,
         mt_delete_resource,
-        mt_add_child_resource_link,
-        mt_delete_child_resource_link,
+        mt_future21,
+        mt_future22,
         mt_get_resource,
         0, //mt_state_changed,
         0, //mt_authenticate,
