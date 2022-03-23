@@ -2537,9 +2537,8 @@ PRIVATE json_t *cmd_set_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hg
         trace = atoi(trace_value);
     }
 
-    if(gobj_set_gclass_trace(gclass, level, trace)==0) {
-        save_user_trace(gobj, gclass_name_, level, trace?1:0, TRUE);
-    }
+    gobj_set_gclass_trace(gclass, level, trace);
+    save_user_trace(gobj, gclass_name_, level, trace?1:0, TRUE);
 
     json_t *jn_data = gobj_get_gclass_trace_level(gclass);
     return msg_iev_build_webix(
@@ -2797,9 +2796,8 @@ PRIVATE json_t *cmd_set_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgob
     }
 
     KW_INCREF(kw);
-    if(gobj_set_gobj_trace(gobj2trace, level, trace?1:0, kw)==0) {
-        save_user_trace(gobj, gobj_name_, level, trace?1:0, TRUE);
-    }
+    gobj_set_gobj_trace(gobj2trace, level, trace?1:0, kw);
+    save_user_trace(gobj, gobj_name_, level, trace?1:0, TRUE);
 
     json_t *jn_data = gobj_get_gobj_trace_level(gobj2trace);
     return msg_iev_build_webix(
