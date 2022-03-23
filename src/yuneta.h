@@ -32,6 +32,7 @@ extern "C"{
 #include "c_tranger.h"
 #include "c_node.h"
 #include "c_resource.h"
+#include "c_resource2.h"
 #include "c_ievent_srv.h"
 #include "c_ievent_cli.h"
 

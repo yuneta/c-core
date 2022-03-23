@@ -57,6 +57,7 @@ set (SRCS
     src/c_node.c
     src/c_tranger.c
     src/c_resource.c
+    src/c_resource2.c
     src/c_ievent_srv.c
     src/c_ievent_cli.c
 #     src/c_store.c
@@ -121,6 +122,7 @@ set (HDRS
     src/c_node.h
     src/c_tranger.h
     src/c_resource.h
+    src/c_resource2.h
     src/c_ievent_srv.h
     src/c_ievent_cli.h
 

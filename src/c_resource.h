@@ -2,7 +2,8 @@
  *          C_RESOURCE.H
  *          Resource GClass.
  *
- *          Resource Controler
+ *          Resource Controler using hsdata and sqlite
+ *          DEPRECATED remove hsdata dependency by json
  *
  *          Copyright (c) 2016-2022 Niyamaka.
  *          All Rights Reserved.
@@ -24,7 +25,6 @@ extern "C"{
  ***************************************************************/
 /*
  *  Resources implemented with SQlite database
- *  Manage relations n-n 1-n childs BUT it's too SLOW
  */
 #define GCLASS_RESOURCE_NAME "Resource"
 #define GCLASS_RESOURCE gclass_resource()
@@ -128,26 +128,6 @@ typedef struct {
  *              Prototypes
  ***************************************************************/
 PUBLIC GCLASS *gclass_resource(void);
-/*
- *  json_t *RESOURCE_WEBIX_SCHEMA(hgobj gobj, const char *resource):
- *
- *      Return a webix resource's schema json:
- *
- *      columns: [
- *          {
- *              id:"colname",
- *              header: "ColName",
- *              fillspace:10
- *          },
- *          ...
- *      ]
- *
- */
-
-// TODO falla al cambiar el prototipo de gobj_exec_internal_method()
-// #define RESOURCE_WEBIX_SCHEMA(gobj, (json_t *)(_resource))
-//     gobj_exec_internal_method((gobj), "resource_webix_schema", _resource, 0)
-
 
 #ifdef __cplusplus
 }
