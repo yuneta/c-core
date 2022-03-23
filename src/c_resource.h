@@ -3,63 +3,8 @@
  *          Resource GClass.
  *
  *          Resource Controler
-
-                        Sample resource schema
-                        ======================
-
-
-tb_resources    NOT recursive (no tree), all tables must be defined in this table
-------------
-    realms:         ASN_ITER,       SDF_RESOURCE
-    binaries,       ASN_ITER,       SDF_RESOURCE
-    configurations: ASN_ITER,       SDF_RESOURCE
-    yunos:          ASN_ITER,       SDF_RESOURCE|SDF_PURECHILD
-                                                            ▲
-                                                            |
-                        HACK PureChild: mark SDF_PURECHILD in own table and in parent's field!
-                                                            | and mark SDF_PARENTID the own field pointing to parent
-                        ┌───────────────┐                   |     |
-                        │     realms    │                   |     |
-                        └───────────────┘                   |     |
-                                ▲ n (dl 'yunos')            |     |
-                                ┃                           |     |
-                                ┃                           |     |
-                                ▼ 1 ('realm_id')            |     |
-                ┌───────────────────────────────────────┐   |     |
-                │               yunos                   │   |     |
-                └───────────────────────────────────────┘   |     |
-                        ▲ 1 ('binary_id')       ▲ n (dl 'configurations')
-                        ┃                       ┃           |     |
-                        ┃                       ┃           |     |
-                        ▼ n (dl 'yunos')        ▼ n (dl 'yunos')  |
-                ┌────────────────┐      ┌────────────────┐  |     |
-                │   binaries     │      │ configurations │  |     |
-                └────────────────┘      └────────────────┘  |     |
-                                                            |     |
-Realms                                                      |     |
-------                                                      |     |
-    id:             ASN_COUNTER64,  SDF_PERSIST|SDF_PKEY    ▼     |
-    yunos:          ASN_ITER,       SDF_RESOURCE|SDF_PURECHILD,   |     "yunos"
-                                                                  |
-Yunos                                                             |
------                                                             |
-    id:             ASN_COUNTER64,  SDF_PERSIST|SDF_PKEY          ▼
-    realm_id:       ASN_COUNTER64,  SDF_PERSIST|SDF_PARENTID,           "realms"
-    binary_id:      ASN_COUNTER64,  SDF_PERSIST,                        "binaries"
-    config_ids:     ASN_ITER,       SDF_RESOURCE,                       "configurations"
-
-Binaries
---------
-    id:             ASN_COUNTER64,  SDF_PERSIST|SDF_PKEY
-
-configurations
---------------
-    id:             ASN_COUNTER64,  SDF_PERSIST|SDF_PKEY
-
-
-
  *
- *          Copyright (c) 2016,2018 Niyamaka.
+ *          Copyright (c) 2016-2022 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
 #pragma once
