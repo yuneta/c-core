@@ -5,7 +5,8 @@
  *          Resource Controler using flat files
  *
  *          Get persistent messages of a "resource" or "topic".
- *          Each resource/topic has a unique own flat file to save his message
+ *          Each resource/topic has a unique own flat file to save his record
+ *          One file per resource
  *
  *          If you want history then use queues, history, series/time.
  *
@@ -38,9 +39,7 @@ PRIVATE int delete_record(
     const char *resource
 );
 
-PRIVATE int create_persistent_resources(hgobj gobj);
 PRIVATE int load_persistent_resources(hgobj gobj);
-
 
 /***************************************************************************
  *          Data: config, public data, private data
@@ -48,9 +47,9 @@ PRIVATE int load_persistent_resources(hgobj gobj);
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag----------------default---------description---------- */
 SDATA (ASN_POINTER,     "json_desc",        SDF_RD,             0,              "C struct json_desc_t with the schema of records. Empty is no schema"),
-SDATA (ASN_BOOLEAN,     "persistent",       SDF_WR|SDF_PERSIST, 0,              "Resources are persistent"),
+SDATA (ASN_BOOLEAN,     "persistent",       SDF_RD,             TRUE,           "Resources are persistent"),
 SDATA (ASN_OCTET_STR,   "service",          SDF_RD,             "",             "Service name for global store, for example 'mqtt'"),
-SDATA (ASN_OCTET_STR,   "database",         SDF_RD,             0,              "Database name. Not empty to be persistent. Path is store/{service}/yuno_role_plus_name()/{database}/"),
+SDATA (ASN_OCTET_STR,   "database",         SDF_RD,             0,              "Database name. Path is store/{service}/yuno_role_plus_name()/{database}/"),
 
 SDATA (ASN_POINTER,     "user_data",        0,                  0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                  0,              "more user data"),
@@ -120,14 +119,13 @@ PRIVATE void mt_create(hgobj gobj)
     SET_PRIV(service,               gobj_read_str_attr)
     SET_PRIV(database,              gobj_read_str_attr)
 
-    // WARNING duplicated code
+    char path_service[NAME_MAX];
+    build_path3(path_service, sizeof(path_service),
+        priv->service,
+        gobj_yuno_role_plus_name(),
+        priv->database
+    );
     if(priv->persistent) {
-        char path_service[NAME_MAX];
-        build_path3(path_service, sizeof(path_service),
-            priv->service,
-            gobj_yuno_role_plus_name(),
-            priv->database
-        );
         yuneta_store_dir(
             priv->path_database, sizeof(priv->path_database), "resources", path_service, TRUE
         );
@@ -139,22 +137,10 @@ PRIVATE void mt_create(hgobj gobj)
  ***************************************************************************/
 PRIVATE void mt_writing(hgobj gobj, const char *path)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+    //PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    IF_EQ_SET_PRIV(persistent,             gobj_read_bool_attr)
-        // WARNING duplicated code
-        if(priv->persistent) {
-            char path_service[NAME_MAX];
-            build_path3(path_service, sizeof(path_service),
-                priv->service,
-                gobj_yuno_role_plus_name(),
-                priv->database
-            );
-            yuneta_store_dir(
-                priv->path_database, sizeof(priv->path_database), "resources", path_service, TRUE
-            );
-        }
-    END_EQ_SET_PRIV()
+    //IF_EQ_SET_PRIV(persistent,             gobj_read_bool_attr)
+    //END_EQ_SET_PRIV()
 }
 
 /***************************************************************************
@@ -173,9 +159,11 @@ PRIVATE int mt_start(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    if(!priv->db_resources) {
+        priv->db_resources = json_object();
+    }
     if(priv->persistent) {
-// TODO        create_persistent_resources(gobj); // IDEMPOTENTE.
-//         load_persistent_resources(gobj);
+        load_persistent_resources(gobj);
     }
 
     return 0;
@@ -186,6 +174,8 @@ PRIVATE int mt_start(hgobj gobj)
  ***************************************************************************/
 PRIVATE int mt_stop(hgobj gobj)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+    JSON_DECREF(priv->db_resources);
     return 0;
 }
 
@@ -247,13 +237,26 @@ PRIVATE int mt_save_resource(
 PRIVATE int mt_delete_resource(
     hgobj gobj,
     const char *resource,
-    json_t *record  // owned
+    json_t *record_  // NOT USED
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    json_t *jn_resource = kw_get_dict(priv->db_resources, resource, 0, 0);
-    if(!jn_resource) {
+    if(record_) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "Don't use record to delete resource",
+            "service",      "%s", priv->service,
+            "database",     "%s", priv->database,
+            "resource",     "%s", resource,
+            NULL
+        );
+    }
+
+    json_t *record = kw_get_dict(priv->db_resources, resource, 0, KW_EXTRACT);
+    if(!record) {
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
@@ -267,7 +270,9 @@ PRIVATE int mt_delete_resource(
         return 0;
     }
 
-    delete_record(gobj, resource);
+    if(priv->persistent) {
+        delete_record(gobj, resource);
+    }
 
     JSON_DECREF(record);
     return 0;
@@ -275,22 +280,37 @@ PRIVATE int mt_delete_resource(
 
 /***************************************************************************
  *      Framework Method list_resource
- *  'ids' has prevalence over other fields.
- *  If 'ids' exists then other fields are ignored to search resources.
  ***************************************************************************/
 PRIVATE void *mt_list_resource(
     hgobj gobj,
-    const char *resource,
+    const char *resource_,
     json_t *jn_filter  // owned
 )
 {
-//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     json_t *list = json_array();
-    if(jn_filter) {
+
+    if(!empty_string(resource_)) {
+        // Like get_resource
+        json_t *record = kw_get_dict(priv->db_resources, resource_, 0, 0);
+        if(record) {
+            json_array_append(list, record);
+        }
+        JSON_DECREF(jn_filter);
+        return list;
     }
 
-    // TODO
+    const char *resource; json_t *record;
+    json_object_foreach(priv->db_resources, resource, record) {
+        if(jn_filter) {
+            if(kw_match_simple(record, json_incref(jn_filter))) {
+                json_array_append(list, record);
+            }
+        } else {
+            json_array_append(list, record);
+        }
+    }
 
     JSON_DECREF(jn_filter);
     return list;
@@ -302,52 +322,15 @@ PRIVATE void *mt_list_resource(
 PRIVATE json_t *mt_get_resource(
     hgobj gobj,
     const char *resource,
-    json_t *jn_filter // owned, string 'id' or dict with 'id' field are used to find the node
+    json_t *jn_filter // NOT USED
 )
 {
-//     BOOL free_return_iter;
-//     dl_list_t *resource2_iter = get_resource2_iter(
-//         gobj,
-//         resource2,
-//         0,
-//         &free_return_iter
-//     );
-//
-//     if(!resource2_iter || dl_size(resource2_iter)==0) {
-//         if(free_return_iter) {
-//             rc_free_iter(resource2_iter, TRUE, 0);
-//         }
-//         KW_DECREF(str_or_kw);
-//         JSON_DECREF(jn_options);
-//         return 0;
-//     }
-//     json_int_t id = 0;
-//     if(json_is_string(str_or_kw)) {
-//         id = atoll(json_string_value(str_or_kw));
-//     } else {
-//         id = kw_get_int(str_or_kw, "id", 0, KW_REQUIRED|KW_WILD_NUMBER);
-//     }
-//     hsdata hs_resource2; rc_instance_t *i_hs;
-//     i_hs = rc_first_instance(resource2_iter, (rc_resource2_t **)&hs_resource2);
-//     while(i_hs) {
-//         json_int_t id_ = sdata_read_uint64(hs_resource2, "id");
-//         if(id == id_) {
-//             if(free_return_iter) {
-//                 rc_free_iter(resource2_iter, TRUE, 0);
-//             }
-//             KW_DECREF(str_or_kw);
-//             JSON_DECREF(jn_options);
-//             return hs_resource2;
-//         }
-//         i_hs = rc_next_instance(i_hs, (rc_resource2_t **)&hs_resource2);
-//     }
-//
-//     if(free_return_iter) {
-//         rc_free_iter(resource2_iter, TRUE, 0);
-//     }
-//
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    json_t *record = kw_get_dict(priv->db_resources, resource, 0, 0);
+
     JSON_DECREF(jn_filter);
-    return 0;
+    return record;
 }
 
 
@@ -361,11 +344,62 @@ PRIVATE json_t *mt_get_resource(
 
 
             /***************************
-             *      Local Methods
+             *      Private Methods
              ***************************/
 
 
 
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE BOOL load_resource_cb(
+    void *user_data,
+    wd_found_type type,     // type found
+    char *fullpath,         // directory+filename found
+    const char *directory,  // directory of found filename
+    char *name,             // dname[255]
+    int level,              // level of tree where file found
+    int index               // index of file inside of directory, relative to 0
+)
+{
+    hgobj gobj = user_data;
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    size_t flags = 0;
+    json_error_t error;
+    json_t *record = json_load_file(fullpath, flags, &error);
+    if(record) {
+        char *p = strstr(name, ".json");
+        if(p) {
+            *p = 0;
+        }
+        json_object_set_new(priv->db_resources, name, record);
+    } else {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_JSON_ERROR,
+            "msg",          "%s", "Wrong json file",
+            "path",         "%s", fullpath,
+            NULL
+        );
+    }
+    return TRUE; // to continue
+}
+
+PRIVATE int load_persistent_resources(hgobj gobj)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    return walk_dir_tree(
+        priv->path_database,
+        ".*\\.json",
+        WD_RECURSIVE|WD_MATCH_REGULAR_FILE,
+        load_resource_cb,
+        gobj
+    );
+}
 
 /***************************************************************************
  *
@@ -379,10 +413,10 @@ PRIVATE int save_record(
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     char filename[NAME_MAX];
-    snprintf(filename, sizeof(filename), ""); // TODO
+    snprintf(filename, sizeof(filename), "%s.json", resource);
 
     char path[PATH_MAX];
-    build_path2(path, sizeof(path), priv->path_database, resource);
+    build_path2(path, sizeof(path), priv->path_database, filename);
 
     int ret = json_dump_file(
         record,
@@ -414,15 +448,15 @@ PRIVATE int delete_record(
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     char filename[NAME_MAX];
-    snprintf(filename, sizeof(filename), "");
+    snprintf(filename, sizeof(filename), "%s.json", resource);
 
     char path[PATH_MAX];
-    build_path2(path, sizeof(path), priv->path_database, resource);
+    build_path2(path, sizeof(path), priv->path_database, filename);
 
     int ret = unlink(path);
     if(ret < 0) {
         log_error(0,
-            "gobj",         "%s", __FILE__,
+            "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_SYSTEM_ERROR,
             "msg",          "%s", "Cannot delete record file",
@@ -433,13 +467,6 @@ PRIVATE int delete_record(
     }
     return 0;
 }
-
-
-
-
-            /***************************
-             *      Private Methods
-             ***************************/
 
 
 
