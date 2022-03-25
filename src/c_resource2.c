@@ -192,7 +192,7 @@ PRIVATE int mt_stop(hgobj gobj)
 /***************************************************************************
  *      Framework Method create_resource
  ***************************************************************************/
-PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw, json_t *jn_options)
+PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
@@ -220,29 +220,24 @@ PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw,
         save_record(gobj, resource, record);
     }
 
-    JSON_DECREF(jn_options);
     return record;
 }
 
 /***************************************************************************
  *      Framework Method update_resource
  ***************************************************************************/
-PRIVATE int mt_update_resource(
+PRIVATE int mt_save_resource(
     hgobj gobj,
     const char *resource,
-    json_t *jn_filter,  // NO USED
-    json_t *kw,  // NOT owned
-    json_t *jn_options  // owned
+    json_t *record  // NOT owned
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     if(priv->persistent) {
-        save_record(gobj, resource, kw);
+        return save_record(gobj, resource, record);
     }
 
-    JSON_DECREF(jn_filter);
-    JSON_DECREF(jn_options);
     return 0;
 }
 
@@ -252,8 +247,7 @@ PRIVATE int mt_update_resource(
 PRIVATE int mt_delete_resource(
     hgobj gobj,
     const char *resource,
-    json_t *jn_filter,  // owned, can be a string or dict with 'id'
-    json_t *jn_options // owned
+    json_t *record  // owned
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -270,15 +264,12 @@ PRIVATE int mt_delete_resource(
             "resource",     "%s", resource,
             NULL
         );
-        JSON_DECREF(jn_filter);
-        JSON_DECREF(jn_options);
         return 0;
     }
 
     delete_record(gobj, resource);
 
-    JSON_DECREF(jn_filter);
-    JSON_DECREF(jn_options);
+    JSON_DECREF(record);
     return 0;
 }
 
@@ -290,8 +281,7 @@ PRIVATE int mt_delete_resource(
 PRIVATE void *mt_list_resource(
     hgobj gobj,
     const char *resource,
-    json_t *jn_filter,  // owned
-    json_t *jn_options  // owned
+    json_t *jn_filter  // owned
 )
 {
 //     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -303,7 +293,6 @@ PRIVATE void *mt_list_resource(
     // TODO
 
     JSON_DECREF(jn_filter);
-    JSON_DECREF(jn_options);
     return list;
 }
 
@@ -313,8 +302,7 @@ PRIVATE void *mt_list_resource(
 PRIVATE json_t *mt_get_resource(
     hgobj gobj,
     const char *resource,
-    json_t *jn_filter,  // owned, string 'id' or dict with 'id' field are used to find the node
-    json_t *jn_options  // owned
+    json_t *jn_filter // owned, string 'id' or dict with 'id' field are used to find the node
 )
 {
 //     BOOL free_return_iter;
@@ -359,7 +347,6 @@ PRIVATE json_t *mt_get_resource(
 //     }
 //
     JSON_DECREF(jn_filter);
-    JSON_DECREF(jn_options);
     return 0;
 }
 
@@ -530,7 +517,7 @@ PRIVATE GCLASS _gclass = {
         0, //mt_inject_event,
         mt_create_resource,
         mt_list_resource,
-        mt_update_resource,
+        mt_save_resource,
         mt_delete_resource,
         0, //mt_future21,
         0, //mt_future22,
