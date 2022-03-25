@@ -366,14 +366,14 @@ PRIVATE int mt_update_resource(
             );
             JSON_DECREF(jn_filter);
             JSON_DECREF(jn_options);
-            return -1;
+            return 0;
         }
 
         json_t *kw_filtro = json_object();
         json_object_set_new(kw_filtro, "id", json_integer(id));
         json_t *kw_resource = sdata2json(hs, SDF_PERSIST, 0);
 
-        return priv->dba->dba_update_record(
+        priv->dba->dba_update_record(
             gobj,
             priv->pDb,
             resource,
