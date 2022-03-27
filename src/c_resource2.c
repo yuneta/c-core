@@ -46,6 +46,7 @@ PRIVATE int load_persistent_resources(hgobj gobj);
  ***************************************************************************/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag----------------default---------description---------- */
+SDATA (ASN_BOOLEAN,     "strict",           SDF_RD,             FALSE,          "Only fields of schema are saved"),
 SDATA (ASN_POINTER,     "json_desc",        SDF_RD,             0,              "C struct json_desc_t with the schema of records. Empty is no schema"),
 SDATA (ASN_BOOLEAN,     "persistent",       SDF_RD,             TRUE,           "Resources are persistent"),
 SDATA (ASN_OCTET_STR,   "service",          SDF_RD,             "",             "Service name for global store, for example 'mqtt'"),
@@ -77,6 +78,7 @@ typedef struct _PRIVATE_DATA {
     char path_database[PATH_MAX];
     const char *pkey;
 
+    BOOL strict;
     json_desc_t *json_desc;
     const char *service;
     const char *database;
@@ -114,6 +116,7 @@ PRIVATE void mt_create(hgobj gobj)
      *  Do copy of heavy used parameters, for quick access.
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
+    SET_PRIV(strict,                gobj_read_bool_attr)
     SET_PRIV(json_desc,             gobj_read_pointer_attr)
     SET_PRIV(persistent,            gobj_read_bool_attr)
     SET_PRIV(service,               gobj_read_str_attr)
@@ -186,13 +189,37 @@ PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    if(!kw) {
+        kw = json_object();
+    }
+
+    json_t *jn_resource = kw_get_dict(priv->db_resources, resource, 0, 0);
+    if(jn_resource) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "Resource already exists",
+            "service",      "%s", priv->service,
+            "database",     "%s", priv->database,
+            "resource",     "%s", resource,
+            NULL
+        );
+        KW_DECREF(kw);
+        return 0;
+    }
+
     /*----------------------------------*
      *  Free content or with schema
      *----------------------------------*/
     json_t *record = 0;
     if(priv->json_desc) {
         record = create_json_record(priv->json_desc);
-        json_object_update_existing_new(record, kw); // kw owned
+        if(priv->strict) {
+            json_object_update_existing_new(record, kw); // kw owned
+        } else {
+            json_object_update_new(record, kw); // kw owned
+        }
     } else {
         record = kw; // kw owned
     }
@@ -200,8 +227,7 @@ PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
     /*------------------------------------------*
      *      Create resource
      *------------------------------------------*/
-    json_t *jn_resource = kw_get_dict(priv->db_resources, resource, json_object(), KW_CREATE);
-    json_object_update(jn_resource, record);
+    kw_set_dict_value(priv->db_resources, resource, record);
 
     /*------------------------------------------*
      *      Save if persistent
@@ -420,7 +446,7 @@ PRIVATE int save_record(
 
     int ret = json_dump_file(
         record,
-        filename,
+        path,
         JSON_INDENT(4)
     );
     if(ret < 0) {

@@ -1213,7 +1213,7 @@ PRIVATE int ac_tx_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
 
     KW_DECREF(kw);
-    return 1;
+    return 0;
 }
 
 /***************************************************************************
@@ -1226,7 +1226,7 @@ PRIVATE int ac_enqueue_tx_data(hgobj gobj, const char *event, json_t *kw, hgobj 
     gbuf_incref(gbuf); // Quédate una copia
     enqueue_write(gobj, gbuf);
     KW_DECREF(kw);
-    return 1;
+    return 0;
 }
 
 /***************************************************************************
@@ -1238,7 +1238,7 @@ PRIVATE int ac_drop(hgobj gobj, const char *event, json_t *kw, hgobj src)
         gobj_stop(gobj);
     }
     KW_DECREF(kw);
-    return 1;
+    return 0;
 }
 
 /***************************************************************************
