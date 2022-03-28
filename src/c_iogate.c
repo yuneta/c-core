@@ -421,7 +421,7 @@ PRIVATE int mt_start(hgobj gobj)
                     "idx", (json_int_t)0,
                     "channel_gobj", (json_int_t)(size_t)child
                 );
-                hsdata hs = gobj_create_resource(priv->resource, resource, kw_rc);
+                hsdata hs = gobj_create_resource(priv->resource, resource, kw_rc, 0);
                 gobj_write_pointer_attr(child, "user_data2", hs);
             } else if(rc_iter_size(iter) == 1) {
                 // TODO se ignoran los disabled y trace_level de los static channel.
@@ -807,7 +807,7 @@ PRIVATE json_t *cmd_add_channel(hgobj gobj, const char *cmd, json_t *kw, hgobj s
     }
 
     KW_INCREF(kw);
-    hsdata hs = gobj_create_resource(priv->resource, resource, kw);
+    hsdata hs = gobj_create_resource(priv->resource, resource, kw, 0);
     if(!hs) {
         return msg_iev_build_webix(
             gobj,

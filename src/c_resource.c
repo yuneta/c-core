@@ -222,7 +222,7 @@ PRIVATE int mt_stop(hgobj gobj)
 /***************************************************************************
  *      Framework Method create_resource
  ***************************************************************************/
-PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
+PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw, json_t *jn_options)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
@@ -238,6 +238,7 @@ PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
     );
     if(!resource_iter) {
         KW_DECREF(kw);
+        JSON_DECREF(jn_options);
         return (hsdata)0;
     }
     if(free_return_iter) {
@@ -250,12 +251,14 @@ PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
             NULL
         );
         KW_DECREF(kw);
+        JSON_DECREF(jn_options);
         return (hsdata)0;
     }
 
     hsdata hs = sdata_create(schema, gobj, on_write_it_cb, 0, 0, resource);
     if(!hs)  {
         KW_DECREF(kw);
+        JSON_DECREF(jn_options);
         return (hsdata)0;
     }
 
@@ -270,6 +273,7 @@ PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
     if(!sdata_check_required_attrs(hs, print_required_attr_not_found, hs)) {
         sdata_destroy(hs);
         KW_DECREF(kw);
+        JSON_DECREF(jn_options);
         return (hsdata)0;
     }
 
@@ -291,6 +295,7 @@ PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
             );
             sdata_destroy(hs);
             KW_DECREF(kw);
+            JSON_DECREF(jn_options);
             return (hsdata)0;
         }
         if(!id) {
@@ -327,6 +332,7 @@ PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
     }
 
     KW_DECREF(kw);
+    JSON_DECREF(jn_options);
     return hs;
 }
 
@@ -336,7 +342,8 @@ PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
 PRIVATE int mt_save_resource(
     hgobj gobj,
     const char *resource,
-    json_t *hs_
+    json_t *hs_,
+    json_t *jn_options // owned
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -356,6 +363,7 @@ PRIVATE int mt_save_resource(
                 "resource",     "%s", resource,
                 NULL
             );
+            JSON_DECREF(jn_options);
             return 0;
         }
 
@@ -371,13 +379,19 @@ PRIVATE int mt_save_resource(
             kw_resource
         );
     }
+    JSON_DECREF(jn_options);
     return 0;
 }
 
 /***************************************************************************
  *      Framework Method delete_resource
  ***************************************************************************/
-PRIVATE int mt_delete_resource(hgobj gobj, const char *resource, json_t *hs_)
+PRIVATE int mt_delete_resource(
+    hgobj gobj,
+    const char *resource,
+    json_t *hs_,
+    json_t *jn_options // owned
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
     hsdata hs = (hsdata)hs_; // HACK old compatibility
@@ -395,6 +409,7 @@ PRIVATE int mt_delete_resource(hgobj gobj, const char *resource, json_t *hs_)
                 "resource",     "%s", resource,
                 NULL
             );
+            JSON_DECREF(jn_options);
             return -1;
         }
         json_t *kw_filtro = json_object();
@@ -408,6 +423,7 @@ PRIVATE int mt_delete_resource(hgobj gobj, const char *resource, json_t *hs_)
     }
     ret += rc_delete_resource(hs, sdata_destroy); // Must the last thing to do
 
+    JSON_DECREF(jn_options);
     return ret;
 }
 

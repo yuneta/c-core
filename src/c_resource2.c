@@ -32,7 +32,8 @@
 PRIVATE int save_record(
     hgobj gobj,
     const char *resource,
-    json_t *record // not owned
+    json_t *record, // not owned
+    json_t *jn_options // not owned
 );
 PRIVATE int delete_record(
     hgobj gobj,
@@ -47,6 +48,7 @@ PRIVATE int load_persistent_resources(hgobj gobj);
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag----------------default---------description---------- */
 SDATA (ASN_BOOLEAN,     "strict",           SDF_RD,             FALSE,          "Only fields of schema are saved"),
+SDATA (ASN_BOOLEAN,     "ignore_private",   SDF_RD,             TRUE,           "Don't save fields beginning by _"),
 SDATA (ASN_POINTER,     "json_desc",        SDF_RD,             0,              "C struct json_desc_t with the schema of records. Empty is no schema"),
 SDATA (ASN_BOOLEAN,     "persistent",       SDF_RD,             TRUE,           "Resources are persistent"),
 SDATA (ASN_OCTET_STR,   "service",          SDF_RD,             "",             "Service name for global store, for example 'mqtt'"),
@@ -79,6 +81,7 @@ typedef struct _PRIVATE_DATA {
     const char *pkey;
 
     BOOL strict;
+    BOOL ignore_private;
     json_desc_t *json_desc;
     const char *service;
     const char *database;
@@ -117,6 +120,7 @@ PRIVATE void mt_create(hgobj gobj)
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
     SET_PRIV(strict,                gobj_read_bool_attr)
+    SET_PRIV(ignore_private,        gobj_read_bool_attr)
     SET_PRIV(json_desc,             gobj_read_pointer_attr)
     SET_PRIV(persistent,            gobj_read_bool_attr)
     SET_PRIV(service,               gobj_read_str_attr)
@@ -185,7 +189,7 @@ PRIVATE int mt_stop(hgobj gobj)
 /***************************************************************************
  *      Framework Method create_resource
  ***************************************************************************/
-PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
+PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw, json_t *jn_options)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
@@ -206,6 +210,7 @@ PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
             NULL
         );
         KW_DECREF(kw);
+        JSON_DECREF(jn_options);
         return 0;
     }
 
@@ -233,9 +238,10 @@ PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
      *      Save if persistent
      *------------------------------------------*/
     if(priv->persistent) {
-        save_record(gobj, resource, record);
+        save_record(gobj, resource, record, jn_options);
     }
 
+    JSON_DECREF(jn_options);
     return record;
 }
 
@@ -245,15 +251,19 @@ PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw)
 PRIVATE int mt_save_resource(
     hgobj gobj,
     const char *resource,
-    json_t *record  // NOT owned
+    json_t *record,  // NOT owned
+    json_t *jn_options // owned
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     if(priv->persistent) {
-        return save_record(gobj, resource, record);
+        int ret = save_record(gobj, resource, record, jn_options);
+        JSON_DECREF(jn_options);
+        return ret;
     }
 
+    JSON_DECREF(jn_options);
     return 0;
 }
 
@@ -263,7 +273,8 @@ PRIVATE int mt_save_resource(
 PRIVATE int mt_delete_resource(
     hgobj gobj,
     const char *resource,
-    json_t *record_  // NOT USED
+    json_t *record_,  // NOT USED
+    json_t *jn_options // owned
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -293,7 +304,8 @@ PRIVATE int mt_delete_resource(
             "resource",     "%s", resource,
             NULL
         );
-        return 0;
+        JSON_DECREF(jn_options);
+        return -1;
     }
 
     if(priv->persistent) {
@@ -301,6 +313,7 @@ PRIVATE int mt_delete_resource(
     }
 
     JSON_DECREF(record);
+    JSON_DECREF(jn_options);
     return 0;
 }
 
@@ -433,7 +446,8 @@ PRIVATE int load_persistent_resources(hgobj gobj)
 PRIVATE int save_record(
     hgobj gobj,
     const char *resource,
-    json_t *record // not owned
+    json_t *record, // not owned
+    json_t *jn_options // not owned
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -444,11 +458,23 @@ PRIVATE int save_record(
     char path[PATH_MAX];
     build_path2(path, sizeof(path), priv->path_database, filename);
 
-    int ret = json_dump_file(
-        record,
-        path,
-        JSON_INDENT(4)
-    );
+    int ret;
+    if(priv->ignore_private) {
+        json_t *_record = kw_filter_private(kw_incref(record));
+        ret = json_dump_file(
+            _record,
+            path,
+            JSON_INDENT(4)
+        );
+        JSON_DECREF(_record);
+    } else {
+        ret = json_dump_file(
+            record,
+            path,
+            JSON_INDENT(4)
+        );
+    }
+
     if(ret < 0) {
         log_error(0,
             "gobj",         "%s", __FILE__,
