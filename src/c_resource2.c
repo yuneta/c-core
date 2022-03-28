@@ -192,9 +192,25 @@ PRIVATE int mt_stop(hgobj gobj)
 PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw, json_t *jn_options)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+    BOOL volatil = kw_get_bool(jn_options, "volatil", 0, 0);
 
     if(!kw) {
         kw = json_object();
+    }
+
+    if(empty_string(resource)) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "Resource name empty",
+            "service",      "%s", priv->service,
+            "database",     "%s", priv->database,
+            NULL
+        );
+        KW_DECREF(kw);
+        JSON_DECREF(jn_options);
+        return 0;
     }
 
     json_t *jn_resource = kw_get_dict(priv->db_resources, resource, 0, 0);
@@ -238,7 +254,9 @@ PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw,
      *      Save if persistent
      *------------------------------------------*/
     if(priv->persistent) {
-        save_record(gobj, resource, record, jn_options);
+        if(!volatil) {
+            save_record(gobj, resource, record, jn_options);
+        }
     }
 
     JSON_DECREF(jn_options);
@@ -256,6 +274,20 @@ PRIVATE int mt_save_resource(
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if(empty_string(resource)) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "Resource name empty",
+            "service",      "%s", priv->service,
+            "database",     "%s", priv->database,
+            NULL
+        );
+        JSON_DECREF(jn_options);
+        return -1;
+    }
 
     if(priv->persistent) {
         int ret = save_record(gobj, resource, record, jn_options);
@@ -290,6 +322,24 @@ PRIVATE int mt_delete_resource(
             "resource",     "%s", resource,
             NULL
         );
+        JSON_DECREF(record_);
+        JSON_DECREF(jn_options);
+        return -1;
+    }
+
+    if(empty_string(resource)) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "Resource name empty",
+            "service",      "%s", priv->service,
+            "database",     "%s", priv->database,
+            NULL
+        );
+        JSON_DECREF(record_);
+        JSON_DECREF(jn_options);
+        return -1;
     }
 
     json_t *record = kw_get_dict(priv->db_resources, resource, 0, KW_EXTRACT);
@@ -304,6 +354,7 @@ PRIVATE int mt_delete_resource(
             "resource",     "%s", resource,
             NULL
         );
+        JSON_DECREF(record);
         JSON_DECREF(jn_options);
         return -1;
     }
@@ -323,7 +374,8 @@ PRIVATE int mt_delete_resource(
 PRIVATE void *mt_list_resource(
     hgobj gobj,
     const char *resource_,
-    json_t *jn_filter  // owned
+    json_t *jn_filter,  // owned
+    json_t *jn_options  // owned
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -337,6 +389,7 @@ PRIVATE void *mt_list_resource(
             json_array_append(list, record);
         }
         JSON_DECREF(jn_filter);
+        JSON_DECREF(jn_options);
         return list;
     }
 
@@ -344,14 +397,33 @@ PRIVATE void *mt_list_resource(
     json_object_foreach(priv->db_resources, resource, record) {
         if(jn_filter) {
             if(kw_match_simple(record, json_incref(jn_filter))) {
-                json_array_append(list, record);
+                if(json_is_array(jn_options)) {
+                    json_t *new_record = kw_clone_by_keys(
+                        json_incref(record),     // owned
+                        json_incref(jn_options),   // owned
+                        FALSE
+                    );
+                    json_array_append_new(list, new_record);
+                } else {
+                    json_array_append(list, record);
+                }
             }
         } else {
-            json_array_append(list, record);
+            if(json_is_array(jn_options)) {
+                json_t *new_record = kw_clone_by_keys(
+                    json_incref(record),     // owned
+                    json_incref(jn_options),   // owned
+                    FALSE
+                );
+                json_array_append_new(list, new_record);
+            } else {
+                json_array_append(list, record);
+            }
         }
     }
 
     JSON_DECREF(jn_filter);
+    JSON_DECREF(jn_options);
     return list;
 }
 
@@ -361,14 +433,31 @@ PRIVATE void *mt_list_resource(
 PRIVATE json_t *mt_get_resource(
     hgobj gobj,
     const char *resource,
-    json_t *jn_filter // NOT USED
+    json_t *jn_filter,  // owned, NOT USED
+    json_t *jn_options  // owned
 )
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    if(empty_string(resource)) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "Resource name empty",
+            "service",      "%s", priv->service,
+            "database",     "%s", priv->database,
+            NULL
+        );
+        JSON_DECREF(jn_filter);
+        JSON_DECREF(jn_options);
+        return 0;
+    }
+
     json_t *record = kw_get_dict(priv->db_resources, resource, 0, 0);
 
     JSON_DECREF(jn_filter);
+    JSON_DECREF(jn_options);
     return record;
 }
 

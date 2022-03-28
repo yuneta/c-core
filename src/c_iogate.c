@@ -405,7 +405,7 @@ PRIVATE int mt_start(hgobj gobj)
             json_t *kw_rc = json_pack("{s:s}",
                 "channel_name", channel_name
             );
-            dl_list_t *iter = (dl_list_t *)gobj_list_resource(priv->resource, resource, kw_rc);
+            dl_list_t *iter = (dl_list_t *)gobj_list_resource(priv->resource, resource, kw_rc, 0);
             if(rc_iter_size(iter) == 0) {
                 kw_rc = json_pack("{s:s, s:s, s:s, s:b, s:b, s:b, s:s, s:s, s:s, s:s, s:I, s:I}",
                     "type", "client_gate",
@@ -449,7 +449,7 @@ PRIVATE int mt_start(hgobj gobj)
     /*-------------------------*
      *  Load dynamic channels
      *-------------------------*/
-    dl_list_t *iter = (dl_list_t *)gobj_list_resource(priv->resource, resource, 0);
+    dl_list_t *iter = (dl_list_t *)gobj_list_resource(priv->resource, resource, 0, 0);
 
     hsdata hs_channel; rc_instance_t *i_hs;
     i_hs = rc_first_instance(iter, (rc_resource_t **)&hs_channel);
@@ -919,8 +919,7 @@ PRIVATE json_t *cmd_list_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
     /*
      *  Get a iter of matched resources
      */
-    KW_INCREF(kw);
-    dl_list_t *iter = (dl_list_t *)gobj_list_resource(priv->resource, resource, kw);
+    dl_list_t *iter = (dl_list_t *)gobj_list_resource(priv->resource, resource, kw_incref(kw), 0);
 
     /*
      *  Convert hsdata to json
@@ -1136,7 +1135,7 @@ PRIVATE json_t *cmd_enable_channels(hgobj gobj, const char *cmd, json_t *kw, hgo
     /*
      *  Get a iter of matched resources
      */
-    dl_list_t *iter = (dl_list_t *)gobj_list_resource(priv->resource, resource, kw_incref(kw));
+    dl_list_t *iter = (dl_list_t *)gobj_list_resource(priv->resource, resource, kw_incref(kw), 0);
 
     hgobj hs; rc_instance_t *i_hs;
     i_hs = rc_first_instance(iter, (rc_resource_t **)&hs);
@@ -1182,7 +1181,7 @@ PRIVATE json_t *cmd_disable_channels(hgobj gobj, const char *cmd, json_t *kw, hg
     /*
      *  Get a iter of matched resources
      */
-    dl_list_t *iter = (dl_list_t *)gobj_list_resource(priv->resource, resource, kw_incref(kw));
+    dl_list_t *iter = (dl_list_t *)gobj_list_resource(priv->resource, resource, kw_incref(kw), 0);
 
     hgobj hs; rc_instance_t *i_hs;
     i_hs = rc_first_instance(iter, (rc_resource_t **)&hs);
@@ -1288,7 +1287,8 @@ PRIVATE int trace_on_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj src
     dl_list_t *iter = (dl_list_t *)gobj_list_resource(
         priv->resource,
         resource,
-        kw_incref(kw) // owned
+        kw_incref(kw), // owned
+        0
     );
 
     hgobj hs; rc_instance_t *i_hs;
@@ -1329,7 +1329,8 @@ PRIVATE int trace_off_channels(hgobj gobj, const char* cmd, json_t* kw, hgobj sr
     dl_list_t *iter = (dl_list_t *)gobj_list_resource(
         priv->resource,
         resource,
-        kw_incref(kw)
+        kw_incref(kw),
+        0
     );
 
     hgobj hs; rc_instance_t *i_hs;
@@ -1383,7 +1384,7 @@ PRIVATE hgobj get_next_destination(hgobj gobj)
      *  Get a iter of matched resources
      */
     const char *last_channel = gobj_read_str_attr(gobj, "last_channel");
-    dl_list_t *iter = (dl_list_t *)gobj_list_resource(priv->resource, resource, 0);
+    dl_list_t *iter = (dl_list_t *)gobj_list_resource(priv->resource, resource, 0, 0);
 
     json_t *jn_filter = json_pack("{s:b, s:b}",
         "opened", 1,
@@ -1506,7 +1507,7 @@ PRIVATE int send_all(hgobj gobj, const char *event, json_t *kw, hgobj src)
     /*
      *  Get a iter of matched resources
      */
-    dl_list_t *iter = (dl_list_t *)gobj_list_resource(priv->resource, resource, 0);
+    dl_list_t *iter = (dl_list_t *)gobj_list_resource(priv->resource, resource, 0, 0);
 
     json_t *jn_filter = json_pack("{s:b, s:b}",
         "opened", 1,

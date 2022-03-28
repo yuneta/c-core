@@ -432,7 +432,12 @@ PRIVATE int mt_delete_resource(
  *  'ids' has prevalence over other fields.
  *  If 'ids' exists then other fields are ignored to search resources.
  ***************************************************************************/
-PRIVATE void *mt_list_resource(hgobj gobj, const char *resource, json_t* jn_filter)
+PRIVATE void *mt_list_resource(
+    hgobj gobj,
+    const char *resource,
+    json_t* jn_filter,
+    json_t *jn_options
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
@@ -444,6 +449,7 @@ PRIVATE void *mt_list_resource(hgobj gobj, const char *resource, json_t* jn_filt
     if(!schema) {
         // Error already logged
         KW_DECREF(jn_filter);
+        JSON_DECREF(jn_options);
         return user_iter;
     }
     json_int_t parent_id = 0;
@@ -460,6 +466,7 @@ PRIVATE void *mt_list_resource(hgobj gobj, const char *resource, json_t* jn_filt
             rc_free_iter(resource_iter, TRUE, 0);
         }
         KW_DECREF(jn_filter);
+        JSON_DECREF(jn_options);
         return user_iter;
     }
 
@@ -524,13 +531,19 @@ PRIVATE void *mt_list_resource(hgobj gobj, const char *resource, json_t* jn_filt
     }
 
     KW_DECREF(jn_filter);
+    JSON_DECREF(jn_options);
     return user_iter;
 }
 
 /***************************************************************************
  *      Framework Method get_resource
  ***************************************************************************/
-PRIVATE json_t *mt_get_resource(hgobj gobj, const char *resource, json_t *jn_filter)
+PRIVATE json_t *mt_get_resource(
+    hgobj gobj,
+    const char *resource,
+    json_t *jn_filter,
+    json_t *jn_options
+)
 {
     BOOL free_return_iter;
     dl_list_t *resource_iter = get_resource_iter(
@@ -545,6 +558,7 @@ PRIVATE json_t *mt_get_resource(hgobj gobj, const char *resource, json_t *jn_fil
             rc_free_iter(resource_iter, TRUE, 0);
         }
         KW_DECREF(jn_filter);
+        JSON_DECREF(jn_options);
         return 0;
     }
     json_int_t id = 0;
@@ -572,6 +586,7 @@ PRIVATE json_t *mt_get_resource(hgobj gobj, const char *resource, json_t *jn_fil
     }
 
     KW_DECREF(jn_filter);
+    JSON_DECREF(jn_options);
     return 0;
 }
 
