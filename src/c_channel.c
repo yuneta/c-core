@@ -144,7 +144,6 @@ PRIVATE int mt_start(hgobj gobj)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     gobj_start(priv->timer);
-    set_timeout_periodic(priv->timer,gobj_read_int32_attr(gobj, "timeout"));
     gobj_start_tree(gobj);
     return 0;
 }
@@ -209,6 +208,8 @@ PRIVATE BOOL all_childs_closed(hgobj gobj)
  ***************************************************************************/
 PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
     my_user_data2_t my_user_data2 = (my_user_data2_t)gobj_read_pointer_attr(src, "user_data2");
     my_user_data2 |= st_open;
     gobj_write_pointer_attr(src, "user_data2", (void *)my_user_data2);
@@ -229,6 +230,8 @@ PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
     }
     gobj_write_bool_attr(gobj, "opened", TRUE);
 
+    set_timeout_periodic(priv->timer,gobj_read_int32_attr(gobj, "timeout"));
+
     return gobj_publish_event(gobj, event, kw);  // reuse kw
 }
 
@@ -237,6 +240,10 @@ PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    clear_timeout(priv->timer);
+
     my_user_data2_t my_user_data2 = (my_user_data2_t)gobj_read_pointer_attr(src, "user_data2");
     my_user_data2 &= ~st_open;
     gobj_write_pointer_attr(src, "user_data2", (void *)my_user_data2);
