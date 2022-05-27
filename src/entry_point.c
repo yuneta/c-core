@@ -489,7 +489,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
                     char *path = yuneta_log_file(temp, sizeof(temp), filename_mask, TRUE);
                     if(path) {
                         size_t bf_size = 0;                     // 0 = default 64K
-                        int max_megas_rotatoryfile_size = 0;    // 0 = default 8
+                        int max_megas_rotatoryfile_size = 0;    // 0 = default 8 Megas
                         int min_free_disk_percentage = 0;       // 0 = default 10
 
                         KW_GET(bf_size, bf_size, kw_get_int)
@@ -1008,4 +1008,3 @@ PUBLIC void set_ordered_death(BOOL ordered_death)
 {
     __ordered_death__ = ordered_death;
 }
-
