@@ -479,7 +479,8 @@ PRIVATE int configure_tty(hgobj gobj)
     /* c_iflag */
 
     /* Ignore break characters */
-    termios_settings.c_iflag = IGNBRK;
+    termios_settings.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
+
     if (parity != PARITY_NONE)
         termios_settings.c_iflag |= INPCK;
     /* Only use ISTRIP when less than 8 bits as it strips the 8th bit */
@@ -489,14 +490,14 @@ PRIVATE int configure_tty(hgobj gobj)
         termios_settings.c_iflag |= (IXON | IXOFF);
 
     /* c_oflag */
-    //termios_settings.c_oflag = 0;
+    termios_settings.c_oflag &= ~OPOST;
 
     /* c_lflag */
-    termios_settings.c_lflag &= ~((tcflag_t) ECHO); // No echo
+    termios_settings.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN); // No echo
 
     /* c_cflag */
     /* Enable receiver, ignore modem control lines */
-    //termios_settings.c_cflag = CREAD | CLOCAL;
+    termios_settings.c_cflag = CREAD | CLOCAL;
 
     /* Databits */
     if (bytesize == 5)
@@ -519,8 +520,9 @@ PRIVATE int configure_tty(hgobj gobj)
         termios_settings.c_cflag |= CSTOPB;
 
     /* RTS/CTS */
-    if (rtscts)
+    if (rtscts) {
         termios_settings.c_cflag |= CRTSCTS;
+    }
 
     /* Baudrate */
     cfsetispeed(&termios_settings, baudrate);
