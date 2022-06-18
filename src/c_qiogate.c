@@ -145,6 +145,7 @@ typedef struct _PRIVATE_DATA {
     uint64_t txMsgsec;
     uint64_t rxMsgsec;
     BOOL debug_queue_prot;
+    BOOL drop_on_timeout_ack;
 } PRIVATE_DATA;
 
 
@@ -191,6 +192,7 @@ PRIVATE void mt_create(hgobj gobj)
     SET_PRIV(with_metadata,             gobj_read_bool_attr)
     SET_PRIV(alert_queue_size,          gobj_read_int32_attr)
     SET_PRIV(max_pending_acks,          gobj_read_uint32_attr)
+    SET_PRIV(drop_on_timeout_ack,       gobj_read_bool_attr)
 }
 
 /***************************************************************************
@@ -205,6 +207,7 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
     ELIF_EQ_SET_PRIV(alert_queue_size,      gobj_read_int32_attr)
     ELIF_EQ_SET_PRIV(max_pending_acks,      gobj_read_uint32_attr)
     ELIF_EQ_SET_PRIV(debug_queue_prot,      gobj_read_bool_attr)
+    ELIF_EQ_SET_PRIV(drop_on_timeout_ack,   gobj_read_bool_attr)
     END_EQ_SET_PRIV()
 }
 
@@ -716,7 +719,7 @@ PRIVATE int send_message_to_bottom_side(hgobj gobj, q_msg msg)
     trq_set_metadata(kw_clone, "__msg_key__", json_integer(rowid));
 
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("QIOGATEx send %s ==> %s, %"PRIu64,
+        trace_msg("QIOGATE send %s ==> %s, %"PRIu64,
             gobj_short_name(gobj),
             gobj_short_name(priv->gobj_bottom_side),
             (uint64_t)rowid
@@ -767,7 +770,7 @@ PRIVATE int send_batch_messages_to_bottom_side(hgobj gobj, q_msg msg, BOOL retra
                 if(priv->debug_queue_prot) {
                     trace_msg("     (1) xxx - rowid %"PRIu64", time %"PRIu64"", rowid, t);
                 }
-                return -1;
+                return 0;
             }
         }
 
@@ -788,13 +791,14 @@ PRIVATE int send_batch_messages_to_bottom_side(hgobj gobj, q_msg msg, BOOL retra
                 if(priv->debug_queue_prot) {
                     trace_msg("     (1) xx  - rowid %"PRIu64", time %"PRIu64"", rowid, t);
                 }
+                return -1; // must drop?
             }
         } else {
             if(priv->debug_queue_prot) {
                 trace_msg("     (1) x   - rowid %"PRIu64", time %"PRIu64"", rowid, t);
             }
+            return 0;
         }
-        return -1;
     }
 
     /*----------------------------------*
@@ -814,18 +818,17 @@ PRIVATE int send_batch_messages_to_bottom_side(hgobj gobj, q_msg msg, BOOL retra
             if(trq_test_ack_timer(msg)) {
                 // TODO ojo con las repeticiones, a oracle parece que le joden
                 /*
-                 *  EN conexiones con respuesta asegurada (tcp con ack) el timeout sin respuesta
+                 *  En conexiones con respuesta asegurada (tcp con ack) el timeout sin respuesta
                  *  deber provocar un drop!!
                  *
                  *  EN conexiones sin respuesta asegurada,
                  *  pero ojo solo con procesos asíncronos verificados,
-                 *  SÍ se puede usar reenvio. Lo suyo, con ack inteligente,
+                 *  SÍ se puede usar reenvío. Lo suyo, con ack inteligente,
                  *  adaptado a los tiempos de respuesta del peer, en tiempo real.
                  */
-                BOOL drop_on_timeout_ack = gobj_read_bool_attr(gobj, "drop_on_timeout_ack");
-                if(drop_on_timeout_ack) {
+                if(priv->drop_on_timeout_ack) {
                     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-                        trace_msg("QIOGATEx drop %s",
+                        trace_msg("QIOGATE drop %s",
                             gobj_short_name(priv->gobj_bottom_side)
                         );
                     }
@@ -880,29 +883,16 @@ PRIVATE int send_batch_messages_to_bottom_side(hgobj gobj, q_msg msg, BOOL retra
 }
 
 /***************************************************************************
- *  Process ACK message
+ *
  ***************************************************************************/
-PRIVATE int process_ack(hgobj gobj, const char *event, json_t *kw, hgobj src)
+PRIVATE int dequeue_msg(
+    hgobj gobj,
+    uint64_t rowid,
+    int result
+)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    GBUFFER *gbuf = (GBUFFER *)(size_t)kw_get_int(kw, "gbuffer", 0, 0);
-
-    gbuf_incref(gbuf);
-    json_t *jn_ack_message = gbuf2json(gbuf, 2);
-
-    uint64_t rowid = kw_get_int(trq_get_metadata(jn_ack_message), "__msg_key__", 0, KW_REQUIRED);
-
-    if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("QIOGATEx ack %s <== %s, %"PRIu64,
-            gobj_short_name(gobj),
-            gobj_short_name(priv->gobj_bottom_side),
-            rowid
-        );
-    }
-
-
-    int result = kw_get_int(trq_get_metadata(jn_ack_message), "result", 0, KW_REQUIRED);
     q_msg msg = trq_get_by_rowid(priv->trq_msgs, rowid);
     if(msg) {
         uint64_t tt = trq_msg_time(msg);
@@ -929,8 +919,6 @@ PRIVATE int process_ack(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
         trq_unload_msg(msg, result);
 
-        //gobj_decr_qs(QS_INTERNAL_QUEUE, 1); // TODO gestiona colas múltiples
-
         if(*priv->ppending_acks > 0) {
             (*priv->ppending_acks)--;
         } else {
@@ -956,11 +944,40 @@ PRIVATE int process_ack(hgobj gobj, const char *event, json_t *kw, hgobj src)
             );
         }
     }
-    JSON_DECREF(jn_ack_message);
-    KW_DECREF(kw);
+
+    return 0;
+}
+
+/***************************************************************************
+ *  Process ACK message
+ ***************************************************************************/
+PRIVATE int process_ack(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    GBUFFER *gbuf = (GBUFFER *)(size_t)kw_get_int(kw, "gbuffer", 0, 0);
+
+    gbuf_incref(gbuf);
+    json_t *jn_ack_message = gbuf2json(gbuf, 2);
+
+    uint64_t rowid = kw_get_int(trq_get_metadata(jn_ack_message), "__msg_key__", 0, KW_REQUIRED);
+    int result = kw_get_int(trq_get_metadata(jn_ack_message), "result", 0, KW_REQUIRED);
+
+    if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
+        trace_msg("QIOGATE ack %s <== %s, %"PRIu64,
+            gobj_short_name(gobj),
+            gobj_short_name(priv->gobj_bottom_side),
+            rowid
+        );
+    }
+
+    dequeue_msg(gobj, rowid, result);
+
+    JSON_DECREF(jn_ack_message)
+    KW_DECREF(kw)
 
     if(priv->bottom_side_opened) {
-        send_batch_messages_to_bottom_side(gobj, 0, FALSE); // envia más al recibir ack
+        send_batch_messages_to_bottom_side(gobj, 0, FALSE); // envía más al recibir ack
     }
     return 0;
 }
