@@ -991,7 +991,7 @@ PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "source unkwnown",
+            "msg",          "%s", "source unknown",
             "src",          "%s", gobj_full_name(src),
             NULL
         );
@@ -1019,7 +1019,7 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "source unkwnown",
+            "msg",          "%s", "source unknown",
             "src",          "%s", gobj_full_name(src),
             NULL
         );
@@ -1044,7 +1044,7 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
         "gobj",         "%s", gobj_full_name(gobj),
         "function",     "%s", __FUNCTION__,
         "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-        "msg",          "%s", "source unkwnown",
+        "msg",          "%s", "source unknown",
         "src",          "%s", gobj_full_name(src),
         NULL
     );
