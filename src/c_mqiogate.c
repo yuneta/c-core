@@ -4,6 +4,8 @@
  *
  *          Multiple Persistent Queue IOGate
  *
+ *   WARNING no puede tener hijos distintos a clase QIOGate
+ *
  *          Copyright (c) 2019 Niyamaka.
  *          All Rights Reserved.
  ***********************************************************************/
@@ -50,6 +52,8 @@ SDATA_END()
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag------------------------default---------description---------- */
+SDATA (ASN_OCTET_STR,   "method",           SDF_RD,                     "lastdigitx10", "Method to select the child to send the message. Default 'number10', numeric value with the last digit used to select the child."),
+SDATA (ASN_OCTET_STR,   "key",              SDF_RD,                     "id",           "field of kw to obtain the index to child to send message. It must be a numeric value, and the last digit is used to index the child, so you can have until 10 childs with the default method."),
 SDATA (ASN_POINTER,     "user_data",        0,                          0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                          0,              "more user data"),
 SDATA (ASN_POINTER,     "subscriber",       0,                          0,              "subscriber of output-events. Not a child gobj."),
@@ -72,6 +76,8 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
  *              Private data
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
+    const char *method;
+    const char *key;
     int n_childs;
 } PRIVATE_DATA;
 
@@ -90,6 +96,7 @@ typedef struct _PRIVATE_DATA {
  ***************************************************************************/
 PRIVATE void mt_create(hgobj gobj)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
     // WARNING no puede tener hijos distintos a clase QIOGate
 
     /*
@@ -104,6 +111,8 @@ PRIVATE void mt_create(hgobj gobj)
      *  Do copy of heavy used parameters, for quick access.
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
+    SET_PRIV(key,           gobj_read_str_attr)
+    SET_PRIV(method,        gobj_read_str_attr)
 }
 
 /***************************************************************************
@@ -138,8 +147,20 @@ PRIVATE int mt_start(hgobj gobj)
         log_error(0,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msgset",       "%s", MSGSET_CONFIGURATION_ERROR,
             "msg",          "%s", "NO CHILDS of QIOGate gclass",
+            NULL
+        );
+    }
+
+    if(empty_string(priv->key)) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_CONFIGURATION_ERROR,
+            "msg",          "%s", "key EMPTY",
+            "method",       "%s", priv->method,
+"key",          "%s", priv->key,
             NULL
         );
     }
@@ -168,7 +189,7 @@ PRIVATE json_t *mt_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src)
     dl_list_t *dl_childs = gobj_match_childs(gobj, 0, jn_filter);
     hgobj child; rc_instance_t *i_rc;
     rc_iter_foreach_forward(dl_childs, i_rc, child) {
-        KW_INCREF(kw);
+        KW_INCREF(kw)
         json_t *jn_stats_child = build_stats(
             child,
             stats,
@@ -180,7 +201,7 @@ PRIVATE json_t *mt_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src)
 
     rc_free_iter(dl_childs, TRUE, 0);
 
-    KW_DECREF(kw);
+    KW_DECREF(kw)
     return jn_stats;
 }
 
@@ -199,7 +220,7 @@ PRIVATE json_t *mt_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
-    KW_INCREF(kw);
+    KW_INCREF(kw)
     json_t *jn_resp = gobj_build_cmds_doc(gobj, kw);
     return msg_iev_build_webix(
         gobj,
@@ -237,24 +258,34 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
 
     hgobj gobj_dst=0;
 
+    const char *id = "";
     int idx = 0;
-    const char *id = kw_get_str(kw, "id", "", KW_REQUIRED);
-    int len = strlen(id);
-    if(len > 0) {
-        idx = atoi(id + len -1);
-    } else {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "id WITHOUT LENGTH",
-            NULL
-        );
-    }
-    idx = idx % priv->n_childs;
-    if(idx < 0) {
-        idx = 0;
-    }
+
+    SWITCHS(priv->method) {
+        CASES("lastdigitx10")
+        DEFAULTS
+            id = kw_get_str(kw, priv->key, "", KW_REQUIRED);
+            int len = strlen(id);
+            if(len > 0) {
+                idx = atoi(id + len -1);
+            } else {
+                log_error(0,
+                    "gobj",         "%s", gobj_full_name(gobj),
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_CONFIGURATION_ERROR,
+                    "msg",          "%s", "key value WITHOUT LENGTH",
+                    "method",       "%s", priv->method,
+                    "key",          "%s", priv->key,
+                    NULL
+                );
+            }
+            idx = idx % priv->n_childs;
+            if(idx < 0) {
+                idx = 0;
+            }
+            break;
+    } SWITCHS_END
+
     gobj_child_by_index(gobj, idx+1, &gobj_dst);
 
     if(!gobj_dst) {
@@ -265,12 +296,12 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
             "msg",          "%s", "QIOGate destine NOT FOUND",
             NULL
         );
-        KW_DECREF(kw);
+        KW_DECREF(kw)
         return -1;
     }
 
     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-        trace_msg("MQIOGATE %s ==> %s", id, gobj_short_name(gobj_dst));
+        trace_msg("MQIOGATE %s (idx %d, value '%s') ==> %s", priv->key, idx, id, gobj_short_name(gobj_dst));
     }
 
     return gobj_send_event(gobj_dst, event, kw, gobj);
