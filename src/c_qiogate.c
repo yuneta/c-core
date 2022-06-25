@@ -827,6 +827,9 @@ PRIVATE int send_batch_messages_to_bottom_side(hgobj gobj, q_msg msg, BOOL retra
                  *  adaptado a los tiempos de respuesta del peer, en tiempo real.
                  */
                 if(priv->drop_on_timeout_ack) {
+                    if(priv->debug_queue_prot) {
+                        trace_msg("     (+) XXX - rowid %"PRIu64", time %"PRIu64"", rowid, t);
+                    }
                     if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
                         trace_msg("QIOGATE drop %s",
                             gobj_short_name(priv->gobj_bottom_side)
