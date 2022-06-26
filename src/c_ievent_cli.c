@@ -481,8 +481,9 @@ PRIVATE int send_identity_card(hgobj gobj)
     const char *yuno_tag = gobj_read_str_attr(gobj_yuno(), "yuno_tag");
     json_int_t launch_id = gobj_read_uint64_attr(gobj_yuno(), "launch_id");
     json_t *kw = json_pack(
-        "{s:s, s:s, s:s, s:s, s:s, s:s, s:b, s:i, s:i, s:s, s:s, s:I, s:s, s:s}",
+        "{s:s, s:s, s:s, s:s, s:s, s:s, s:s, s:b, s:i, s:i, s:s, s:s, s:I, s:s, s:s}",
         "yuno_role", gobj_yuno_role(),
+        "yuno_id", gobj_yuno_id(),
         "yuno_name", gobj_yuno_name(),
         "yuno_tag", yuno_tag?yuno_tag:"",
         "yuno_version", yuno_version?yuno_version:"",

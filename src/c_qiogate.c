@@ -666,18 +666,20 @@ PRIVATE q_msg enqueue_message(
                 snprintf(
                     subject,
                     sizeof(subject),
-                    "ALERTA Encolamiento de %ld mensajes en nodo '%s', yuno '%s'",
+                    "ALERTA Encolamiento de %ld mensajes en nodo '%s', yuno '%s' %s",
                     (unsigned long)trq_size(priv->trq_msgs),
                     get_host_name(),
-                    gobj_yuno_role_plus_name()
+                    gobj_yuno_role_plus_name(),
+                    gobj_yuno_id()
                 );
                 snprintf(
                     alert,
                     sizeof(alert),
-                    "Encolamiento de %ld mensajes en nodo '%s', yuno '%s'",
+                    "Encolamiento de %ld mensajes en nodo '%s', yuno '%s' %s",
                     (unsigned long)trq_size(priv->trq_msgs),
                     get_host_name(),
-                    gobj_yuno_role_plus_name()
+                    gobj_yuno_role_plus_name(),
+                    gobj_yuno_id()
                 );
                 send_alert(gobj, subject, alert);
             }

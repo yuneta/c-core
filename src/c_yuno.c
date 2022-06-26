@@ -431,6 +431,7 @@ SDATA (ASN_OCTET_STR,   "appDate",          SDF_RD,                     "",     
 SDATA (ASN_OCTET_STR,   "work_dir",         SDF_RD,                     "",             "Work dir"),
 SDATA (ASN_OCTET_STR,   "domain_dir",       SDF_RD,                     "",             "Domain dir"),
 SDATA (ASN_OCTET_STR,   "yuno_role",        SDF_RD,                     "",             "Yuno Role"),
+SDATA (ASN_OCTET_STR,   "yuno_id",          SDF_RD,                     "",             "Yuno Id. Set by agent"),
 SDATA (ASN_OCTET_STR,   "yuno_name",        SDF_RD,                     "",             "Yuno Name. Set by agent"),
 SDATA (ASN_OCTET_STR,   "yuno_tag",         SDF_RD,                     "",             "Yuno Alias. Set by agent"),
 SDATA (ASN_OCTET_STR,   "yuno_release",     SDF_RD,                     "",             "Yuno Release. Set by agent"),
@@ -449,7 +450,7 @@ SDATA (ASN_UNSIGNED,    "timeout",          SDF_RD,                     1000,   
 SDATA (ASN_UNSIGNED,    "timeout_stats",    SDF_RD,                     1,              "timeout (seconds) for publishing stats"),
 SDATA (ASN_UNSIGNED,    "timeout_flush",    SDF_RD,                     2,              "timeout (seconds) for rotatory flush"),
 SDATA (ASN_UNSIGNED,    "watcher_pid",      SDF_RD,                     0,              "Watcher pid"),
-SDATA (ASN_OCTET_STR,   "info_msg",         SDF_RD,                     "",              "Info msg, like errno"),
+SDATA (ASN_OCTET_STR,   "info_msg",         SDF_RD,                     "",             "Info msg, like errno"),
 SDATA (ASN_COUNTER64,   "launch_id",        SDF_RD,                     0,              "Launch Id. Set by agent"),
 SDATA (ASN_OCTET_STR,   "dynamicDoc",       SDF_WR|SDF_PERSIST,         "",             "Dynamic documentation"),
 SDATA (ASN_OCTET_STR,   "start_date",       SDF_RD|SDF_STATS,           "",             "Yuno starting date"),
@@ -541,6 +542,7 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
  *              Private data
  *---------------------------------------------*/
 typedef struct _PRIVATE_DATA {
+    const char *yuno_id;
     const char *yuno_name;
     const char *yuno_role;
 
@@ -642,6 +644,7 @@ PRIVATE void mt_create(hgobj gobj)
     SET_PRIV(timeout_stats,         gobj_read_uint32_attr)
     SET_PRIV(timeout_flush,         gobj_read_uint32_attr)
     SET_PRIV(timeout_restart,       gobj_read_uint32_attr)
+    SET_PRIV(yuno_id,               gobj_read_str_attr)
     SET_PRIV(yuno_name,             gobj_read_str_attr)
     SET_PRIV(yuno_role,             gobj_read_str_attr)
 
@@ -792,6 +795,7 @@ PUBLIC void mt_run(hgobj gobj)
         "function",         "%s", __FUNCTION__,
         "msgset",           "%s", MSGSET_STARTUP,
         "msg",              "%s", "Running main",
+        "yuno_id",          "%s", priv->yuno_id,
         "yuno_name",        "%s", priv->yuno_name,
         "yuno_role",        "%s", priv->yuno_role,
         NULL

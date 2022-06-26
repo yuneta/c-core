@@ -26,6 +26,7 @@ PRIVATE char __realm_role__[NAME_MAX] = {0};
 PRIVATE char __realm_name__[NAME_MAX] = {0};
 PRIVATE char __realm_env__[NAME_MAX] = {0};
 PRIVATE char __yuno_role__[NAME_MAX] = {0};
+PRIVATE char __yuno_id__[NAME_MAX] = {0};
 PRIVATE char __yuno_name__[NAME_MAX] = {0};
 PRIVATE char __yuno_tag__[NAME_MAX] = {0};
 
@@ -659,6 +660,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
     }
 
     const char *yuno_role  = kw_get_str(jn_yuno, "yuno_role", "", 0);
+    const char *yuno_id  = kw_get_str(jn_yuno, "yuno_id", "", 0);
     const char *yuno_name  = kw_get_str(jn_yuno, "yuno_name", "", 0);
     const char *yuno_tag  = kw_get_str(jn_yuno, "yuno_tag", "", 0);
     if(empty_string(yuno_role)) {
@@ -684,6 +686,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
     snprintf(__realm_name__, sizeof(__realm_name__), "%s", realm_name);
     snprintf(__realm_env__, sizeof(__realm_env__), "%s", realm_env);
     snprintf(__yuno_role__, sizeof(__yuno_role__), "%s", yuno_role);
+    snprintf(__yuno_id__, sizeof(__yuno_id__), "%s", yuno_id);
     snprintf(__yuno_name__, sizeof(__yuno_name__), "%s", yuno_name);
     snprintf(__yuno_tag__, sizeof(__yuno_tag__), "%s", yuno_tag);
 
@@ -728,6 +731,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
 
         json_t *jn_basic_info = json_pack("{s:s, s:s, s:s, s:s, s:s, s:s, s:s}",
             "role", __yuno_role__,
+            "id", __yuno_id__,
             "name", __yuno_name__,
             "alias", __yuno_tag__,
             "version", __yuno_version__,
@@ -811,6 +815,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
         "msgset",       "%s", MSGSET_START_STOP,
         "msg",          "%s", "Finished",
         "role",         "%s", __yuno_role__,
+        "id",           "%s", __yuno_id__,
         "name",         "%s", __yuno_name__,
         "alias",        "%s", __yuno_tag__,
         NULL
@@ -818,9 +823,10 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
     JSON_DECREF(__jn_config__);
     gbmem_shutdown();
     register_yuneta_environment(0, 0, 0, 0, 0);
-    log_debug_printf("", "<===== Yuno '%s^%s' stopped\n",
+    log_debug_printf("", "<===== Yuno '%s^%s %s' stopped\n",
         __yuno_role__,
-        __yuno_name__
+        __yuno_name__,
+        __yuno_id__
     );
     end_ghelpers_library();
 
@@ -858,6 +864,7 @@ PRIVATE void process(const char *process_name, const char *work_dir, const char 
         "realm_name",   "%s", __realm_name__,
         "realm_env",    "%s", __realm_env__,
         "yuno_role",    "%s", __yuno_role__,
+        "id",           "%s", __yuno_id__,
         "yuno_name",    "%s", __yuno_name__,
         "yuno_tag",     "%s", __yuno_tag__,
         "version",      "%s", __yuno_version__,
@@ -885,6 +892,7 @@ PRIVATE void process(const char *process_name, const char *work_dir, const char 
         __realm_role__,
         __realm_name__,
         __realm_env__,
+        __yuno_id__,
         __yuno_name__,
         __yuno_tag__,
         jn_yuno
