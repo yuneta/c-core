@@ -92,7 +92,7 @@ SDATA (ASN_UNSIGNED,    "on_critical_error",SDF_RD,             LOG_OPT_TRACE_ST
 SDATA (ASN_UNSIGNED,    "max_pending_acks", SDF_WR|SDF_PERSIST, 1,          "Maximum messages pending of ack"),
 SDATA (ASN_UNSIGNED64,  "backup_queue_size",SDF_WR|SDF_PERSIST, 2*1000000,  "Do backup at this size"),
 SDATA (ASN_INTEGER,     "alert_queue_size", SDF_WR|SDF_PERSIST, 2000,       "Limit alert queue size"),
-SDATA (ASN_INTEGER,     "timeout_ack",      SDF_WR|SDF_PERSIST, 60,         "Timeout ack in seconds"),
+SDATA (ASN_INTEGER,     "timeout_ack",      SDF_WR|SDF_PERSIST, 10,         "Timeout ack in seconds"),
 SDATA (ASN_BOOLEAN,     "drop_on_timeout_ack",SDF_WR|SDF_PERSIST, 1,        "On ack timeout drop connection"),
 
 SDATA (ASN_BOOLEAN,     "with_metadata",    SDF_RD,             0,          "Don't filter metadata"),
@@ -837,6 +837,15 @@ PRIVATE int send_batch_messages_to_bottom_side(hgobj gobj, q_msg msg, BOOL retra
                             gobj_short_name(priv->gobj_bottom_side)
                         );
                     }
+                    log_error(0,
+                        "gobj",         "%s", gobj_full_name(gobj),
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                        "msg",          "%s", "Dropping by timeout ack",
+                        "gobj_bottom",  "%s", gobj_short_name(priv->gobj_bottom_side),
+                        NULL
+                    );
+
                     gobj_send_event(priv->gobj_bottom_side, "EV_DROP", 0, gobj);
                     break;
                 }
