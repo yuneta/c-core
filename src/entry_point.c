@@ -729,9 +729,8 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
         json_t *jn_public_services = kw_get_dict_value(jn_yuno, "public_services", 0, 0);
         json_t *jn_service_descriptor = kw_get_dict_value(jn_yuno, "service_descriptor", 0, 0);
 
-        json_t *jn_basic_info = json_pack("{s:s, s:s, s:s, s:s, s:s, s:s, s:s}",
+        json_t *jn_basic_info = json_pack("{s:s, s:s, s:s, s:s, s:s, s:s}",
             "role", __yuno_role__,
-            "id", __yuno_id__,
             "name", __yuno_name__,
             "alias", __yuno_tag__,
             "version", __yuno_version__,
