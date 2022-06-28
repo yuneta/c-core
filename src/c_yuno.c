@@ -27,11 +27,6 @@
 /***************************************************************************
  *              Structures
  ***************************************************************************/
-typedef struct cnf_cmd_s {
-    const char *cmd;
-    json_t * (*cmd_handle)(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-    const char *desc;
-} cnf_cmd_t;
 
 /***************************************************************************
  *              Prototypes
