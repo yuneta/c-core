@@ -927,7 +927,8 @@ PRIVATE void on_write_cb(uv_write_t* req, int status)
     priv->uv_req_write_active = 0;
 
     if(gobj_trace_level(gobj) & TRACE_UV) {
-        trace_msg(">>> on_write_cb tcp p=%p",
+        trace_msg(">>> on_write_cb status %d, tcp p=%p",
+            status,
             &priv->uv_socket
         );
     }
