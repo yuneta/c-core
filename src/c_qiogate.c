@@ -1068,6 +1068,9 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     if(src == priv->gobj_bottom_side) {
+        (*priv->prxMsgs)++;
+        priv->rxMsgsec++;
+        gobj_incr_qs(QS_RXMSGS, 1);
         return process_ack(gobj, event, kw, src);
     }
 
