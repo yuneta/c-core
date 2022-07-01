@@ -2090,7 +2090,7 @@ PRIVATE json_t *cmd_info_ifs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
         char temp[64];
 
-        bin2hex(temp, sizeof(temp), pif->phys_addr, sizeof(pif->phys_addr));
+        bin2hex(temp, sizeof(temp), (uint8_t *)pif->phys_addr, sizeof(pif->phys_addr));
         json_object_set_new(
             jn_if,
             "phys_addr",
