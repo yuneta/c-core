@@ -258,6 +258,7 @@ PRIVATE int mt_start(hgobj gobj)
 
     if(gobj_read_bool_attr(gobj, "shared")) {
         // TODO FALTA CHEQUEAR si el S.O. lo soporta.
+        #ifndef __CYGWIN__
         int sfd;
         uv_fileno((const uv_handle_t *) &priv->uv_socket, &sfd);
         int optval = 1;
@@ -282,6 +283,7 @@ PRIVATE int mt_start(hgobj gobj)
                 return -1;
             }
         }
+        #endif
     }
 
     r = uv_tcp_bind(&priv->uv_socket, res->ai_addr, 0);

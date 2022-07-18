@@ -72,6 +72,11 @@ Sample of kw create parameter "metric"
 #include <string.h>
 #include "c_rstats.h"
 
+#ifdef __CYGWIN__
+#define fopen64 fopen
+#define fseeko64 fseeko
+#endif
+
 /***************************************************************************
  *              Constants
  ***************************************************************************/
@@ -585,5 +590,3 @@ PUBLIC GCLASS *gclass_rstats(void)
 {
     return &_gclass;
 }
-
-
