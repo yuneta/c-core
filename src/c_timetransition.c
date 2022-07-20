@@ -6,7 +6,7 @@
 ***********************************************************************/
 #include <string.h>
 #include <time.h>
-#include <regex.h>
+#include <pcre2posix.h>
 #include <ghelpers.h>
 #include "c_timer.h"
 #include "c_timetransition.h"
