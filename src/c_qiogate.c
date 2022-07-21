@@ -848,8 +848,6 @@ PRIVATE int send_batch_messages_to_bottom_side(hgobj gobj, q_msg msg, BOOL retra
                         "gobj_bottom",  "%s", gobj_short_name(priv->gobj_bottom_side),
                         NULL
                     );
-                    json_t *jn_msg = trq_msg_json(msg);
-                    log_debug_json(0, jn_msg, "Dropping by timeout ack");
 
                     gobj_send_event(priv->gobj_bottom_side, "EV_DROP", 0, gobj);
                     break;

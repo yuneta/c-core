@@ -13,24 +13,26 @@ set(LIB_DEST_DIR ${CMAKE_INSTALL_PREFIX}/lib)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99")
 
-if(CYGWIN)
-    add_definitions(-D__CYGWIN__)
-    add_definitions(-DNOT_INCLUDE_LIBUNWIND)
-endif()
-
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   add_definitions(-DDEBUG)
   option(SHOWNOTES "Show preprocessor notes" OFF)
 
   if(CMAKE_COMPILER_IS_GNUCC)
     # GCC specific debug options
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g3 -ggdb")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g3 -ggdb3 -gdwarf-2")
     set(AVOID_VERSION -avoid-version)
   endif(CMAKE_COMPILER_IS_GNUCC)
 endif(CMAKE_BUILD_TYPE MATCHES Debug)
 
 add_definitions(-D_GNU_SOURCE)
 add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64)
+
+check_include_files(regex.h HAVE_REGEX_H)
+if(HAVE_REGEX_H)
+    add_definitions(-DHAVE_REGEX_H)
+else(HAVE_REGEX_H)
+    message("***  WARNING: GNU C regex library not found.")
+endif(HAVE_REGEX_H)
 
 include_directories(/yuneta/development/output/include)
 

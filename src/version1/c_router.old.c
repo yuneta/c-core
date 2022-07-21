@@ -136,7 +136,7 @@ relanch new instances.
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
-#include <pcre2posix.h>
+#include <regex.h>
 #include <time.h>
 #include "c_router.h"
 

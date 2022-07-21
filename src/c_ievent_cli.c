@@ -128,11 +128,9 @@ PRIVATE void mt_create(hgobj gobj)
         }
     }
     if(!is_yuneta) {
-#ifndef __CYGWIN__
         trace_msg("User or group 'yuneta' is needed to run %s", gobj_yuno_role());
         printf("User or group 'yuneta' is needed to run %s\n", gobj_yuno_role());
         exit(0);
-#endif
     }
 
     SET_PRIV(remote_yuno_name,          gobj_read_str_attr)
