@@ -86,11 +86,9 @@ PUBLIC char *yuneta_realm_store_dir(
     BOOL create
 );
 
-PUBLIC const char *get_random_uuid(void);
 PUBLIC const char *generate_node_uuid(void);
 PUBLIC const char *node_uuid(void);
 
 #ifdef __cplusplus
 }
 #endif
-

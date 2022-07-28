@@ -255,20 +255,6 @@ PUBLIC char *yuneta_realm_store_dir(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC const char *get_random_uuid(void)
-{
-    static char uuid_[256] = {0};
-
-    uuid_t binuuid;
-    uuid_generate_random(binuuid);
-    uuid_unparse_lower(binuuid, uuid_);
-
-    return uuid_;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
 PRIVATE void save_uuid(const char *uuid_)
 {
     snprintf(global_uuid, sizeof(global_uuid), "%s", uuid_);
@@ -461,4 +447,3 @@ PUBLIC const char *generate_node_uuid(void)
 
     return new_uuid;
 }
-
