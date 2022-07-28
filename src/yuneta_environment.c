@@ -5,10 +5,8 @@
  *              Copyright (c) 2014-2015 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <uuid/uuid.h>
 #include "yuneta_environment.h"
 
 /***************************************************************************
