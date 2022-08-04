@@ -10,7 +10,6 @@
  *          All Rights Reserved.
  ***********************************************************************/
 #include <string.h>
-#include <stdio.h>
 #include "c_mqiogate.h"
 
 /***************************************************************************
@@ -160,7 +159,7 @@ PRIVATE int mt_start(hgobj gobj)
             "msgset",       "%s", MSGSET_CONFIGURATION_ERROR,
             "msg",          "%s", "key EMPTY",
             "method",       "%s", priv->method,
-"key",          "%s", priv->key,
+            "key",          "%s", priv->key,
             NULL
         );
     }
