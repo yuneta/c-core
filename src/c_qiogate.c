@@ -34,6 +34,8 @@ PRIVATE int close_queue(hgobj gobj);
  *          Data: config, public data, private data
  ***************************************************************************/
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_trace_queue_prot_on(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_trace_queue_prot_off(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_queue_mark_pending(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_queue_mark_notpending(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_reset_maxtxrx(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -57,6 +59,11 @@ PRIVATE const char *a_help[] = {"h", "?", 0};
 PRIVATE sdata_desc_t command_table[] = {
 /*-CMD---type-----------name----------------alias---------------items-----------json_fn---------description---------- */
 SDATACM (ASN_SCHEMA,    "help",             a_help,             pm_help,        cmd_help,       "Command's help"),
+
+SDATACM (ASN_SCHEMA,    "trace-queue-prot-on",0,                0,              cmd_trace_queue_prot_on, "Trace ON queue protocol"),
+SDATACM (ASN_SCHEMA,    "trace-queue-prot-off",0,               0,              cmd_trace_queue_prot_off, "Trace OFF queue protocol"),
+
+
 SDATACM (ASN_SCHEMA,    "reset_maxtxrx",        0,          0,              cmd_reset_maxtxrx, "Reset max tx rx stats"),
 SDATACM (ASN_SCHEMA,    "queue_mark_pending",   0,          pm_queue,       cmd_queue_mark_pending, "Mark selected messages as pending (Will be resend)."),
 SDATACM (ASN_SCHEMA,    "queue_mark_notpending", 0,         pm_queue,       cmd_queue_mark_notpending,"Mark selected messages as notpending (Will NOT be send or resend)."),
@@ -301,6 +308,40 @@ PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         gobj,
         0,
         jn_resp,
+        0,
+        0,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_trace_queue_prot_on(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    BOOL set = TRUE;
+    gobj_write_bool_attr(gobj, "debug_queue_prot", set);
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        json_sprintf("%s: Trace queue protocol %s", gobj_name(gobj), set?"ON":"OFF"),
+        0,
+        0,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_trace_queue_prot_off(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    BOOL set = FALSE;
+    gobj_write_bool_attr(gobj, "debug_queue_prot", set);
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        json_sprintf("%s: Trace queue protocol %s", gobj_name(gobj), set?"ON":"OFF"),
         0,
         0,
         kw  // owned
