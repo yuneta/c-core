@@ -212,6 +212,7 @@ PRIVATE int mt_start(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    // TODO copia cambios connex a connexs
     hgobj bottom_gobj = gobj_bottom_gobj(gobj);
     if(!bottom_gobj) {
         bottom_gobj = gobj_create(gobj_name(gobj), GCLASS_TCP0, 0, gobj); // TODO configurable la clase a crear
