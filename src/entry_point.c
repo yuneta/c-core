@@ -480,7 +480,7 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
                 log_add_handler(key, handler_type, handler_options, 0); // HACK until now: no output
 
                 if(handler_options & LOG_HND_OPT_DEEP_TRACE) {
-                    __deep_trace__ = TRUE;
+                    __deep_trace__ = 1;
                 }
 
             } else if(strcmp(handler_type, "file")==0) {
@@ -965,7 +965,7 @@ PRIVATE void process(const char *process_name, const char *work_dir, const char 
     }
 
     if(__deep_trace__) {
-        gobj_set_deep_tracing(TRUE);
+        gobj_set_deep_tracing(__deep_trace__);
     }
 
     /*------------------------*

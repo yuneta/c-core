@@ -404,7 +404,7 @@ PUBLIC GCLASS *gclass_timer(void)
  ***************************************************************************/
 PUBLIC void set_timeout(hgobj gobj, int msec)
 {
-    if(gobj_get_deep_tracing()) {
+    if(gobj_get_deep_tracing()>1) {
         trace_machine("⏲ ✅ set_timeout %d: %s",
             msec,
             gobj_full_name(gobj)
@@ -425,7 +425,7 @@ PUBLIC void set_timeout(hgobj gobj, int msec)
  ***************************************************************************/
 PUBLIC void set_timeout_periodic(hgobj gobj, int msec)
 {
-    if(gobj_get_deep_tracing()) {
+    if(gobj_get_deep_tracing()>1) {
         trace_machine("⏲ ⏲ ✅ set_timeout_periodic %d: %s",
             msec,
             gobj_full_name(gobj)
@@ -446,7 +446,7 @@ PUBLIC void set_timeout_periodic(hgobj gobj, int msec)
  ***************************************************************************/
 PUBLIC void clear_timeout(hgobj gobj)
 {
-    if(gobj_get_deep_tracing()) {
+    if(gobj_get_deep_tracing()>1) {
         trace_machine("⏲ ❎ clear_timeout: %s",
             gobj_full_name(gobj)
         );

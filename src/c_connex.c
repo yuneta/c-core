@@ -6,10 +6,7 @@
  *          All Rights Reserved.
  ***********************************************************************/
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <errno.h>
 #include <string.h>
-#include <ctype.h>
 #include <netdb.h>
 #include "c_connex.h"
 
@@ -101,7 +98,6 @@ typedef struct _PRIVATE_DATA {
     int n_urls;
     json_t *urls;
     dl_list_t dl_tx_data;
-    ip_port ip_port;
 
     const char *connected_event_name;
     const char *tx_ready_event_name;
@@ -131,7 +127,7 @@ PRIVATE void mt_create(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    priv->timer = gobj_create("", GCLASS_TIMER, 0, gobj);
+    priv->timer = gobj_create(gobj_name(gobj), GCLASS_TIMER, 0, gobj);
 
     dl_init(&priv->dl_tx_data);
 
@@ -218,7 +214,7 @@ PRIVATE int mt_start(hgobj gobj)
 
     hgobj tcp0 = gobj_bottom_gobj(gobj);
     if(!tcp0) {
-        tcp0 = gobj_create(gobj_name(gobj), GCLASS_TCP0, 0, gobj);
+        tcp0 = gobj_create(gobj_name(gobj), GCLASS_TCP0, 0, gobj); // TODO configurable la clase a crear
         gobj_set_bottom_gobj(gobj, tcp0);
     }
 
@@ -482,27 +478,19 @@ PRIVATE int ac_connect(hgobj gobj, const char *event, json_t *kw, hgobj src)
      *  Pass the parameters directly with a write in child attributes.
      */
     hgobj bottom_gobj = gobj_bottom_gobj(gobj);
-    if(bottom_gobj) {
-        gobj_write_str_attr(bottom_gobj, "lHost", lHost);
-        gobj_write_str_attr(bottom_gobj, "lPort", lPort);
-        gobj_write_str_attr(bottom_gobj, "rHost", rHost);
-        gobj_write_str_attr(bottom_gobj, "rPort", rPort);
+    if(!bottom_gobj) {
+        bottom_gobj = gobj_create(gobj_name(gobj), GCLASS_TCP0, 0, gobj);  //TODO configurable la clase a crear
+        gobj_set_bottom_gobj(gobj, bottom_gobj);
+    }
+    gobj_write_str_attr(bottom_gobj, "lHost", lHost);
+    gobj_write_str_attr(bottom_gobj, "lPort", lPort);
+    gobj_write_str_attr(bottom_gobj, "rHost", rHost);
+    gobj_write_str_attr(bottom_gobj, "rPort", rPort);
 
-        // HACK firstly set timeout, EV_CONNECTED can be received inside of gobj_start()
-        set_timeout(priv->timer, gobj_read_int32_attr(gobj, "timeout_waiting_connected"));
-        gobj_change_state(gobj, "ST_WAIT_CONNECTED");
-        if(gobj_start(bottom_gobj)<0) {
-            set_timeout(priv->timer, gobj_read_int32_attr(gobj, "timeout_between_connections"));
-        }
-
-    } else {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "NO bottom_gobj!",
-            NULL
-        );
+    // HACK firstly set timeout, EV_CONNECTED can be received inside of gobj_start()
+    set_timeout(priv->timer, gobj_read_int32_attr(gobj, "timeout_waiting_connected"));
+    gobj_change_state(gobj, "ST_WAIT_CONNECTED");
+    if(gobj_start(bottom_gobj)<0) {
         set_timeout(priv->timer, gobj_read_int32_attr(gobj, "timeout_between_connections"));
     }
 
@@ -727,6 +715,10 @@ PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
                     gobj_read_int32_attr(gobj, "timeout_between_connections")
                 );
             }
+        }
+        if(gobj_is_volatil(src)) {
+            gobj_set_bottom_gobj(gobj, 0);
+            gobj_destroy(src);
         }
     }
 
