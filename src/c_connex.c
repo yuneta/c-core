@@ -212,10 +212,10 @@ PRIVATE int mt_start(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    hgobj tcp0 = gobj_bottom_gobj(gobj);
-    if(!tcp0) {
-        tcp0 = gobj_create(gobj_name(gobj), GCLASS_TCP0, 0, gobj); // TODO configurable la clase a crear
-        gobj_set_bottom_gobj(gobj, tcp0);
+    hgobj bottom_gobj = gobj_bottom_gobj(gobj);
+    if(!bottom_gobj) {
+        bottom_gobj = gobj_create(gobj_name(gobj), GCLASS_TCP0, 0, gobj); // TODO configurable la clase a crear
+        gobj_set_bottom_gobj(gobj, bottom_gobj);
     }
 
     // HACK el start de tcp0 lo hace el timer
@@ -701,6 +701,34 @@ PRIVATE int ac_drop(hgobj gobj, const char *event, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE int ac_force_drop(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    hgobj bottom_gobj = gobj_bottom_gobj(gobj);
+    if (bottom_gobj) {
+        gobj_set_bottom_gobj(gobj, 0);
+        gobj_destroy(bottom_gobj);
+    }
+    bottom_gobj = gobj_create(gobj_name(gobj), GCLASS_TCP0, 0, gobj); // TODO configurable la clase a crear
+    gobj_set_bottom_gobj(gobj, bottom_gobj);
+
+    if(!empty_string(priv->disconnected_event_name)) {
+        gobj_publish_event(gobj, priv->disconnected_event_name, 0);
+    }
+
+    set_timeout(
+        priv->timer,
+        gobj_read_int32_attr(gobj, "timeout_between_connections")
+    );
+
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -788,6 +816,7 @@ PRIVATE EV_ACTION ST_CONNECTED[] = {
 };
 PRIVATE EV_ACTION ST_WAIT_DISCONNECTED[] = {
     {"EV_DISCONNECTED",     ac_disconnected,            "ST_DISCONNECTED"},
+    {"EV_DROP",             ac_force_drop,              "ST_DISCONNECTED"},
     {"EV_STOPPED",          ac_stopped,                 "ST_DISCONNECTED"},
     {"EV_TIMEOUT",          ac_stopped,                 "ST_DISCONNECTED"},
     {0,0,0}
