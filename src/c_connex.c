@@ -213,8 +213,18 @@ PRIVATE int mt_start(hgobj gobj)
 
     hgobj bottom_gobj = gobj_bottom_gobj(gobj);
     if(!bottom_gobj) {
-        bottom_gobj = gobj_create(gobj_name(gobj), GCLASS_TCP0, 0, gobj);
-        gobj_set_bottom_gobj(gobj, bottom_gobj);
+        if(!gobj_read_bool_attr(gobj, "character_device")) {
+            bottom_gobj = gobj_create(gobj_name(gobj), GCLASS_TCP0, 0, gobj);
+            gobj_set_bottom_gobj(gobj, bottom_gobj);
+        } else {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "NO bottom_gobj!",
+                NULL
+            );
+        }
     }
 
     // HACK el start de tcp0 lo hace el timer
@@ -735,6 +745,11 @@ PRIVATE int ac_drop(hgobj gobj, const char *event, json_t *kw, hgobj src)
 PRIVATE int ac_force_drop(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if(gobj_read_bool_attr(gobj, "character_device")) {
+        KW_DECREF(kw);
+        return 0;
+    }
 
     hgobj bottom_gobj = gobj_bottom_gobj(gobj);
     if (bottom_gobj) {
