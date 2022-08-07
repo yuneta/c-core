@@ -486,19 +486,26 @@ PRIVATE int ac_connect(hgobj gobj, const char *event, json_t *kw, hgobj src)
      *  Pass the parameters directly with a write in child attributes.
      */
     hgobj bottom_gobj = gobj_bottom_gobj(gobj);
-    if(!bottom_gobj) {
-        bottom_gobj = gobj_create(gobj_name(gobj), GCLASS_TCP0, 0, gobj);  //TODO configurable la clase a crear
-        gobj_set_bottom_gobj(gobj, bottom_gobj);
-    }
-    gobj_write_str_attr(bottom_gobj, "lHost", lHost);
-    gobj_write_str_attr(bottom_gobj, "lPort", lPort);
-    gobj_write_str_attr(bottom_gobj, "rHost", rHost);
-    gobj_write_str_attr(bottom_gobj, "rPort", rPort);
+    if(bottom_gobj) {
+        gobj_write_str_attr(bottom_gobj, "lHost", lHost);
+        gobj_write_str_attr(bottom_gobj, "lPort", lPort);
+        gobj_write_str_attr(bottom_gobj, "rHost", rHost);
+        gobj_write_str_attr(bottom_gobj, "rPort", rPort);
 
-    // HACK firstly set timeout, EV_CONNECTED can be received inside of gobj_start()
-    set_timeout(priv->timer, gobj_read_int32_attr(gobj, "timeout_waiting_connected"));
-    gobj_change_state(gobj, "ST_WAIT_CONNECTED");
-    if(gobj_start(bottom_gobj)<0) {
+        // HACK firstly set timeout, EV_CONNECTED can be received inside of gobj_start()
+        set_timeout(priv->timer, gobj_read_int32_attr(gobj, "timeout_waiting_connected"));
+        gobj_change_state(gobj, "ST_WAIT_CONNECTED");
+        if(gobj_start(bottom_gobj)<0) {
+            set_timeout(priv->timer, gobj_read_int32_attr(gobj, "timeout_between_connections"));
+        }
+    } else {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "NO bottom_gobj!",
+            NULL
+        );
         set_timeout(priv->timer, gobj_read_int32_attr(gobj, "timeout_between_connections"));
     }
 
@@ -690,6 +697,15 @@ PRIVATE int ac_transmit_ready(hgobj gobj, const char *event, json_t *kw, hgobj s
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE int ac_ignore_transmit_ready(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE int ac_drop(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -718,7 +734,7 @@ PRIVATE int ac_force_drop(hgobj gobj, const char *event, json_t *kw, hgobj src)
         gobj_set_bottom_gobj(gobj, 0);
         gobj_destroy(bottom_gobj);
     }
-    bottom_gobj = gobj_create(gobj_name(gobj), GCLASS_TCP0, 0, gobj); // TODO configurable la clase a crear
+    bottom_gobj = gobj_create(gobj_name(gobj), GCLASS_TCP0, 0, gobj);
     gobj_set_bottom_gobj(gobj, bottom_gobj);
 
     if(!empty_string(priv->disconnected_event_name)) {
@@ -751,10 +767,6 @@ PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
                     gobj_read_int32_attr(gobj, "timeout_between_connections")
                 );
             }
-        }
-        if(gobj_is_volatil(src)) {
-            gobj_set_bottom_gobj(gobj, 0);
-            gobj_destroy(src);
         }
     }
 
@@ -827,6 +839,7 @@ PRIVATE EV_ACTION ST_WAIT_DISCONNECTED[] = {
     {"EV_DROP",             ac_force_drop,              "ST_DISCONNECTED"},
     {"EV_STOPPED",          ac_stopped,                 "ST_DISCONNECTED"},
     {"EV_TIMEOUT",          ac_stopped,                 "ST_DISCONNECTED"},
+    {"EV_TX_READY",         ac_ignore_transmit_ready,   0},
     {0,0,0}
 };
 
