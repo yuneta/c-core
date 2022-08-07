@@ -1,8 +1,15 @@
 /***********************************************************************
  *          C_CONNEX.C
- *          GClass of CONNEX: auto-connection and multi-destine over tcp.
+ *          Connex GClass.
  *
- *          Copyright (c) 2013-2014 Niyamaka.
+ *          Auto-connection and multi-destine over tcp or character device (like ttyUSB)
+*
+ *          In character device /dev/ must be not included
+ *          Url example for /dev/ttyUSB2:
+ *
+ *                      "tty://ttyUSB2"
+ *
+ *          Copyright (c) 2013-2022 Niyamaka.
  *          All Rights Reserved.
  ***********************************************************************/
 #include <sys/types.h>
