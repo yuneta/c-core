@@ -15,6 +15,10 @@
  ***************************************************************************/
 
 /***************************************************************************
+ *              Structures
+ ***************************************************************************/
+
+/***************************************************************************
  *              Prototypes
  ***************************************************************************/
 
@@ -85,7 +89,7 @@ enum {
     TRACE_DEBUG = 0x0001,
 };
 PRIVATE const trace_level_t s_user_trace_level[16] = {
-{"debug",        "Trace to debug"},
+{"debug",       "Trace"},
 {0, 0},
 };
 
@@ -131,9 +135,13 @@ PRIVATE void mt_create(hgobj gobj)
 
     dl_init(&priv->dl_tx_data);
 
+    /*
+     *  CHILD subscription model
+     */
     hgobj subscriber = (hgobj)gobj_read_pointer_attr(gobj, "subscriber");
-    if(!subscriber)
+    if(!subscriber) {
         subscriber = gobj_parent(gobj);
+    }
     gobj_subscribe_event(gobj, NULL, NULL, subscriber);
 
     /*
@@ -190,32 +198,15 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
 }
 
 /***************************************************************************
- *      Framework Method destroy
- ***************************************************************************/
-PRIVATE void mt_destroy(hgobj gobj)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    if(dl_size(&priv->dl_tx_data)>0) {
-        GBUFFER *gbuf;
-        while((gbuf=dl_first(&priv->dl_tx_data))) {
-            dl_delete(&priv->dl_tx_data, gbuf, 0);
-            gbuf_decref(gbuf);
-        }
-    }
-}
-
-/***************************************************************************
  *      Framework Method start
  ***************************************************************************/
 PRIVATE int mt_start(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    // TODO copia cambios connex a connexs
     hgobj bottom_gobj = gobj_bottom_gobj(gobj);
     if(!bottom_gobj) {
-        bottom_gobj = gobj_create(gobj_name(gobj), GCLASS_TCP0, 0, gobj); // TODO configurable la clase a crear
+        bottom_gobj = gobj_create(gobj_name(gobj), GCLASS_TCP0, 0, gobj);
         gobj_set_bottom_gobj(gobj, bottom_gobj);
     }
 
@@ -244,6 +235,22 @@ PRIVATE int mt_stop(hgobj gobj)
     }
 
     return 0;
+}
+
+/***************************************************************************
+ *      Framework Method destroy
+ ***************************************************************************/
+PRIVATE void mt_destroy(hgobj gobj)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if(dl_size(&priv->dl_tx_data)>0) {
+        GBUFFER *gbuf;
+        while((gbuf=dl_first(&priv->dl_tx_data))) {
+            dl_delete(&priv->dl_tx_data, gbuf, 0);
+            gbuf_decref(gbuf);
+        }
+    }
 }
 
 
