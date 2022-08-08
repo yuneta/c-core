@@ -703,7 +703,18 @@ PRIVATE q_msg enqueue_message(
         if(trq_size(priv->trq_msgs) >= priv->alert_queue_size) {
             if(trq_size(priv->trq_msgs) % priv->alert_queue_size == 0) {
                 char subject[280];
-                char alert[280];
+                char alert[512];
+                struct tm *tm;
+                char utc_stamp[164];
+                time_t timestamp;
+                time(&timestamp);
+                tm = gmtime(&timestamp);
+                strftime(utc_stamp, sizeof(utc_stamp), "%Y-%m-%dT%H:%M:%S%z", tm);
+
+                char local_stamp[164];
+                tm = localtime(&timestamp);
+                strftime(local_stamp, sizeof(local_stamp), "%Y-%m-%dT%H:%M:%S%z", tm);
+
                 snprintf(
                     subject,
                     sizeof(subject),
@@ -716,12 +727,14 @@ PRIVATE q_msg enqueue_message(
                 snprintf(
                     alert,
                     sizeof(alert),
-                    "Encolamiento de %ld mensajes en nodo '%s', yuno '%s' %s",
+                    "Encolamiento de %ld mensajes en nodo '%s', yuno '%s' %s\nUTC %s, LOCAL %s",
                     (unsigned long)trq_size(priv->trq_msgs),
                     get_host_name(),
                     gobj_yuno_role_plus_name(),
-                    gobj_read_str_attr(gobj, "tranger_database")
+                    gobj_read_str_attr(gobj, "tranger_database"),
+                    utc_stamp, local_stamp
                 );
+
                 send_alert(gobj, subject, alert);
             }
         }
