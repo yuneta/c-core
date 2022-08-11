@@ -42,9 +42,9 @@ PRIVATE const char *a_help[] = {"h", "?", 0};
 
 PRIVATE sdata_desc_t pm_channel[] = {
 /*-PM----type-----------name------------flag----------------default-----description---------- */
-    SDATAPM (ASN_OCTET_STR, "channel_name", 0,                  0,          "Channel name."),
-    SDATAPM (ASN_BOOLEAN,   "opened",    0,                     0,          "Channel opened"),
-    SDATA_END()
+SDATAPM (ASN_OCTET_STR, "channel_name", 0,                  0,          "Channel name."),
+SDATAPM (ASN_BOOLEAN,   "opened",       0,                  0,          "Channel opened"),
+SDATA_END()
 };
 
 
@@ -193,7 +193,7 @@ PRIVATE json_t *mt_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src)
     json_t *jn_stats = json_object();
 
     json_t *jn_filter = json_pack("{s:s}",
-        "__gclass_name__", "QIOGate"
+        "__gclass_name__", GCLASS_QIOGATE_NAME
     );
     dl_list_t *dl_childs = gobj_match_childs(gobj, 0, jn_filter);
     hgobj child; rc_instance_t *i_rc;
