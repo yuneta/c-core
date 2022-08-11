@@ -61,7 +61,9 @@ SDATA_END()
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag------------------------default---------description---------- */
-SDATA (ASN_OCTET_STR,   "method",           SDF_RD,                     "lastdigitx10", "Method to select the child to send the message. Default 'number10', numeric value with the last digit used to select the child."),
+SDATA (ASN_OCTET_STR,   "method",           SDF_RD,                     "lastdigits", "Method to select the child to send the message ('lastdigits', ). Default 'lastdigits', numeric value with the 'digits' last digits used to select the child. Digits can be decimal or hexadecimal ONLY, automatically detected."),
+SDATA (ASN_UNSIGNED,    "digits",           SDF_RD|SDF_STATS,           1,              "Digits to calculate output"),
+
 SDATA (ASN_OCTET_STR,   "key",              SDF_RD,                     "id",           "field of kw to obtain the index to child to send message. It must be a numeric value, and the last digit is used to index the child, so you can have until 10 childs with the default method."),
 SDATA (ASN_POINTER,     "user_data",        0,                          0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                          0,              "more user data"),
@@ -87,6 +89,7 @@ PRIVATE const trace_level_t s_user_trace_level[16] = {
 typedef struct _PRIVATE_DATA {
     const char *method;
     const char *key;
+    unsigned digits;
     int n_childs;
 } PRIVATE_DATA;
 
@@ -122,6 +125,7 @@ PRIVATE void mt_create(hgobj gobj)
      */
     SET_PRIV(key,           gobj_read_str_attr)
     SET_PRIV(method,        gobj_read_str_attr)
+    SET_PRIV(digits,        gobj_read_uint32_attr)
 }
 
 /***************************************************************************
@@ -308,12 +312,21 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
     int idx = 0;
 
     SWITCHS(priv->method) {
-        CASES("lastdigitx10")
+        CASES("lastdigits")
         DEFAULTS
+            int digits = priv->digits;
             id = kw_get_str(kw, priv->key, "", KW_REQUIRED);
             int len = strlen(id);
             if(len > 0) {
-                idx = atoi(id + len -1);
+                if(digits > len) {
+                    digits = len;
+                }
+                char *s = (char *)id + len - digits;
+                if(all_numbers(s)) {
+                    idx = atoi(s);
+                } else {
+                    idx = (int)strtol(s, NULL, 16);
+                }
             } else {
                 log_error(0,
                     "gobj",         "%s", gobj_full_name(gobj),
