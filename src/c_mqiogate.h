@@ -10,6 +10,7 @@
 #pragma once
 
 #include <ginsfsm.h>
+#include "c_iogate.h"
 #include "c_channel.h"
 #include "c_resource.h"
 

@@ -29,6 +29,7 @@
  *          Data: config, public data, private data
  ***************************************************************************/
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_view_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE sdata_desc_t pm_help[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
@@ -39,9 +40,18 @@ SDATA_END()
 
 PRIVATE const char *a_help[] = {"h", "?", 0};
 
+PRIVATE sdata_desc_t pm_channel[] = {
+/*-PM----type-----------name------------flag----------------default-----description---------- */
+    SDATAPM (ASN_OCTET_STR, "channel_name", 0,                  0,          "Channel name."),
+    SDATAPM (ASN_BOOLEAN,   "opened",    0,                     0,          "Channel opened"),
+    SDATA_END()
+};
+
+
 PRIVATE sdata_desc_t command_table[] = {
-/*-CMD---type-----------name----------------alias---------------items-----------json_fn---------description---------- */
-SDATACM (ASN_SCHEMA,    "help",             a_help,             pm_help,        cmd_help,       "Command's help"),
+/*-CMD---type-----------name----------------alias-------items-----------json_fn---------description---------- */
+SDATACM (ASN_SCHEMA,    "help",             a_help,     pm_help,        cmd_help,       "Command's help"),
+SDATACM (ASN_SCHEMA,    "view-channels",    0,          pm_channel,     cmd_view_channels,"View channels."),
 SDATA_END()
 };
 
@@ -227,6 +237,43 @@ PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         jn_resp,
         0,
         0,
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_view_channels(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    dl_list_t dl_qiogate_childs;
+    json_t *jn_resp = json_array();
+    /*
+     *  Guarda lista de hijos con queue para las estadísticas
+     */
+    json_t *jn_filter = json_pack("{s:s}",
+        "__gclass_name__", GCLASS_IOGATE_NAME
+    );
+    gobj_match_childs_tree(gobj, &dl_qiogate_childs, jn_filter);
+
+    hgobj child; rc_instance_t *i_rc;
+    rc_iter_foreach_forward(&dl_qiogate_childs, i_rc, child) {
+        json_t *r = gobj_command(child, "view-channels", json_incref(kw), gobj);
+        json_t *data = kw_get_dict_value(r, "data", 0, 0);
+        if(data) {
+            json_array_append(jn_resp, data);
+        }
+        json_decref(r);
+    }
+
+    rc_free_iter(&dl_qiogate_childs, FALSE, 0);
+
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        0,
+        0,
+        jn_resp,
         kw  // owned
     );
 }
