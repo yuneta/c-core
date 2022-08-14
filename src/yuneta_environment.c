@@ -221,6 +221,34 @@ PUBLIC char *yuneta_log_file(
 /***************************************************************************
  *
  ***************************************************************************/
+PUBLIC char *yuneta_bin_dir(char *bf, int bfsize, BOOL create)
+{
+    return yuneta_realm_dir(bf, bfsize, "bin", create);
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC char *yuneta_bin_file(
+    char *bf,
+    int bfsize,
+    const char *filename,
+    BOOL create)    // from environment.global_store_dir json config
+{
+    char log_path[PATH_MAX];
+    if(!yuneta_bin_dir(log_path, sizeof(log_path), create)) {
+        *bf = 0;
+        return 0;
+    }
+
+    build_path2(bf, bfsize, log_path, filename);
+
+    return bf;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PUBLIC char *yuneta_realm_store_dir(
     char *bf,
     int bfsize,

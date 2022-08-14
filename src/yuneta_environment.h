@@ -76,6 +76,19 @@ PUBLIC char *yuneta_log_file(
     BOOL create
 );
 
+PUBLIC char *yuneta_bin_dir(
+    char *bf,
+    int bfsize,
+    BOOL create
+);
+
+PUBLIC char *yuneta_bin_file(
+    char *bf,
+    int bfsize,
+    const char *filename,
+    BOOL create
+);
+
 PUBLIC char *yuneta_realm_store_dir(
     char *bf,
     int bfsize,

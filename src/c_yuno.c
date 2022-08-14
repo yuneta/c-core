@@ -13,9 +13,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
-#include <sys/resource.h>
 #include <string.h>
-#include <time.h>
 #include <sys/statvfs.h>
 #include <sys/utsname.h>
 #include "c_yuno.h"
@@ -31,6 +29,7 @@
 /***************************************************************************
  *              Prototypes
  ***************************************************************************/
+PRIVATE int save_pid_in_file(hgobj gobj);
 PRIVATE int set_user_gclass_traces(hgobj gobj);
 PRIVATE int set_user_gclass_no_traces(hgobj gobj);
 PRIVATE int set_user_gobj_traces(hgobj gobj);
@@ -61,6 +60,9 @@ PRIVATE void inform_cb(int priority, uint32_t count, void *user_data);
 /***************************************************************************
  *          Data: config, public data, private data
  ***************************************************************************/
+PRIVATE int atexit_registered = 0; /* Register atexit just 1 time. */
+PRIVATE char pidfile[NAME_MAX] = {0};
+
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_authzs(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_view_config(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -584,11 +586,26 @@ PRIVATE void close_loop(uv_loop_t* loop);
 
 
 /***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE void remove_pid_file(void)
+{
+    if(!empty_string(pidfile)) {
+        unlink(pidfile);
+    }
+}
+
+/***************************************************************************
  *      Framework Method create
  ***************************************************************************/
 PRIVATE void mt_create(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if (!atexit_registered) {
+        atexit(remove_pid_file);
+        atexit_registered = 1;
+    }
 
     char bfdate[90];
     current_timestamp(bfdate, sizeof(bfdate));
@@ -653,6 +670,10 @@ PRIVATE void mt_create(hgobj gobj)
             gobj_write_str_attr(gobj, "sys_release", buf1.release);
             gobj_write_str_attr(gobj, "sys_machine", buf1.machine);
         }
+    }
+
+    if(gobj_read_uint64_attr(gobj, "launch_id")) {
+        save_pid_in_file(gobj);
     }
 }
 
@@ -4224,6 +4245,22 @@ PRIVATE json_t* cmd_global_variables(hgobj gobj, const char* cmd, json_t* kw, hg
 
 
 
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int save_pid_in_file(hgobj gobj)
+{
+    /*
+     *  Let it create the bin_path. Can exist some zombi yuno.
+     */
+    unsigned int pid = getpid();
+    yuneta_bin_file(pidfile, sizeof(pidfile), "yuno.pid", TRUE);
+    FILE *file = fopen(pidfile, "w");
+    fprintf(file, "%d\n", pid);
+    fclose(file);
+    return 0;
+}
 
 /***************************************************************************
  *
