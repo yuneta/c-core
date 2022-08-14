@@ -435,10 +435,10 @@ PUBLIC int yuneta_entry_point(int argc, char *argv[],
     const char *work_dir = 0;           /* by default total silence */
     const char *domain_dir = 0;         /* by default total silence */
     size_t buffer_uv_read = 8*1024;
-    json_int_t MEM_MIN_BLOCK = 32;                      /* smaller memory block */
-    json_int_t MEM_MAX_BLOCK = 64*1024LL;               /* largest memory block */
-    json_int_t MEM_SUPERBLOCK = 128*1024LL;             /* super-block size */
-    json_int_t MEM_MAX_SYSTEM_MEMORY = 1*1024LL*1024LL; /* maximum core memory */
+    json_int_t MEM_MIN_BLOCK = 512;                     /* smaller memory block */
+    json_int_t MEM_MAX_BLOCK = 16*1024LL*1024LL;         /* largest memory block */
+    json_int_t MEM_SUPERBLOCK = 16*1024LL*1024LL;        /* super-block size */
+    json_int_t MEM_MAX_SYSTEM_MEMORY = 64*1024LL*1024LL; /* maximum core memory */
     BOOL use_system_memory = FALSE;
 
     json_t *jn_temp_environment = kw_get_dict(jn_temp_config, "environment", 0, 0);
