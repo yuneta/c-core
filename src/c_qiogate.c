@@ -734,7 +734,7 @@ PRIVATE q_msg enqueue_message(
                     gobj_read_str_attr(gobj, "tranger_database"),
                     utc_stamp, local_stamp
                 );
-
+                trace_msg("ALERTA: %s", alert);
                 send_alert(gobj, subject, alert);
             }
         }
