@@ -357,7 +357,7 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
                     "gobj",         "%s", gobj_full_name(gobj),
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                    "msg",          "%s", "Child wihout EV_SEND_MESSAGE or EV_TX_DATA input event",
+                    "msg",          "%s", "Child without EV_SEND_MESSAGE or EV_TX_DATA input event",
                     "child",        "%s", gobj_short_name(child),
                     NULL
                 );
