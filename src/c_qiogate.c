@@ -100,7 +100,7 @@ SDATA (ASN_UNSIGNED,    "max_pending_acks", SDF_WR|SDF_PERSIST, 1,          "Max
 SDATA (ASN_UNSIGNED64,  "backup_queue_size",SDF_WR|SDF_PERSIST, 2*1000000,  "Do backup at this size"),
 SDATA (ASN_INTEGER,     "alert_queue_size", SDF_WR|SDF_PERSIST, 2000,       "Limit alert queue size"),
 SDATA (ASN_INTEGER,     "timeout_ack",      SDF_WR|SDF_PERSIST, 60,         "Timeout ack in seconds"),
-SDATA (ASN_BOOLEAN,     "drop_on_timeout_ack",SDF_WR|SDF_PERSIST, 1,        "On ack timeout drop connection"),
+SDATA (ASN_UNSIGNED,    "drop_on_timeout_ack",SDF_WR|SDF_PERSIST, 1,        "On ack timeout drop connection"),
 
 SDATA (ASN_BOOLEAN,     "with_metadata",    SDF_RD,             0,          "Don't filter metadata"),
 SDATA (ASN_BOOLEAN,     "disable_alert",    SDF_WR|SDF_PERSIST, 0,          "Disable alert"),
@@ -152,7 +152,7 @@ typedef struct _PRIVATE_DATA {
     uint64_t txMsgsec;
     uint64_t rxMsgsec;
     BOOL debug_queue_prot;
-    BOOL drop_on_timeout_ack;
+    uint32_t drop_on_timeout_ack;
 } PRIVATE_DATA;
 
 
@@ -199,7 +199,7 @@ PRIVATE void mt_create(hgobj gobj)
     SET_PRIV(with_metadata,             gobj_read_bool_attr)
     SET_PRIV(alert_queue_size,          gobj_read_int32_attr)
     SET_PRIV(max_pending_acks,          gobj_read_uint32_attr)
-    SET_PRIV(drop_on_timeout_ack,       gobj_read_bool_attr)
+    SET_PRIV(drop_on_timeout_ack,       gobj_read_uint32_attr)
 }
 
 /***************************************************************************
@@ -214,7 +214,7 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
     ELIF_EQ_SET_PRIV(alert_queue_size,      gobj_read_int32_attr)
     ELIF_EQ_SET_PRIV(max_pending_acks,      gobj_read_uint32_attr)
     ELIF_EQ_SET_PRIV(debug_queue_prot,      gobj_read_bool_attr)
-    ELIF_EQ_SET_PRIV(drop_on_timeout_ack,   gobj_read_bool_attr)
+    ELIF_EQ_SET_PRIV(drop_on_timeout_ack,   gobj_read_uint32_attr)
     END_EQ_SET_PRIV()
 }
 
@@ -885,27 +885,49 @@ PRIVATE int send_batch_messages_to_bottom_side(hgobj gobj, q_msg msg, BOOL retra
                 trq_set_ack_timer(msg, priv->timeout_ack);
                 gobj_incr_qs(QS_REPEATED, 1);
 
-                if(priv->drop_on_timeout_ack) {
-                    if(priv->debug_queue_prot) {
-                        trace_msg("     (+) XXX - rowid %"PRIu64", time %"PRIu64"", rowid, t);
-                    }
-                    if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-                        trace_msg("QIOGATE drop %s",
-                            gobj_short_name(priv->gobj_bottom_side)
+                switch(priv->drop_on_timeout_ack) {
+                    case 1:
+                        if(priv->debug_queue_prot) {
+                            trace_msg("     (+) XXX - rowid %"PRIu64", time %"PRIu64"", rowid, t);
+                        }
+                        if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
+                            trace_msg("QIOGATE drop %s",
+                                gobj_short_name(priv->gobj_bottom_side)
+                            );
+                        }
+                        log_error(0,
+                            "gobj",         "%s", gobj_full_name(gobj),
+                            "function",     "%s", __FUNCTION__,
+                            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                            "msg",          "%s", "Dropping by timeout ack",
+                            "gobj_bottom",  "%s", gobj_short_name(priv->gobj_bottom_side),
+                            NULL
                         );
-                    }
-                    log_error(0,
-                        "gobj",         "%s", gobj_full_name(gobj),
-                        "function",     "%s", __FUNCTION__,
-                        "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                        "msg",          "%s", "Dropping by timeout ack",
-                        "gobj_bottom",  "%s", gobj_short_name(priv->gobj_bottom_side),
-                        NULL
-                    );
 
-                    gobj_send_event(priv->gobj_bottom_side, "EV_DROP", 0, gobj);
-                    break;
+                        gobj_send_event(priv->gobj_bottom_side, "EV_DROP", 0, gobj);
+                        return 0;
+
+                    case 2:
+                        if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
+                            trace_msg("QIOGATE exit(-1) %s",
+                                gobj_short_name(priv->gobj_bottom_side)
+                            );
+                        }
+                        log_error(0,
+                            "gobj",         "%s", gobj_full_name(gobj),
+                            "function",     "%s", __FUNCTION__,
+                            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                            "msg",          "%s", "Exiting by timeout ack",
+                            "gobj_bottom",  "%s", gobj_short_name(priv->gobj_bottom_side),
+                            NULL
+                        );
+                        exit(-1);
+
+                    default:
+                        // continue below resend
+                        break;
                 }
+
                 int ret = send_message_to_bottom_side(gobj, msg);
                 if(ret == 0) {
                     if(priv->debug_queue_prot) {
