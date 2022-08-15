@@ -100,7 +100,7 @@ SDATA (ASN_UNSIGNED,    "max_pending_acks", SDF_WR|SDF_PERSIST, 1,          "Max
 SDATA (ASN_UNSIGNED64,  "backup_queue_size",SDF_WR|SDF_PERSIST, 2*1000000,  "Do backup at this size"),
 SDATA (ASN_INTEGER,     "alert_queue_size", SDF_WR|SDF_PERSIST, 2000,       "Limit alert queue size"),
 SDATA (ASN_INTEGER,     "timeout_ack",      SDF_WR|SDF_PERSIST, 60,         "Timeout ack in seconds"),
-SDATA (ASN_UNSIGNED,    "drop_on_timeout_ack",SDF_WR|SDF_PERSIST, 1,        "On ack timeout drop connection"),
+SDATA (ASN_UNSIGNED,    "drop_on_timeout_ack",SDF_WR|SDF_PERSIST, 1,        "On ack timeout => 1: drop connection, 2:exit(-1), other: resend message"),
 
 SDATA (ASN_BOOLEAN,     "with_metadata",    SDF_RD,             0,          "Don't filter metadata"),
 SDATA (ASN_BOOLEAN,     "disable_alert",    SDF_WR|SDF_PERSIST, 0,          "Disable alert"),
