@@ -353,7 +353,7 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
                 ret += gobj_send_event(child, "EV_TX_DATA", kw, gobj);
             } else {
                 kw_decref(kw);
-                log_error(0,
+                log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", gobj_full_name(gobj),
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_INTERNAL_ERROR,
