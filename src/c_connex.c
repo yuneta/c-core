@@ -780,6 +780,9 @@ PRIVATE int ac_stopped(hgobj gobj, const char *event, json_t *kw, hgobj src)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     if(gobj_bottom_gobj(gobj)==src) {
+        if(gobj_is_running(src)) {
+            gobj_stop(src);
+        }
         if(gobj_is_running(gobj)) {
             if (priv->n_urls > 0 && priv->idx_dst > 0) {
                 set_timeout(priv->timer, 100);
@@ -853,7 +856,7 @@ PRIVATE EV_ACTION ST_CONNECTED[] = {
     {"EV_TIMEOUT",          ac_timeout_data,            0},
     {"EV_TX_READY",         ac_transmit_ready,          0},
     {"EV_DROP",             ac_drop,                    "ST_WAIT_DISCONNECTED"},
-    {"EV_STOPPED",          ac_stopped,                 0},
+    {"EV_STOPPED",          ac_stopped,                 "ST_DISCONNECTED"},
     {0,0,0}
 };
 PRIVATE EV_ACTION ST_WAIT_DISCONNECTED[] = {
