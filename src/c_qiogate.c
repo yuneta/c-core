@@ -260,6 +260,7 @@ PRIVATE int mt_start(hgobj gobj)
             "msg",          "%s", "timeout_ack EMPTY",
             NULL
         );
+        priv->timeout_ack = 60;
     }
 
     /*--------------------------------*
@@ -889,6 +890,7 @@ PRIVATE int send_batch_messages_to_bottom_side(hgobj gobj, q_msg msg, BOOL retra
                  *  SÍ se puede usar reenvío. Lo suyo, con ack inteligente,
                  *  adaptado a los tiempos de respuesta del peer, en tiempo real.
                  */
+                // TODO georeverse has trq_add_retries()/trq_test_retries(msg)
                 trq_set_ack_timer(msg, priv->timeout_ack);
                 gobj_incr_qs(QS_REPEATED, 1);
 
