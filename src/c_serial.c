@@ -844,7 +844,6 @@ PRIVATE int do_write(hgobj gobj, GBUFFER *gbuf)
             "msg",          "%s", "uv_req_write ALREADY ACTIVE",
             NULL
         );
-        return -1;
     }
 
     priv->uv_req_write_active = 1;
