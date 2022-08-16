@@ -222,7 +222,7 @@ PRIVATE void mt_destroy(hgobj gobj)
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_OPERATIONAL_ERROR,
-            "msg",          "%s", "GObj NOT STOPPED. UV handler ACTIVE!",
+            "msg",          "%s", "destroying: UV handler ACTIVE!",
             NULL
         );
     }
@@ -231,7 +231,7 @@ PRIVATE void mt_destroy(hgobj gobj)
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_OPERATIONAL_ERROR,
-            "msg",          "%s", "UV req_read ACTIVE",
+            "msg",          "%s", "destroying: UV req_read ACTIVE",
             NULL
         );
     }
@@ -240,7 +240,7 @@ PRIVATE void mt_destroy(hgobj gobj)
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_OPERATIONAL_ERROR,
-            "msg",          "%s", "UV req_connect ACTIVE",
+            "msg",          "%s", "destroying: UV req_connect ACTIVE",
             NULL
         );
     }
@@ -249,7 +249,7 @@ PRIVATE void mt_destroy(hgobj gobj)
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_OPERATIONAL_ERROR,
-            "msg",          "%s", "UV req_write ACTIVE",
+            "msg",          "%s", "destroying: UV req_write ACTIVE",
             NULL
         );
     }
@@ -258,7 +258,7 @@ PRIVATE void mt_destroy(hgobj gobj)
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_OPERATIONAL_ERROR,
-            "msg",          "%s", "UV req_shutdown ACTIVE",
+            "msg",          "%s", "destroying: UV req_shutdown ACTIVE",
             NULL
         );
     }
