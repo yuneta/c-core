@@ -1247,8 +1247,11 @@ PRIVATE int ac_drop(hgobj gobj, const char *event, json_t *kw, hgobj src)
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
-    {"EV_TX_DATA",          0},
-    {"EV_DROP",             0},
+    // top input
+    {"EV_TX_DATA",              0,  0,  ""},
+    {"EV_DROP",                 0,  0,  ""},
+    // bottom input
+    {"EV_STOPPED",              0,  0,  ""},
     {NULL, 0}
 };
 PRIVATE const EVENT output_events[] = {
