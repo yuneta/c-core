@@ -1270,16 +1270,21 @@ PRIVATE const char *state_names[] = {
 };
 
 PRIVATE EV_ACTION ST_STOPPED[] = {
+    {"EV_STOPPED",              0,                          0},
     {0,0,0}
 };
 PRIVATE EV_ACTION ST_WAIT_STOPPED[] = {
+    {"EV_STOPPED",              0,                          0},
     {0,0,0}
 };
 PRIVATE EV_ACTION ST_WAIT_CONNECTED[] = {
-    {"EV_DROP",         ac_drop,                0},
+    {"EV_DROP",                 ac_drop,                    0},
     {0,0,0}
 };
 PRIVATE EV_ACTION ST_WAIT_DISCONNECTED[] = {
+    {"EV_DROP",                 ac_drop,                    0}, // HACK no tenemos timeout
+                                                                // Father insists
+    {"EV_STOPPED",              0,                          0},
     {0,0,0}
 };
 PRIVATE EV_ACTION ST_CONNECTED[] = {
