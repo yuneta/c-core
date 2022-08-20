@@ -63,7 +63,6 @@ SDATACM (ASN_SCHEMA,    "help",             a_help,             pm_help,        
 SDATACM (ASN_SCHEMA,    "trace-queue-prot-on",0,                0,              cmd_trace_queue_prot_on, "Trace ON queue protocol"),
 SDATACM (ASN_SCHEMA,    "trace-queue-prot-off",0,               0,              cmd_trace_queue_prot_off, "Trace OFF queue protocol"),
 
-
 SDATACM (ASN_SCHEMA,    "reset_maxtxrx",        0,          0,              cmd_reset_maxtxrx, "Reset max tx rx stats"),
 SDATACM (ASN_SCHEMA,    "queue_mark_pending",   0,          pm_queue,       cmd_queue_mark_pending, "Mark selected messages as pending (Will be resend)."),
 SDATACM (ASN_SCHEMA,    "queue_mark_notpending", 0,         pm_queue,       cmd_queue_mark_notpending,"Mark selected messages as notpending (Will NOT be send or resend)."),
@@ -805,9 +804,10 @@ PRIVATE int send_message_to_bottom_side(hgobj gobj, q_msg msg)
  *  // reenvia al recibir ack:                 (*) <->
  *  // reenvia por timeout periódico           (*) ->
  ***************************************************************************/
-PRIVATE int send_batch_messages_to_bottom_side(hgobj gobj, q_msg msg, BOOL retransmit)
+PRIVATE int send_batch_messages(hgobj gobj, q_msg msg, BOOL retransmit)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+    void *(*discard_message)(hgobj gobj, q_msg msg) = 0;
 
     if(priv->debug_queue_prot) {
         //trace_msg("=================BATCH=========================>");
@@ -834,7 +834,7 @@ PRIVATE int send_batch_messages_to_bottom_side(hgobj gobj, q_msg msg, BOOL retra
                 if(priv->debug_queue_prot) {
                     trace_msg("     (1) xxx - rowid %"PRIu64", time %"PRIu64"", rowid, t);
                 }
-                return 0;
+                return 0; // Previous message has not sent
             }
         }
 
@@ -850,14 +850,23 @@ PRIVATE int send_batch_messages_to_bottom_side(hgobj gobj, q_msg msg, BOOL retra
                 (*priv->ppending_acks)++;
                 trq_set_soft_mark(msg, MARK_PENDING_ACK, TRUE);
                 trq_set_ack_timer(msg, priv->timeout_ack);
-                return 0;
+                return 1; // Sent one message
+
             } else {
-                if(priv->debug_queue_prot) {
+                // Error sending the message
+                if(discard_message) { // TODO like georeverse
+                    if(priv->debug_queue_prot) {
+                        trace_msg("     (1) xx!  - rowid %"PRIu64", time %"PRIu64"", rowid, t);
+                    }
+                    discard_message(gobj, msg);
+                    return 0;
+                } else {
                     trace_msg("     (1) xx  - rowid %"PRIu64", time %"PRIu64"", rowid, t);
+                    return -1; // Error sending, must drop?
                 }
-                return -1; // must drop?
             }
         } else {
+            // Max pending reached
             if(priv->debug_queue_prot) {
                 trace_msg("     (1) x   - rowid %"PRIu64", time %"PRIu64"", rowid, t);
             }
@@ -868,13 +877,17 @@ PRIVATE int send_batch_messages_to_bottom_side(hgobj gobj, q_msg msg, BOOL retra
     /*----------------------------------*
      *      Sending batch messages
      *----------------------------------*/
+    int sent = 0;
     qmsg_foreach_forward(priv->trq_msgs, msg) {
         uint64_t rowid = trq_msg_rowid(msg);
         uint64_t t = trq_msg_time(msg);
 
         if((trq_get_soft_mark(msg) & MARK_PENDING_ACK)) {
             if(!retransmit) {
-                break;
+                if(priv->debug_queue_prot) {
+                    trace_msg("     (X)     - rowid %"PRIu64", time %"PRIu64", sent %d", rowid, t, sent);
+                }
+                return sent;
             }
             /*
              *  Resend msgs with MARK_PENDING_ACK and timer fulfilled
@@ -1077,7 +1090,7 @@ PRIVATE int process_ack(hgobj gobj, const char *event, json_t *kw, hgobj src)
     KW_DECREF(kw)
 
     if(priv->bottom_side_opened) {
-        send_batch_messages_to_bottom_side(gobj, 0, FALSE); // envía más al recibir ack
+        send_batch_messages(gobj, 0, FALSE); // envía más al recibir ack
     }
     return 0;
 }
@@ -1101,7 +1114,7 @@ PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
     if(src == priv->gobj_bottom_side) {
         priv->bottom_side_opened = TRUE;
-        send_batch_messages_to_bottom_side(gobj, 0, TRUE);  // Reenvia al abrir la conexión
+        send_batch_messages(gobj, 0, TRUE);  // Reenvia al abrir la conexión
         set_timeout_periodic(priv->timer, priv->timeout_poll);
     } else {
         log_error(0,
@@ -1186,7 +1199,7 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
 
     if(msg) {
         if(priv->bottom_side_opened) {
-            send_batch_messages_to_bottom_side(gobj, msg, FALSE); // envia al recibir (único con id)
+            send_batch_messages(gobj, msg, FALSE); // envia al recibir (único con id)
         }
     }
 
@@ -1218,7 +1231,7 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
     priv->txMsgsec = 0;
 
     if(priv->bottom_side_opened) {
-        send_batch_messages_to_bottom_side(gobj, 0, TRUE); // reenvia por timeout periódico
+        send_batch_messages(gobj, 0, TRUE); // reenvia por timeout periódico
     }
 
     if(trq_size(priv->trq_msgs)==0 && *priv->ppending_acks==0) {
