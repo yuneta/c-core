@@ -927,7 +927,6 @@ PRIVATE int send_batch_messages(hgobj gobj, q_msg msg, BOOL retransmit)
                         if(priv->debug_queue_prot) {
                             trace_msg("     (+) XX! - rowid %"PRIu64", time %"PRIu64"", rowid, t);
                         }
-                        return -1; // Max retry reached without discard solution
                     }
                 } else {
                     // Timeout reached, resend, infinity retry or max retry not reached
@@ -1087,7 +1086,7 @@ PRIVATE int process_ack(hgobj gobj, const char *event, json_t *kw, hgobj src)
     KW_DECREF(kw)
 
     if(priv->bottom_side_opened) {
-        send_batch_messages(gobj, 0, FALSE); // envía más al recibir ack
+        send_batch_messages(gobj, 0, FALSE); // try to send more messages after receiving ack
     }
     return 0;
 }
@@ -1111,7 +1110,7 @@ PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
     if(src == priv->gobj_bottom_side) {
         priv->bottom_side_opened = TRUE;
-        send_batch_messages(gobj, 0, TRUE);  // Reenvia al abrir la conexión
+        send_batch_messages(gobj, 0, TRUE);  // On open send or resend
         set_timeout_periodic(priv->timer, priv->timeout_poll);
     } else {
         log_error(0,
@@ -1196,7 +1195,7 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
 
     if(msg) {
         if(priv->bottom_side_opened) {
-            send_batch_messages(gobj, msg, FALSE); // envia al recibir (único con id)
+            send_batch_messages(gobj, msg, FALSE); // Send the received msg
         }
     }
 
@@ -1228,7 +1227,24 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
     priv->txMsgsec = 0;
 
     if(priv->bottom_side_opened) {
-        send_batch_messages(gobj, 0, TRUE); // reenvia por timeout periódico
+        int ret = send_batch_messages(gobj, 0, TRUE); // Resend by periodic timeout
+        if(ret < 0) {
+            if(priv->drop_on_timeout_ack) {
+                if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
+                    trace_msg("QIOGATE drop %s", gobj_short_name(priv->gobj_bottom_side));
+                }
+                log_error(0,
+                    "gobj",         "%s", gobj_full_name(gobj),
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "msg",          "%s", "Dropping by timeout ack",
+                    "gobj_bottom",  "%s", gobj_short_name(priv->gobj_bottom_side),
+                    NULL
+                );
+
+                gobj_send_event(priv->gobj_bottom_side, "EV_DROP", 0, gobj);
+            }
+        }
     }
 
     if(trq_size(priv->trq_msgs)==0 && *priv->ppending_acks==0) {
