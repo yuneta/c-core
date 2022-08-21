@@ -34,8 +34,6 @@ PRIVATE int close_queue(hgobj gobj);
  *          Data: config, public data, private data
  ***************************************************************************/
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_trace_queue_prot_on(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_trace_queue_prot_off(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_queue_mark_pending(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_queue_mark_notpending(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_reset_maxtxrx(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -59,9 +57,6 @@ PRIVATE const char *a_help[] = {"h", "?", 0};
 PRIVATE sdata_desc_t command_table[] = {
 /*-CMD---type-----------name----------------alias---------------items-----------json_fn---------description---------- */
 SDATACM (ASN_SCHEMA,    "help",             a_help,             pm_help,        cmd_help,       "Command's help"),
-
-SDATACM (ASN_SCHEMA,    "trace-queue-prot-on",0,                0,              cmd_trace_queue_prot_on, "Trace ON queue protocol"),
-SDATACM (ASN_SCHEMA,    "trace-queue-prot-off",0,               0,              cmd_trace_queue_prot_off, "Trace OFF queue protocol"),
 
 SDATACM (ASN_SCHEMA,    "reset_maxtxrx",        0,          0,              cmd_reset_maxtxrx, "Reset max tx rx stats"),
 SDATACM (ASN_SCHEMA,    "queue_mark_pending",   0,          pm_queue,       cmd_queue_mark_pending, "Mark selected messages as pending (Will be resend)."),
@@ -106,8 +101,6 @@ SDATA (ASN_BOOLEAN,     "disable_alert",    SDF_WR|SDF_PERSIST, 0,          "Dis
 SDATA (ASN_OCTET_STR,   "alert_from",       SDF_WR,             "",         "Alert from"),
 SDATA (ASN_OCTET_STR,   "alert_to",         SDF_WR|SDF_PERSIST, "",         "Alert destination"),
 
-SDATA (ASN_BOOLEAN,     "debug_queue_prot", SDF_WR|SDF_PERSIST, 0,          "Debug queue protocol"),
-
 SDATA (ASN_POINTER,     "user_data",        0,                  0,          "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                  0,          "more user data"),
 SDATA (ASN_POINTER,     "subscriber",       0,                  0,          "subscriber of output-events. Not a child gobj."),
@@ -118,10 +111,12 @@ SDATA_END()
  *      GClass trace levels
  *---------------------------------------------*/
 enum {
-    TRACE_MESSAGES = 0x0001,
+    TRACE_MESSAGES      = 0x0001,
+    TRACE_QUEUE_PROT    = 0x0002,
 };
 PRIVATE const trace_level_t s_user_trace_level[16] = {
 {"messages",                "Trace messages"},
+{"trace_queue_prot",        "Trace queue protocol"},
 {0, 0},
 };
 
@@ -150,7 +145,6 @@ typedef struct _PRIVATE_DATA {
     uint64_t *prxMsgs;
     uint64_t txMsgsec;
     uint64_t rxMsgsec;
-    BOOL debug_queue_prot;
     BOOL drop_on_timeout_ack;
 } PRIVATE_DATA;
 
@@ -192,7 +186,6 @@ PRIVATE void mt_create(hgobj gobj)
      *  Do copy of heavy used parameters, for quick access.
      *  HACK The writable attributes must be repeated in mt_writing method.
      */
-    SET_PRIV(debug_queue_prot,          gobj_read_bool_attr)
     SET_PRIV(timeout_poll,              gobj_read_int32_attr)
     SET_PRIV(timeout_ack,               gobj_read_int32_attr)
     SET_PRIV(with_metadata,             gobj_read_bool_attr)
@@ -212,7 +205,6 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
     ELIF_EQ_SET_PRIV(timeout_ack,           gobj_read_int32_attr)
     ELIF_EQ_SET_PRIV(alert_queue_size,      gobj_read_int32_attr)
     ELIF_EQ_SET_PRIV(max_pending_acks,      gobj_read_uint32_attr)
-    ELIF_EQ_SET_PRIV(debug_queue_prot,      gobj_read_bool_attr)
     ELIF_EQ_SET_PRIV(drop_on_timeout_ack,   gobj_read_bool_attr)
     END_EQ_SET_PRIV()
 }
@@ -308,40 +300,6 @@ PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         gobj,
         0,
         jn_resp,
-        0,
-        0,
-        kw  // owned
-    );
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_trace_queue_prot_on(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-    BOOL set = TRUE;
-    gobj_write_bool_attr(gobj, "debug_queue_prot", set);
-    return msg_iev_build_webix(
-        gobj,
-        0,
-        json_sprintf("%s: Trace queue protocol %s", gobj_name(gobj), set?"ON":"OFF"),
-        0,
-        0,
-        kw  // owned
-    );
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_trace_queue_prot_off(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-    BOOL set = FALSE;
-    gobj_write_bool_attr(gobj, "debug_queue_prot", set);
-    return msg_iev_build_webix(
-        gobj,
-        0,
-        json_sprintf("%s: Trace queue protocol %s", gobj_name(gobj), set?"ON":"OFF"),
         0,
         0,
         kw  // owned
@@ -809,17 +767,13 @@ PRIVATE int send_batch_messages(hgobj gobj, q_msg msg, BOOL retransmit)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
     void *(*discard_message)(hgobj gobj, q_msg msg) = 0;
 
-    if(priv->debug_queue_prot) {
-        //trace_msg("=================BATCH=========================>");
-    }
-
     /*------------------------------*
      *      Sending one message
      *------------------------------*/
     if(msg) {
         uint64_t rowid = trq_msg_rowid(msg);
         uint64_t t = trq_msg_time(msg);
-        if(priv->debug_queue_prot) {
+        if(gobj_trace_level(gobj) & TRACE_QUEUE_PROT) {
             trace_msg("  -> (1)     - rowid %"PRIu64", time %"PRIu64"", rowid, t);
         }
 
@@ -831,7 +785,7 @@ PRIVATE int send_batch_messages(hgobj gobj, q_msg msg, BOOL retransmit)
         q_msg prev_last_msg = trq_prev_msg(last_msg);
         if(prev_last_msg) {
             if(!(trq_get_soft_mark(prev_last_msg) & MARK_PENDING_ACK)) {
-                if(priv->debug_queue_prot) {
+                if(gobj_trace_level(gobj) & TRACE_QUEUE_PROT) {
                     trace_msg("     (1) xxx - rowid %"PRIu64", time %"PRIu64"", rowid, t);
                 }
                 return 0; // Previous message has not sent
@@ -841,7 +795,7 @@ PRIVATE int send_batch_messages(hgobj gobj, q_msg msg, BOOL retransmit)
         if((*priv->ppending_acks) < priv->max_pending_acks) {
             int ret = send_message_to_bottom_side(gobj, msg);
             if(ret == 0) {
-                if(priv->debug_queue_prot) {
+                if(gobj_trace_level(gobj) & TRACE_QUEUE_PROT) {
                     trace_msg("     (1) ->  - rowid %"PRIu64", time %"PRIu64"", rowid, t);
                 }
 
@@ -857,12 +811,12 @@ PRIVATE int send_batch_messages(hgobj gobj, q_msg msg, BOOL retransmit)
             } else {
                 // Error sending the message
                 if(discard_message) { // TODO like georeverse
-                    if(priv->debug_queue_prot) {
+                    if(gobj_trace_level(gobj) & TRACE_QUEUE_PROT) {
                         trace_msg("     (1) xx!  - rowid %"PRIu64", time %"PRIu64"", rowid, t);
                     }
                     discard_message(gobj, msg);
                 } else {
-                    if(priv->debug_queue_prot) {
+                    if(gobj_trace_level(gobj) & TRACE_QUEUE_PROT) {
                         trace_msg("     (1) xx  - rowid %"PRIu64", time %"PRIu64"", rowid, t);
                     }
                 }
@@ -870,7 +824,7 @@ PRIVATE int send_batch_messages(hgobj gobj, q_msg msg, BOOL retransmit)
             }
         } else {
             // Max pending reached
-            if(priv->debug_queue_prot) {
+            if(gobj_trace_level(gobj) & TRACE_QUEUE_PROT) {
                 trace_msg("     (1) x   - rowid %"PRIu64", time %"PRIu64"", rowid, t);
             }
             return 0;
@@ -891,7 +845,7 @@ PRIVATE int send_batch_messages(hgobj gobj, q_msg msg, BOOL retransmit)
              *  Resend msgs with MARK_PENDING_ACK and timer fulfilled
              */
             if(!retransmit) {
-                if(priv->debug_queue_prot) {
+                if(gobj_trace_level(gobj) & TRACE_QUEUE_PROT) {
                     trace_msg("     (X)     - rowid %"PRIu64", time %"PRIu64", sent %d", rowid, t, sent);
                 }
                 // Batch without retransmit must be rapid (retransmit will be in timeout poll)
@@ -912,7 +866,7 @@ PRIVATE int send_batch_messages(hgobj gobj, q_msg msg, BOOL retransmit)
                 if(trq_test_retries(msg)) {
                     // No more retries
                     if(discard_message) {
-                        if(priv->debug_queue_prot) {
+                        if(gobj_trace_level(gobj) & TRACE_QUEUE_PROT) {
                             trace_msg("     (+) XX  - rowid %"PRIu64", time %"PRIu64"", rowid, t);
                         }
                         discard_message(gobj, msg);
@@ -924,7 +878,7 @@ PRIVATE int send_batch_messages(hgobj gobj, q_msg msg, BOOL retransmit)
                             "msg",          "%s", "trq_test_retries() done without discard_messages",
                             NULL
                         );
-                        if(priv->debug_queue_prot) {
+                        if(gobj_trace_level(gobj) & TRACE_QUEUE_PROT) {
                             trace_msg("     (+) XX! - rowid %"PRIu64", time %"PRIu64"", rowid, t);
                         }
                     }
@@ -936,17 +890,17 @@ PRIVATE int send_batch_messages(hgobj gobj, q_msg msg, BOOL retransmit)
                     int ret = send_message_to_bottom_side(gobj, msg);
                     if (ret == 0) {
                         sent++;
-                        if (priv->debug_queue_prot) {
+                        if(gobj_trace_level(gobj) & TRACE_QUEUE_PROT) {
                             trace_msg("     (+) ->  - rowid %"PRIu64", time %"PRIu64"", rowid, t);
                         }
                     } else {
                         if(discard_message) {
-                            if(priv->debug_queue_prot) {
+                            if(gobj_trace_level(gobj) & TRACE_QUEUE_PROT) {
                                 trace_msg("     (+) xx  - rowid %"PRIu64", time %"PRIu64"", rowid, t);
                             }
                             discard_message(gobj, msg);
                         } else {
-                            if(priv->debug_queue_prot) {
+                            if(gobj_trace_level(gobj) & TRACE_QUEUE_PROT) {
                                 trace_msg("     (+) xx! - rowid %"PRIu64", time %"PRIu64"", rowid, t);
                             }
                         }
@@ -962,7 +916,7 @@ PRIVATE int send_batch_messages(hgobj gobj, q_msg msg, BOOL retransmit)
                 int ret = send_message_to_bottom_side(gobj, msg);
                 if(ret == 0) {
                     sent++;
-                    if(priv->debug_queue_prot) {
+                    if(gobj_trace_level(gobj) & TRACE_QUEUE_PROT) {
                         trace_msg("     (-) ->  - rowid %"PRIu64", time %"PRIu64"", rowid, t);
                     }
                     (*priv->ptxMsgs)++;
@@ -973,14 +927,14 @@ PRIVATE int send_batch_messages(hgobj gobj, q_msg msg, BOOL retransmit)
                     trq_set_soft_mark(msg, MARK_PENDING_ACK, TRUE);
                     trq_set_ack_timer(msg, priv->timeout_ack);
                 } else {
-                    if(priv->debug_queue_prot) {
+                    if(gobj_trace_level(gobj) & TRACE_QUEUE_PROT) {
                         trace_msg("     (-) xx  - rowid %"PRIu64", time %"PRIu64"", rowid, t);
                     }
                     return -1;
                 }
             } else {
                 // Max pending reached
-                if(priv->debug_queue_prot) {
+                if(gobj_trace_level(gobj) & TRACE_QUEUE_PROT) {
                     trace_msg("     (-) x   - rowid %"PRIu64", time %"PRIu64"", rowid, t);
                 }
                 return sent;
@@ -1005,7 +959,7 @@ PRIVATE int dequeue_msg(
     q_msg msg = trq_get_by_rowid(priv->trq_msgs, rowid);
     if(msg) {
         uint64_t tt = trq_msg_time(msg);
-        if(priv->debug_queue_prot) {
+        if(gobj_trace_level(gobj) & TRACE_QUEUE_PROT) {
             trace_msg("     ( ) <-  - rowid %"PRIu64", time %"PRIu64" ACK", rowid, tt);
         }
 
