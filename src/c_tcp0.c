@@ -1249,8 +1249,9 @@ PRIVATE int ac_drop(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_force_drop(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    do_close(gobj);
-
+    if(gobj_is_running(gobj)) {
+        gobj_stop(gobj);
+    }
     KW_DECREF(kw);
     return 0;
 }
