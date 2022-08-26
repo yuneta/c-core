@@ -1565,7 +1565,7 @@ PRIVATE GCLASS _gclass = {
     0,  // acl
     s_user_trace_level,
     0,  // command_table
-    gcflag_no_check_ouput_events, // gcflag,
+    gcflag_no_check_output_events, // gcflag,
 };
 
 /***************************************************************************
