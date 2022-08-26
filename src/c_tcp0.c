@@ -794,6 +794,7 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
                 "uv_error",     "%s", uv_err_name(nread),
                 NULL
             );
+            gobj_change_state(gobj, "ST_WAIT_DISCONNECTED"); // TODO seems like already disconnected
         }
         if(gobj_is_running(gobj)) {
             gobj_stop(gobj); // auto-stop
@@ -1244,6 +1245,17 @@ PRIVATE int ac_drop(hgobj gobj, const char *event, json_t *kw, hgobj src)
 }
 
 /***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int ac_force_drop(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    do_close(gobj);
+
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
@@ -1285,7 +1297,7 @@ PRIVATE EV_ACTION ST_WAIT_CONNECTED[] = {
     {0,0,0}
 };
 PRIVATE EV_ACTION ST_WAIT_DISCONNECTED[] = {
-    {"EV_DROP",                 ac_drop,                    0}, // HACK no tenemos timeout
+    {"EV_DROP",                 ac_force_drop,              0}, // HACK no tenemos timeout
                                                                 // Father insists
     {"EV_STOPPED",              0,                          0},
     {0,0,0}
