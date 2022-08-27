@@ -345,6 +345,49 @@ PRIVATE int mt_stop(hgobj gobj)
 
 
 /***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE void set_disconnected(hgobj gobj, const char *cause)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    /*
+     *  Info of "disconnected"
+     */
+    if(gobj_trace_level(gobj) & TRACE_CONNECT_DISCONNECT) {
+        log_info(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
+            "msg",          "%s", "Disconnected",
+            "msg2",         "%s", "Disconnected🔴",
+            "remote-addr",  "%s", priv->peername?priv->peername:"",
+            "local-addr",   "%s", priv->sockname?priv->sockname:"",
+            "cause",        "%s", cause,
+            NULL
+        );
+    }
+
+    gobj_change_state(gobj, "ST_STOPPED");
+
+    if(priv->inform_disconnection) {
+        priv->inform_disconnection = FALSE;
+        gobj_publish_event(gobj, priv->disconnected_event_name, 0);
+    }
+
+    if(gobj_read_bool_attr(gobj, "__clisrv__")) {
+        gobj_write_str_attr(gobj, "peername", "");
+    } else {
+        gobj_write_str_attr(gobj, "sockname", "");
+    }
+
+    if(gobj_is_volatil(gobj)) {
+        gobj_destroy(gobj);
+    } else {
+        gobj_publish_event(gobj, priv->stopped_event_name, 0);
+    }
+}
+
+/***************************************************************************
  *  Only NOW you can destroy this gobj,
  *  when uv has released the handler.
  ***************************************************************************/
@@ -359,18 +402,7 @@ PRIVATE void on_close_cb(uv_handle_t* handle)
     priv->uv_handler_active = 0;
     priv->uv_req_connect_active = 0;
 
-    gobj_change_state(gobj, "ST_STOPPED");
-
-    if(priv->inform_disconnection) {
-        priv->inform_disconnection = FALSE;
-        gobj_publish_event(gobj, priv->disconnected_event_name, 0);
-    }
-
-    if(gobj_is_volatil(gobj)) {
-        gobj_destroy(gobj);
-    } else {
-        gobj_publish_event(gobj, priv->stopped_event_name, 0);
-    }
+    set_disconnected(gobj, "on_close_cb");
 }
 
 /***************************************************************************
@@ -390,10 +422,25 @@ PRIVATE void do_close(hgobj gobj)
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_OPERATIONAL_ERROR,
-            "msg",          "%s", "UV handler NOT ACTIVE!",
+            "msg",          "%s", "UV handler NOT ACTIVE 1",
             NULL
         );
-        set_disconnected(gobj, "");
+        set_disconnected(gobj, "UV handler NOT ACTIVE 1");
+        return;
+    }
+
+    if(!uv_is_active((uv_handle_t *)&priv->uv_socket)) {
+        if(!uv_is_closing((uv_handle_t *)&priv->uv_socket)) {
+            if(gobj_trace_level(gobj) & TRACE_UV) {
+                trace_msg(">>> uv_close tcp p=%p", &priv->uv_socket);
+            }
+            gobj_change_state(gobj, "ST_WAIT_STOPPED");
+            uv_close((uv_handle_t *)&priv->uv_socket, on_close_cb);
+        } else {
+            priv->uv_handler_active = 0;
+            priv->uv_req_connect_active = 0;
+            set_disconnected(gobj, "UV handler NOT ACTIVE 2");
+        }
         return;
     }
 
@@ -448,43 +495,6 @@ PRIVATE void set_connected(hgobj gobj)
     // TODO error de diseño, si se cambia connected_event_name la publicación fallará
     // porque el evento no estará en output_events list.
     gobj_publish_event(gobj, priv->connected_event_name, kw_ev);
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE void set_disconnected(hgobj gobj, const char *cause)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    /*
-     *  Info of "disconnected"
-     */
-    if(gobj_trace_level(gobj) & TRACE_CONNECT_DISCONNECT) {
-        log_info(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
-            "msg",          "%s", "Disconnected",
-            "msg2",         "%s", "Disconnected🔴",
-            "remote-addr",  "%s", priv->peername?priv->peername:"",
-            "local-addr",   "%s", priv->sockname?priv->sockname:"",
-            "cause",        "%s", cause?cause:"",
-            NULL
-        );
-    }
-
-    gobj_change_state(gobj, "ST_STOPPED");
-
-    if(priv->inform_disconnection) {
-        priv->inform_disconnection = FALSE;
-        gobj_publish_event(gobj, priv->disconnected_event_name, 0);
-    }
-
-    if(gobj_read_bool_attr(gobj, "__clisrv__")) {
-        gobj_write_str_attr(gobj, "peername", "");
-    } else {
-        gobj_write_str_attr(gobj, "sockname", "");
-    }
 }
 
 /***************************************************************************
@@ -794,8 +804,8 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
                 "uv_error",     "%s", uv_err_name(nread),
                 NULL
             );
-            gobj_change_state(gobj, "ST_WAIT_DISCONNECTED"); // TODO seems like already disconnected
         }
+        gobj_change_state(gobj, "ST_WAIT_DISCONNECTED"); // seems like already disconnected
         if(gobj_is_running(gobj)) {
             gobj_stop(gobj); // auto-stop
         }
@@ -865,7 +875,7 @@ PRIVATE void on_shutdown_cb(uv_shutdown_t* req, int status)
     }
 
     priv->uv_req_shutdown_active = 0;
-    set_disconnected(gobj, "shutdown");
+    // set_disconnected(gobj, "shutdown"); GMS
     do_close(gobj);
 }
 
@@ -935,7 +945,7 @@ PRIVATE void on_write_cb(uv_write_t* req, int status)
     }
 
     if(status != 0) {
-        set_disconnected(gobj, uv_err_name(status));
+        // set_disconnected(gobj, uv_err_name(status)); GMS
         if(gobj_is_running(gobj)) {
             gobj_stop(gobj); // auto-stop
         }
@@ -1154,7 +1164,7 @@ PRIVATE int try_write_all(hgobj gobj, BOOL inform_tx_ready)
                 /*
                  *  Falló la conexión
                  */
-                set_disconnected(gobj, uv_err_name(sent));
+                // set_disconnected(gobj, uv_err_name(sent)); GMS
                 if(gobj_is_running(gobj)) {
                     gobj_stop(gobj); // auto-stop
                 }
