@@ -89,6 +89,7 @@ SDATA (ASN_OCTET_STR,   "pkey",             SDF_RD,             "",         "trq
 SDATA (ASN_OCTET_STR,   "tkey",             SDF_RD,             "",         "trq_open tkey"),
 SDATA (ASN_OCTET_STR,   "system_flag",      SDF_RD,             "",         "trq_open system_flag"),
 SDATA (ASN_UNSIGNED,    "on_critical_error",SDF_RD,             LOG_OPT_TRACE_STACK, "tranger parameter"),
+SDATA (ASN_OCTET_STR,   "alert_message",    SDF_WR|SDF_PERSIST, "ALERTA Encolamiento", "Alert message"),
 SDATA (ASN_UNSIGNED,    "max_pending_acks", SDF_WR|SDF_PERSIST, 1,          "Maximum messages pending of ack"),
 SDATA (ASN_UNSIGNED,    "maximum_retries",  SDF_WR|SDF_PERSIST, 0,          "Maximum tx retries per message"),
 SDATA (ASN_UNSIGNED64,  "backup_queue_size",SDF_WR|SDF_PERSIST, 1*1000000,  "Do backup at this size"),
@@ -660,7 +661,7 @@ PRIVATE q_msg enqueue_message(
     }
 
     if(!gobj_read_bool_attr(gobj, "disable_alert")) {
-        if(trq_size(priv->trq_msgs) >= priv->alert_queue_size) {
+        if(priv->alert_queue_size > 0 && trq_size(priv->trq_msgs) >= priv->alert_queue_size) {
             if(trq_size(priv->trq_msgs) % priv->alert_queue_size == 0) {
                 char subject[280];
                 char alert[512];
@@ -679,7 +680,8 @@ PRIVATE q_msg enqueue_message(
                 snprintf(
                     subject,
                     sizeof(subject),
-                    "ALERTA Encolamiento de %ld mensajes en nodo '%s', yuno '%s' %s",
+                    "%s %ld msgs, node '%s', yuno '%s' %s",
+                    gobj_read_str_attr(gobj, "alert_message"), //"ALERTA Encolamiento",
                     (unsigned long)trq_size(priv->trq_msgs),
                     get_host_name(),
                     gobj_yuno_role_plus_name(),
@@ -688,7 +690,8 @@ PRIVATE q_msg enqueue_message(
                 snprintf(
                     alert,
                     sizeof(alert),
-                    "Encolamiento de %ld mensajes en nodo '%s', yuno '%s' %s\nUTC %s, LOCAL %s",
+                    "%s %ld msgs, node '%s', yuno '%s' %s\nUTC %s, LOCAL %s",
+                    gobj_read_str_attr(gobj, "alert_message"), //"ALERTA Encolamiento",
                     (unsigned long)trq_size(priv->trq_msgs),
                     get_host_name(),
                     gobj_yuno_role_plus_name(),
