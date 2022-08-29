@@ -639,7 +639,9 @@ PRIVATE void mt_create(hgobj gobj)
 
     set_user_gclass_traces(gobj);
     set_user_gclass_no_traces(gobj);
-    gobj_set_deep_tracing(gobj_read_int32_attr(gobj, "deep_trace"));
+    if(gobj_read_int32_attr(gobj, "deep_trace")) {
+        gobj_set_deep_tracing(gobj_read_int32_attr(gobj, "deep_trace"));
+    }
 
     /*
      *  Create the event loop
