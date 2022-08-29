@@ -680,12 +680,13 @@ PRIVATE q_msg enqueue_message(
                 snprintf(
                     subject,
                     sizeof(subject),
-                    "%s %ld msgs, node '%s', yuno '%s' %s",
+                    "%s %ld msgs, node '%s', yuno '%s', queue %s, owner %s",
                     gobj_read_str_attr(gobj, "alert_message"), //"ALERTA Encolamiento",
                     (unsigned long)trq_size(priv->trq_msgs),
                     get_host_name(),
                     gobj_yuno_role_plus_name(),
-                    gobj_read_str_attr(gobj, "tranger_database")
+                    gobj_read_str_attr(gobj, "tranger_database"),
+                    gobj_node_owner()
                 );
                 snprintf(
                     alert,
