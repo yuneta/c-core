@@ -954,11 +954,20 @@ PRIVATE void on_write_cb(uv_write_t* req, int status)
 
     if(status != 0) {
         if(status == UV_EPIPE) {
-            if (gobj_trace_level(gobj) & TRACE_CONNECT_DISCONNECT) {
+            if(gobj_trace_level(gobj) & TRACE_CONNECT_DISCONNECT) {
                 log_info(0,
                     "gobj",     "%s", gobj_full_name(gobj),
                     "msgset",   "%s", MSGSET_CONNECT_DISCONNECT,
                     "msg",      "%s", "Broken pipe",
+                    NULL
+                );
+            }
+        } else if(status == UV_ECONNRESET) {
+            if(gobj_trace_level(gobj) & TRACE_CONNECT_DISCONNECT) {
+                log_info(0,
+                    "gobj",     "%s", gobj_full_name(gobj),
+                    "msgset",   "%s", MSGSET_CONNECT_DISCONNECT,
+                    "msg",      "%s", "Forcibly closed by peer",
                     NULL
                 );
             }
