@@ -1649,7 +1649,8 @@ PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
         json_integer((json_int_t)(size_t)src)
     );
 
-    return gobj_publish_event(gobj, event, kw); // reuse kw
+    gobj_publish_event(gobj, event, kw); // reuse kw
+    return 0;
 }
 
 /***************************************************************************
@@ -1696,7 +1697,8 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
         json_integer((json_int_t)(size_t)src)
     );
 
-    return gobj_publish_event(gobj, event, kw); // reuse kw
+    gobj_publish_event(gobj, event, kw); // reuse kw
+    return 0;
 }
 
 /***************************************************************************
@@ -1751,7 +1753,8 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
         json_integer((json_int_t)(size_t)src)
     );
 
-    return gobj_publish_event(gobj, event, kw); // reuse kw
+    gobj_publish_event(gobj, event, kw); // reuse kw
+    return 0;
 }
 
 /***************************************************************************
@@ -1799,10 +1802,10 @@ PRIVATE int ac_iev_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
         "channel_gobj",
         json_integer((json_int_t)(size_t)src)
     );
-    int ret = gobj_publish_event(gobj, iev_event, iev_kw);  // reuse kw
+    gobj_publish_event(gobj, iev_event, iev_kw);  // reuse kw
 
     KW_DECREF(kw);
-    return ret;
+    return 0;
 }
 
 /***************************************************************************

@@ -884,7 +884,7 @@ PRIVATE BOOL mt_publication_pre_filter(
     hgobj gobj,
     hsdata subs,
     const char *event,
-    json_t *kw  // NOT owned! you can modify this publishing kw
+    json_t *kw  // kw NOT owned! you can modify this publishing kw
 )
 {
     BOOL to_publish = 0;

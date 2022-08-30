@@ -200,7 +200,8 @@ PRIVATE int ac_disconnected(hgobj gobj, const char *event, json_t *kw, hgobj src
 PRIVATE int ac_rx_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-    return gobj_publish_event(gobj, priv->on_message_event_name, kw); // reuse kw
+    gobj_publish_event(gobj, priv->on_message_event_name, kw); // reuse kw
+    return 0;
 }
 
 /********************************************************************

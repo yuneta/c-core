@@ -3476,7 +3476,8 @@ PRIVATE int treedb_callback(
     );
     json_decref(node);
 
-    return gobj_publish_event(user_data, operation, kw);
+    gobj_publish_event(user_data, operation, kw);
+    return 0;
 }
 
 /***************************************************************************

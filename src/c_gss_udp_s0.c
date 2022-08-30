@@ -300,7 +300,8 @@ PRIVATE int ac_rx_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
     ch->t_inactivity = start_sectimer(priv->seconds_inactivity);
 
     if(priv->disable_end_of_frame) {
-        return gobj_publish_event(gobj, priv->on_message_event_name, kw);
+        gobj_publish_event(gobj, priv->on_message_event_name, kw);
+        return 0;
     }
 
     char *p;

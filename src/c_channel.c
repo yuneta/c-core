@@ -232,7 +232,8 @@ PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
     set_timeout_periodic(priv->timer,gobj_read_int32_attr(gobj, "timeout"));
 
-    return gobj_publish_event(gobj, event, kw);  // reuse kw
+    gobj_publish_event(gobj, event, kw);  // reuse kw
+    return 0;
 }
 
 /***************************************************************************
@@ -284,7 +285,8 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
     }
     (*priv->prxMsgs)++;
 
-    return gobj_publish_event(gobj, event, kw); // reuse kw
+    gobj_publish_event(gobj, event, kw); // reuse kw
+    return 0;
 }
 
 /***************************************************************************
@@ -303,7 +305,8 @@ PRIVATE int ac_on_id(hgobj gobj, const char *event, json_t *kw, hgobj src)
     }
     (*priv->prxMsgs)++;
 
-    return gobj_publish_event(gobj, event, kw); // reuse kw
+    gobj_publish_event(gobj, event, kw); // reuse kw
+    return 0;
 }
 
 /***************************************************************************
@@ -322,7 +325,8 @@ PRIVATE int ac_on_id_nak(hgobj gobj, const char *event, json_t *kw, hgobj src)
     }
     (*priv->prxMsgs)++;
 
-    return gobj_publish_event(gobj, event, kw); // reuse kw
+    gobj_publish_event(gobj, event, kw); // reuse kw
+    return 0;
 }
 
 /***************************************************************************
