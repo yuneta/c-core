@@ -704,6 +704,11 @@ PRIVATE q_msg enqueue_message(
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_INTERNAL_ERROR,
                     "msg",          "%s", subject,
+                    "node",         "%s", get_host_name(),
+                    "yuno",         "%s", gobj_yuno_role_plus_name(),
+                    "owner",        "%s", gobj_node_owner(),
+                    "queue",        "%s", gobj_read_str_attr(gobj, "tranger_database"),
+                    "utc",          "%ld", (long)timestamp,
                     NULL
                 );
 
