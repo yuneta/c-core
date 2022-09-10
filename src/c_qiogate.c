@@ -708,6 +708,7 @@ PRIVATE q_msg enqueue_message(
                     "yuno",         "%s", gobj_yuno_role_plus_name(),
                     "owner",        "%s", gobj_node_owner(),
                     "queue",        "%s", gobj_read_str_attr(gobj, "tranger_database"),
+                    "queue_size",   "%ld", (unsigned long)trq_size(priv->trq_msgs),
                     "utc",          "%ld", (long)timestamp,
                     NULL
                 );
