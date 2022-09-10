@@ -702,7 +702,7 @@ PRIVATE q_msg enqueue_message(
                 log_error(0,
                     "gobj",         "%s", gobj_full_name(gobj),
                     "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "msgset",       "%s", MSGSET_QUEUE_ALARM,
                     "msg",          "%s", subject,
                     "node",         "%s", get_host_name(),
                     "yuno",         "%s", gobj_yuno_role_plus_name(),
