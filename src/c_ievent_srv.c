@@ -691,7 +691,7 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
     json_t *jn_resp = gobj_authenticate(gobj_service, kw, gobj);
     if(kw_get_int(jn_resp, "result", -1, KW_REQUIRED|KW_CREATE)<0) {
         const char *comment = kw_get_str(jn_resp, "comment", "", 0);
-        const char *remote_addr = gobj_read_str_attr(get_bottom_gobj(src), "remote-addr");
+        // TODO sacalo: const char *remote_addr = gobj_read_str_attr(get_bottom_gobj(src), "remote-addr");
         log_warning(0,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
@@ -699,7 +699,7 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
             "msg",          "%s", "Authentication rejected",
             "cause",        "%s", comment,
             "detail",       "%j", jn_resp,
-            "remote-addr",  "%s", remote_addr?remote_addr:"",
+            //"remote-addr",  "%s", remote_addr?remote_addr:"",
             "yuno_role",    "%s", kw_get_str(kw, "yuno_role", "", 0),
             "yuno_id",      "%s", kw_get_str(kw, "yuno_id", "", 0),
             "yuno_name",    "%s", kw_get_str(kw, "yuno_name", "", 0),
