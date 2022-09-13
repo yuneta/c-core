@@ -692,6 +692,7 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
     if(kw_get_int(jn_resp, "result", -1, KW_REQUIRED|KW_CREATE)<0) {
         const char *comment = kw_get_str(jn_resp, "comment", "", 0);
         // TODO sacalo: const char *remote_addr = gobj_read_str_attr(get_bottom_gobj(src), "remote-addr");
+        // TODO y en el cliente mete la ip de origen
         log_warning(0,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
