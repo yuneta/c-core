@@ -1868,6 +1868,18 @@ PRIVATE int ac_send_message(hgobj gobj, const char *event, json_t *kw, hgobj src
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
     GBUFFER *gbuf_data = (GBUFFER *)(size_t)kw_get_int(kw, "gbuffer", 0, FALSE);
+    if(!gbuf_data) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "gbuf NULL",
+            NULL
+        );
+        KW_DECREF(kw)
+        return -1;
+    }
+
     size_t ln = gbuf_leftbytes(gbuf_data);
     char h_opcode;
 
