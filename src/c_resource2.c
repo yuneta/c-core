@@ -2,7 +2,7 @@
  *          C_RESOURCE2.C
  *          Resource2 GClass.
  *
- *          Resource Controler using flat files
+ *          Resource Controller using flat files
  *
  *          Get persistent messages of a "resource" or "topic".
  *          Each resource/topic has a unique own flat file to save his record
@@ -52,7 +52,7 @@ SDATA (ASN_BOOLEAN,     "ignore_private",   SDF_RD,             TRUE,           
 SDATA (ASN_POINTER,     "json_desc",        SDF_RD,             0,              "C struct json_desc_t with the schema of records. Empty is no schema"),
 SDATA (ASN_BOOLEAN,     "persistent",       SDF_RD,             TRUE,           "Resources are persistent"),
 SDATA (ASN_OCTET_STR,   "service",          SDF_RD,             "",             "Service name for global store, for example 'mqtt'"),
-SDATA (ASN_OCTET_STR,   "database",         SDF_RD,             0,              "Database name. Path is store/{service}/yuno_role_plus_name()/{database}/"),
+SDATA (ASN_OCTET_STR,   "database",         SDF_RD,             0,              "Database name. Path is store/resources/{service}/yuno_role_plus_name()/{database}/"),
 
 SDATA (ASN_POINTER,     "user_data",        0,                  0,              "user data"),
 SDATA (ASN_POINTER,     "user_data2",       0,                  0,              "more user data"),

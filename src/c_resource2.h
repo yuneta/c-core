@@ -2,7 +2,7 @@
  *          C_RESOURCE2.H
  *          Resource2 GClass.
  *
- *          Resource Controler using flat files
+ *          Resource Controller using flat files
  *
  *          Copyright (c) 2022 Niyamaka.
  *          All Rights Reserved.
