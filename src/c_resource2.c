@@ -193,6 +193,7 @@ PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw,
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
     BOOL volatil = kw_get_bool(jn_options, "volatil", 0, 0);
+    BOOL update = kw_get_bool(jn_options, "update", 0, 0);
 
     if(!kw) {
         kw = json_object();
@@ -215,34 +216,42 @@ PRIVATE json_t *mt_create_resource(hgobj gobj, const char *resource, json_t *kw,
 
     json_t *jn_resource = kw_get_dict(priv->db_resources, resource, 0, 0);
     if(jn_resource) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "Resource already exists",
-            "service",      "%s", priv->service,
-            "database",     "%s", priv->database,
-            "resource",     "%s", resource,
-            NULL
-        );
-        KW_DECREF(kw);
-        JSON_DECREF(jn_options);
-        return 0;
+        if(!update) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "Resource already exists",
+                "service",      "%s", priv->service,
+                "database",     "%s", priv->database,
+                "resource",     "%s", resource,
+                NULL
+            );
+            KW_DECREF(kw);
+            JSON_DECREF(jn_options);
+            return 0;
+        }
     }
 
     /*----------------------------------*
      *  Free content or with schema
      *----------------------------------*/
-    json_t *record = 0;
+    json_t *record = jn_resource;
     if(priv->json_desc) {
-        record = create_json_record(priv->json_desc);
+        if(!record) {
+            record = create_json_record(priv->json_desc);
+        }
         if(priv->strict) {
             json_object_update_existing_new(record, kw); // kw owned
         } else {
             json_object_update_new(record, kw); // kw owned
         }
     } else {
-        record = kw; // kw owned
+        if(!record) {
+            record = kw; // kw owned
+        } else {
+            json_object_update(record, kw);
+        }
     }
 
     /*------------------------------------------*
