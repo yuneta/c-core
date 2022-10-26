@@ -923,22 +923,24 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    const char *command = kw_get_str(kw, "__command__", 0, 0);
+    const char *service = kw_get_str(kw, "service", "", 0);
+
     if(!gobj_read_bool_attr(gobj, "authenticated")) {
         return send_static_iev(gobj,
             "EV_MT_COMMAND_ANSWER",
-            msg_iev_build_webix(
+            msg_iev_build_webix2(
                 gobj,
                 -1,
                 json_sprintf("Only authenticated users can request commands"),
                 0,
                 0,
-                kw
+                kw,
+                command
             ),
             src
         );
     }
-    const char *command = kw_get_str(kw, "__command__", 0, 0);
-    const char *service = kw_get_str(kw, "service", "", 0);
 
     hgobj service_gobj;
     if(empty_string(service)) {
@@ -948,13 +950,14 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
         if(!service_gobj) {
             return send_static_iev(gobj,
                 "EV_MT_COMMAND_ANSWER",
-                msg_iev_build_webix(
+                msg_iev_build_webix2(
                     gobj,
                     -1,
                     json_sprintf("Service '%s' not found.", service),
                     0,
                     0,
-                    kw
+                    kw,
+                    command
                 ),
                 src
             );
@@ -981,7 +984,7 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
             gobj,
             kw,
             webix,
-            0
+            command
         );
         return send_static_iev(gobj,
             "EV_MT_COMMAND_ANSWER",

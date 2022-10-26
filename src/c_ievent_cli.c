@@ -1108,13 +1108,14 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
         return send_static_iev(gobj,
             "EV_MT_COMMAND_ANSWER",
-            msg_iev_build_webix(
+            msg_iev_build_webix2(
                 gobj,
                 ret,
                 0,
                 0,
                 jn_response,
-                kw
+                kw,
+                command
             ),
             src
         );
@@ -1130,13 +1131,14 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
             if(!service_gobj) {
                 return send_static_iev(gobj,
                     "EV_MT_COMMAND_ANSWER",
-                    msg_iev_build_webix(
+                    msg_iev_build_webix2(
                         gobj,
                         -100,
                         json_sprintf("Service '%s' not found.", service),
                         0,
                         0,
-                        kw
+                        kw,
+                        command
                     ),
                     src
                 );
@@ -1157,7 +1159,7 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
             gobj,
             kw,
             webix,
-            0
+            command
         );
         return send_static_iev(gobj,
             "EV_MT_COMMAND_ANSWER",
