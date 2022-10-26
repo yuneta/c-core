@@ -221,6 +221,11 @@ PRIVATE json_t *mt_stats(hgobj gobj, const char *stats, json_t *kw, hgobj src)
     );
 
     json_object_set_new(kw, "__stats__", json_string(stats));
+    msg_iev_push_stack(
+        kw,         // not owned
+        "__stats__",
+        json_string(stats)   // owned
+    );
 
     send_static_iev(gobj, "EV_MT_STATS", kw, src);
 
@@ -263,6 +268,11 @@ PRIVATE json_t *mt_command(hgobj gobj, const char *command, json_t *kw, hgobj sr
     );
 
     json_object_set_new(kw, "__command__", json_string(command));
+    msg_iev_push_stack(
+        kw,         // not owned
+        "__command__",
+        json_string(command)   // owned
+    );
 
     send_static_iev(gobj, "EV_MT_COMMAND", kw, src);
 
