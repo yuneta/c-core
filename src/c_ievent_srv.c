@@ -936,7 +936,7 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
                 0,
                 0,
                 kw,
-                command
+                ""
             ),
             src
         );
@@ -957,7 +957,7 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
                     0,
                     0,
                     kw,
-                    command
+                    ""
                 ),
                 src
             );
@@ -984,7 +984,7 @@ PRIVATE int ac_mt_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
             gobj,
             kw,
             webix,
-            command
+            ""
         );
         return send_static_iev(gobj,
             "EV_MT_COMMAND_ANSWER",
