@@ -53,7 +53,7 @@ SDATA (ASN_POINTER,     "gobj_service",         0,      0, "gobj of identity_car
 SDATA (ASN_BOOLEAN,     "authenticated",        SDF_RD, 0, "True if entry was authenticated"),
 SDATA (ASN_JSON,        "jwt_payload",          SDF_RD, 0, "JWT payload (decoded user data) of authenticated user"),
 SDATA (ASN_OCTET_STR,   "__username__",         SDF_RD, "", "Username"),
-SDATA (ASN_JSON,        "attrs",                SDF_RD, "", "Client attrs"),
+SDATA (ASN_JSON,        "identity_card",        SDF_RD, "", "Identity Card of clisrv"),
 
 // TODO available_services for this gate
 // TODO available_services in this gate
@@ -542,7 +542,7 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
     gobj_write_str_attr(gobj, "this_service", "");
     gobj_write_pointer_attr(gobj, "gobj_service", 0);
     gobj_write_str_attr(gobj, "__username__", "");
-    gobj_write_json_attr(gobj, "attrs", 0);
+    gobj_write_json_attr(gobj, "identity_card", 0);
 
     KW_DECREF(kw);
     return 0;
@@ -770,7 +770,9 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
     gobj_write_str_attr(gobj, "this_service", iev_dst_service);
     gobj_write_pointer_attr(gobj, "gobj_service", gobj_service);
     gobj_write_str_attr(gobj, "__username__", kw_get_str(jn_resp, "username", "", 0));
-    gobj_write_json_attr(gobj, "attrs", kw);
+    // TODO extract and save tiempos de autorization del jwt (y datos de interes) !!!???
+    json_object_set(kw, "jwt", kw_get_dict_value(jn_resp, "jwt_payload", json_null(), KW_REQUIRED)); // HACK delete original jwt
+    gobj_write_json_attr(gobj, "identity_card", kw);
 
     /*----------------------------------------------*
      *  Change to state SESSION,
