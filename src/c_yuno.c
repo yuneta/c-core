@@ -91,7 +91,7 @@ PRIVATE json_t *cmd_read_num(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 
 PRIVATE json_t *cmd_info_cpus(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_info_ifs(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-
+PRIVATE json_t *cmd_info_os(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE json_t *cmd_info_global_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_get_global_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -364,6 +364,7 @@ SDATACM (ASN_SCHEMA,    "read-number",              0,      pm_rd_attr,     cmd_
 
 SDATACM (ASN_SCHEMA,    "info-cpus",                0,      0,              cmd_info_cpus,              "Info of cpus"),
 SDATACM (ASN_SCHEMA,    "info-ifs",                 0,      0,              cmd_info_ifs,               "Info of ifs"),
+SDATACM (ASN_SCHEMA,    "info-os",                  0,      0,              cmd_info_os,                "Info os"),
 
 SDATACM (ASN_SCHEMA,    "info-global-trace",        0,      0,              cmd_info_global_trace,      "Info of global trace levels"),
 SDATACM (ASN_SCHEMA,    "get-global-trace",         0,      0,              cmd_get_global_trace,       "Get global trace levels"),
@@ -2160,6 +2161,31 @@ PRIVATE json_t *cmd_info_ifs(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
         gobj,
         0,
         json_sprintf("Number of ifs: %d", count),
+        0,
+        jn_data, // owned
+        kw  // owned
+    );
+}
+
+/***************************************************************************
+ *  OS's info
+ ***************************************************************************/
+PRIVATE json_t *cmd_info_os(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    uv_utsname_t uname;
+    uv_os_uname(&uname);
+
+    json_t *jn_data = json_pack("{s:s, s:s, s:s, s:s}",
+        "sysname", uname.sysname,
+        "release", uname.release,
+        "version", uname.version,
+        "machine", uname.machine
+    );
+
+    return msg_iev_build_webix(
+        gobj,
+        0,
+        0,
         0,
         jn_data, // owned
         kw  // owned
