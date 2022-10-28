@@ -770,7 +770,6 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
     gobj_write_str_attr(gobj, "this_service", iev_dst_service);
     gobj_write_pointer_attr(gobj, "gobj_service", gobj_service);
     gobj_write_str_attr(gobj, "__username__", kw_get_str(jn_resp, "username", "", 0));
-    // TODO extract and save tiempos de autorization del jwt (y datos de interes) !!!???
     json_object_set(kw, "jwt", kw_get_dict_value(jn_resp, "jwt_payload", json_null(), KW_REQUIRED)); // HACK delete original jwt
     gobj_write_json_attr(gobj, "identity_card", kw);
 
