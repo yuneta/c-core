@@ -717,7 +717,7 @@ PRIVATE json_t *mt_create_node( // Return is YOURS
         priv->treedb_name,
         topic_name
     )) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -787,7 +787,7 @@ PRIVATE json_t *mt_update_node( // Return is YOURS
         priv->treedb_name,
         topic_name
     )) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -887,7 +887,7 @@ PRIVATE int mt_delete_node(
         priv->treedb_name,
         topic_name
     )) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -1226,7 +1226,7 @@ PRIVATE json_t *mt_get_node(
         priv->treedb_name,
         topic_name
     )) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", gobj_full_name(gobj),
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
