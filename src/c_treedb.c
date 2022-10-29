@@ -62,11 +62,11 @@ SDATA_END()
 
 PRIVATE sdata_desc_t pm_open_treedb[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "filename_mask",0,              "%Y-%m-%d",    "Organization of tables (file name format, see strftime())"),
+SDATAPM (ASN_OCTET_STR, "filename_mask",0,              "%Y-%m-%d", "Organization of tables (file name format, see strftime())"),
 SDATAPM (ASN_INTEGER,   "exit_on_error",0,              0,          "exit on error"),
 SDATAPM (ASN_OCTET_STR, "treedb_name",  0,              0,          "Treedb name"),
 SDATAPM (ASN_JSON,      "treedb_schema",0,              0,          "Initial treedb schema"),
-SDATAPM (ASN_BOOLEAN,   "use_internal_schema",0,        0,          "Use internal (harcoded) schema"),
+SDATAPM (ASN_BOOLEAN,   "use_internal_schema",0,        0,          "Use internal (hardcoded in source code) schema"),
 SDATA_END()
 };
 PRIVATE sdata_desc_t pm_close_treedb[] = {
