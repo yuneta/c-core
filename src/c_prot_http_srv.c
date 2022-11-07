@@ -32,8 +32,8 @@
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag------------default---------description---------- */
-SDATA (ASN_INTEGER,     "timeout_inactivity",SDF_WR,        1*60*1000,      "Timeout inactivity"),
-SDATA (ASN_BOOLEAN,     "connected",        SDF_RD|SDF_STATS,0,              "Connection state. Important filter!"),
+SDATA (ASN_INTEGER,     "timeout_inactivity",SDF_WR,        5*60,          "Timeout inactivity, in seconds"),
+SDATA (ASN_BOOLEAN,     "connected",        SDF_RD|SDF_STATS,0,             "Connection state. Important filter!"),
 SDATA (ASN_OCTET_STR,   "on_open_event_name",SDF_RD,        "EV_ON_OPEN",   "Must be empty if you don't want receive this event"),
 SDATA (ASN_OCTET_STR,   "on_close_event_name",SDF_RD,       "EV_ON_CLOSE",  "Must be empty if you don't want receive this event"),
 SDATA (ASN_OCTET_STR,   "on_message_event_name",SDF_RD,     "EV_ON_MESSAGE","Must be empty if you don't want receive this event"),
@@ -217,7 +217,7 @@ PRIVATE int ac_connected(hgobj gobj, const char *event, json_t *kw, hgobj src)
         gobj_publish_event(gobj, priv->on_open_event_name, 0);
     }
 
-    set_timeout(priv->timer, priv->timeout_inactivity);
+    set_timeout(priv->timer, priv->timeout_inactivity*1000);
 
     KW_DECREF(kw);
     return 0;
@@ -257,7 +257,7 @@ PRIVATE int ac_rx_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
         log_debug_gbuf(LOG_DUMP_INPUT, gbuf, "%s", gobj_short_name(gobj));
     }
 
-    set_timeout(priv->timer, priv->timeout_inactivity);
+    set_timeout(priv->timer, priv->timeout_inactivity*1000);
 
     int result = parse_message(gobj, gbuf, priv->parsing_request);
     if (result < 0) {
