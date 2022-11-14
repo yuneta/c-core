@@ -114,6 +114,7 @@ typedef struct _FRAME_HEAD {
 /***************************************************************************
  *              Prototypes
  ***************************************************************************/
+PRIVATE int send_http_message2(hgobj gobj, const char *format, ...) JANSSON_ATTRS((format(printf, 2, 3)));
 PRIVATE void start_wait_frame_header(hgobj gobj);
 PRIVATE void ws_close(hgobj gobj, int code, const char *reason);
 PRIVATE BOOL do_response(hgobj gobj, GHTTP_PARSER *request);
@@ -1401,17 +1402,29 @@ PRIVATE BOOL do_response(hgobj gobj, GHTTP_PARSER *request)
      *  Accept the connection
      *------------------------------*/
     {
-        const char *subprotocol_header = "";
-//     subprotocol_header = ''
-//     subprotocols = environ.get("HTTP_SEC_WEBSOCKET_PROTOCOL", '')
-//     subprotocols = [s.strip() for s in subprotocols.split(',')]
-//     if subprotocols:
+        char subprotocol_header[512] = {0};
+        const char *subprotocol = kw_get_str(
+            request->jn_headers,
+            "SEC-WEBSOCKET-PROTOCOL",
+            "",
+            0
+        );
+        if(!empty_string(subprotocol)) {
+            // TODO accept all by now, future: publish to top to validate protocol
+            snprintf(subprotocol_header, sizeof(subprotocol_header), "%s: %s\r\n",
+                "Sec-Websocket-Protocol",
+                subprotocol
+            );
+        }
+
+//        subprotocols = [s.strip() for s in subprotocols.split(',')]
+//        if subprotocols:
 //         selected = self.select_subprotocol(subprotocols)
 //         if selected:
 //             assert selected in subprotocols
 //             subprotocol_header = "Sec-WebSocket-Protocol: %s\r\n" % (
 //                 selected)
-//
+
         static const char *magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
         SHA1Context shactx;
         char concat[100], sha[20], b64_sha[sizeof(sha) * 2];
@@ -1440,7 +1453,7 @@ PRIVATE BOOL do_response(hgobj gobj, GHTTP_PARSER *request)
             "Upgrade: websocket\r\n"
             "Connection: Upgrade\r\n"
             "Sec-WebSocket-Accept: %s\r\n"
-//            "%s\r\n"
+            "%s"
             "\r\n",
                 b64_sha,
                 subprotocol_header
@@ -1624,7 +1637,6 @@ PRIVATE int ac_process_handshake(hgobj gobj, const char *event, json_t *kw, hgob
         /*
          * analyze the response
          */
-
         int result = process_http(gobj, gbuf, priv->parsing_response);
         if (result < 0) {
             gobj_send_event(gobj_bottom_gobj(gobj), "EV_DROP", 0, gobj);
