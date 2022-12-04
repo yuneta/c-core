@@ -979,7 +979,10 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
         /*-------------------------*
          *  Dispatch the event
          *-------------------------*/
-        hgobj gobj_service = gobj_find_unique_gobj(iev_dst_service, TRUE);
+        // 4 Dic 2022, WARNING until 6.2.2 version was used gobj_find_unique_gobj(),
+        // improving security: only gobj services must be accessed externally,
+        // may happen collateral damages
+        hgobj gobj_service = gobj_find_service(iev_dst_service, TRUE);
         if(gobj_service) {
             if(gobj_event_in_input_event_list(gobj_service, iev_event, EVF_PUBLIC_EVENT)) {
                 gobj_send_event(gobj_service, iev_event, iev_kw, gobj);
