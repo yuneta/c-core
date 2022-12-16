@@ -108,6 +108,11 @@ typedef struct _PRIVATE_DATA {
     uv_tty_t uv_tty;
     char uv_handler_active;
     char uv_read_active;
+    /* Write request type. Careful attention must be paid when reusing objects of this type.
+     * When a stream is in non-blocking mode, write requests sent with uv_write will be queued.
+     * Reusing objects at this point is undefined behaviour.
+     * It is safe to reuse the uv_write_t object only after the callback passed to uv_write is fired.
+     */
     uv_write_t uv_req_write;
     char uv_req_write_active;
     int tty_fd;
