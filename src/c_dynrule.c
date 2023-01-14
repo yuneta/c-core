@@ -518,8 +518,8 @@ PRIVATE BOOL compare(hgobj gobj, json_t *jn_var1, json_t *jn_var2, OP op)
      *  Try integer
      */
     if(json_is_integer(jn_var1) || json_is_integer(jn_var2)) {
-        int64_t val1 = jn2integer(jn_var1);
-        int64_t val2 = jn2integer(jn_var2);
+        json_int_t val1 = jn2integer(jn_var1);
+        json_int_t val2 = jn2integer(jn_var2);
         switch(op) {
         case OP_EQUAL:
             if(val1 == val2)
@@ -552,8 +552,8 @@ PRIVATE BOOL compare(hgobj gobj, json_t *jn_var1, json_t *jn_var2, OP op)
      *  Try boolean
      */
     if(json_is_boolean(jn_var1) || json_is_boolean(jn_var2)) {
-        int64_t val1 = jn2integer(jn_var1);
-        int64_t val2 = jn2integer(jn_var2);
+        json_int_t val1 = jn2integer(jn_var1);
+        json_int_t val2 = jn2integer(jn_var2);
         switch(op) {
         case OP_EQUAL:
             if(val1 == val2)
