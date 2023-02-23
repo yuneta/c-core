@@ -573,7 +573,7 @@ PRIVATE int open_tty(hgobj gobj)
     if(count_char(port, '/')==0) {
         snprintf(priv->port, sizeof(priv->port), "/dev/%s", port);
     } else {
-        snprintf(priv->port, sizeof(priv->port), "/%s", port);
+        snprintf(priv->port, sizeof(priv->port), "%s", port);
     }
 
     do {
