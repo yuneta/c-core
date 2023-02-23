@@ -570,7 +570,11 @@ PRIVATE int open_tty(hgobj gobj)
         return -1;
     }
 
-    snprintf(priv->port, sizeof(priv->port), "/dev/%s", port);
+    if(count_char(port, '/')==0) {
+        snprintf(priv->port, sizeof(priv->port), "/dev/%s", port);
+    } else {
+        snprintf(priv->port, sizeof(priv->port), "/%s", port);
+    }
 
     do {
         priv->tty_fd = open(priv->port, O_RDWR, 0);

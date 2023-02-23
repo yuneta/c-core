@@ -127,13 +127,22 @@ PRIVATE void mt_create(hgobj gobj)
         );
     } else {
         char port[64];
-        parse_http_url(
+        if(parse_http_url(
             priv->url,
             priv->schema, sizeof(priv->schema),
             priv->host, sizeof(priv->host),
             port, sizeof(port),
             FALSE
-        );
+        )<0) {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "parse_http_url() FAILED",
+                "url",          "%s", priv->url,
+                NULL
+            );
+        }
         priv->port = atoi(port);
     }
 

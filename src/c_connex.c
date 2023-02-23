@@ -68,7 +68,7 @@ PRIVATE sdata_desc_t tattr_desc[] = {
 SDATA (ASN_UNSIGNED,    "connxs",           SDF_RD,                     0,              "connection counter"),
 SDATA (ASN_BOOLEAN,     "connected",        SDF_RD|SDF_STATS,           0,              "Connection state. Important filter!"),
 
-SDATA (ASN_BOOLEAN,     "character_device",             SDF_RD,         0,              "Set true with caracter device (Url example: 'tty://ttyUSB2', /dev/ must be not included"),
+SDATA (ASN_BOOLEAN,     "character_device",             SDF_RD,         0,              "Set true with character device (Url example: 'tty://ttyUSB2', /dev/ must be not included"),
 SDATA (ASN_BOOLEAN,     "manual",                       SDF_RD,         0,              "Set true if you want connect manually"),
 SDATA (ASN_OCTET_STR,   "connected_event_name",         SDF_RD,         "EV_CONNECTED", "Must be empty if you don't want receive this event"),
 SDATA (ASN_OCTET_STR,   "disconnected_event_name",      SDF_RD,         "EV_DISCONNECTED", "Must be empty if you don't want receive this event"),
@@ -427,16 +427,67 @@ PRIVATE BOOL get_next_dst(
                 rl_url,
                 2
             );
-            parse_http_url(rl_url[0], schema, schema_len, rhost, rhost_len, rport, rport_len, FALSE);
-            parse_http_url(rl_url[1], schema, schema_len, lhost, lhost_len, lport, lport_len, FALSE);
+            int ret = 0;
+            ret += parse_http_url(rl_url[0], schema, schema_len, rhost, rhost_len, rport, rport_len, FALSE);
+            ret += parse_http_url(rl_url[1], schema, schema_len, lhost, lhost_len, lport, lport_len, FALSE);
+            if(ret < 0) {
+                log_error(0,
+                    "gobj",         "%s", gobj_full_name(gobj),
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "parse_http_url() FAILED",
+                    "url",          "%s", url,
+                    NULL
+                );
+            }
             split_free(rl_url, list_size);
         } else {
-            // TODO se muere con canbus0 aleatoriamente
-            parse_http_url(url, schema, schema_len, rhost, rhost_len, rport, rport_len, FALSE);
-            const char *p = gobj_read_str_attr(gobj, "lHost");
-            snprintf(lhost, lhost_len, "%s", p?p:"");
-            p = gobj_read_str_attr(gobj, "lPort");
-            snprintf(lport, lport_len, "%s", p?p:"");
+            if(!gobj_read_bool_attr(gobj, "character_device")) {
+                if(parse_http_url(url, schema, schema_len, rhost, rhost_len, rport, rport_len, FALSE)<0) {
+                    log_error(0,
+                        "gobj",         "%s", gobj_full_name(gobj),
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                        "msg",          "%s", "parse_http_url() FAILED",
+                        "url",          "%s", url,
+                        NULL
+                    );
+                }
+                const char *p = gobj_read_str_attr(gobj, "lHost");
+                snprintf(lhost, lhost_len, "%s", p ? p : "");
+                p = gobj_read_str_attr(gobj, "lPort");
+                snprintf(lport, lport_len, "%s", p ? p : "");
+            } else {
+                char host[64];
+                char port[64];
+                char path[64];
+                char query[64];
+                int ret = parse_full_http_url(
+                    url, schema, schema_len,
+                    host, sizeof(host),
+                    port, sizeof(port),
+                    path, sizeof(path),
+                    query, sizeof(query),
+                    0, 0,
+                    0, 0,
+                    FALSE
+                );
+                if(ret < 0) {
+                    log_error(0,
+                        "gobj",         "%s", gobj_full_name(gobj),
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                        "msg",          "%s", "parse_full_http_url() FAILED",
+                        "url",          "%s", url,
+                        NULL
+                    );
+                }
+                if(!empty_string(path)) {
+                    build_path3(rhost, rhost_len, "/", host, path);
+                } else {
+                    snprintf(rhost, rhost_len, "%s", host);
+                }
+            }
         }
 
         // Point to next dst

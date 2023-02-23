@@ -468,7 +468,16 @@ PRIVATE int mt_start(hgobj gobj)
              *      Create the dynamic tree gobj.
              *------------------------------------------------*/
             char schema[20], host[120], port[40];
-            parse_http_url(url, schema, sizeof(schema), host, sizeof(host), port, sizeof(port), FALSE);
+            if(parse_http_url(url, schema, sizeof(schema), host, sizeof(host), port, sizeof(port), FALSE)<0) {
+                log_error(0,
+                    "gobj",         "%s", gobj_full_name(gobj),
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "parse_http_url() FAILED",
+                    "url",          "%s", url,
+                    NULL
+                );
+            }
 
             json_t * jn_config_variables = json_pack("{s:{s:s, s:s, s:s, s:s, s:I, s:s, s:s, s:s}}",
                 "__json_config_variables__",
