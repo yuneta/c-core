@@ -624,7 +624,7 @@ PRIVATE json_t *mt_get_resource(
  *      ]
  *
  ***************************************************************************/
-PUBLIC json_t *resource_webix_schema(
+PRIVATE json_t *resource_webix_schema(
     hgobj gobj,
     const char *lmethod,
     json_t *kw,
