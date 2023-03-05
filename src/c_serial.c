@@ -862,7 +862,7 @@ PRIVATE int do_write(hgobj gobj, GBUFFER *gbuf)
 
     char *bf = gbuf_get(gbuf, ln);
     uv_buf_t b[] = {
-        { .base = bf, .len = ln}
+        {.base = bf, .len = ln}
     };
     uint32_t trace = gobj_trace_level(gobj);
     if((trace & TRACE_UV)) {

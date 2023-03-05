@@ -598,7 +598,7 @@ PRIVATE int send_data(hgobj gobj, GBUFFER *gbuf)
     char *bf = gbuf_get(gbuf, ln);
 
     uv_buf_t b[] = {
-        { .base = bf, .len = ln}
+        {.base = bf, .len = ln}
     };
 
     priv->req_send.data = gobj;
