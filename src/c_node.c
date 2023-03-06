@@ -880,7 +880,7 @@ PRIVATE int mt_delete_node(
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     /*-----------------------------------*
-     *      Check appropiate topic
+     *      Check appropriate topic
      *-----------------------------------*/
     if(!treedb_is_treedbs_topic(
         priv->tranger,
