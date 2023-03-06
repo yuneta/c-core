@@ -944,7 +944,7 @@ PRIVATE int mt_delete_node(
     json_t *jn_filter = json_object();
 
     /*
-     *  Check if has secondary keys
+     *  Check if it has secondary keys
      */
     json_t *pkey2s_list = treedb_topic_pkey2s(priv->tranger, topic_name);
     int idx; json_t *jn_pkey2_name;
