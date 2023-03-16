@@ -201,6 +201,7 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
             log_debug_json(0, priv->urls, "urls MUST BE an json array!");
         }
         priv->n_urls = json_array_size(priv->urls);
+        priv->idx_dst = 0;
     END_EQ_SET_PRIV()
 }
 
