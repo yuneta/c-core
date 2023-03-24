@@ -41,6 +41,9 @@ PRIVATE int save_global_trace(
     BOOL set,
     BOOL persistent
 );
+PRIVATE int save_trace_filters(
+    hgobj gobj
+);
 PRIVATE int save_user_trace(
     hgobj gobj,
     const char *name,
@@ -2655,6 +2658,8 @@ PRIVATE json_t *cmd_add_trace_filter(hgobj gobj, const char *cmd, json_t *kw, hg
     }
 
     int ret = gobj_add_trace_filter(attr, value);
+    save_trace_filters(gobj);
+
     json_t *jn_filters = gobj_get_trace_filter(); // Return is not YOURS
 
     return msg_iev_build_webix(
@@ -2697,6 +2702,7 @@ PRIVATE json_t *cmd_remove_trace_filter(hgobj gobj, const char *cmd, json_t *kw,
 
     // If attr is empty then remove all filters, if value is empty then remove all values of attr
     int ret = gobj_remove_trace_filter(attr, value);
+    save_trace_filters(gobj);
 
     json_t *jn_filters = gobj_get_trace_filter(); // Return is not YOURS
 
@@ -4873,6 +4879,11 @@ PRIVATE int set_user_gclass_traces(hgobj gobj)
         }
     }
 
+    json_t *jn_trace_filters = json_object_get(jn_trace_levels, "__trace_filters__");
+    if(jn_trace_filters) {
+        gobj_load_trace_filter(json_incref(jn_trace_filters));
+    }
+
     const char *key;
     json_t *jn_name;
     json_object_foreach(jn_trace_levels, key, jn_name) {
@@ -4986,6 +4997,9 @@ PRIVATE int set_user_gobj_traces(hgobj gobj)
         if(strcmp(name, "__global_trace__")==0) {
             continue;
         }
+        if(strcmp(name, "__trace_filters__")==0) {
+            continue;
+        }
 
         GCLASS *gclass = 0;
         hgobj namedgobj = 0;
@@ -5073,6 +5087,9 @@ PRIVATE int set_user_gobj_no_traces(hgobj gobj)
             continue;
         }
         if(strcmp(name, "__global_trace__")==0) {
+            continue;
+        }
+        if(strcmp(name, "__trace_filters__")==0) {
             continue;
         }
 
@@ -5183,6 +5200,17 @@ PRIVATE int save_global_trace(
     } else {
         return 0;
     }
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int save_trace_filters(hgobj gobj)
+{
+    json_t *jn_trace_levels = gobj_read_json_attr(gobj, "trace_levels");
+    json_t *jn_trace_filters = gobj_get_trace_filter();
+    json_object_set(jn_trace_levels, "__trace_filters__", jn_trace_filters);
+    return gobj_save_persistent_attrs(gobj, json_string("trace_levels"));
 }
 
 /***************************************************************************
