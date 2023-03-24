@@ -3250,6 +3250,20 @@ PRIVATE json_t* cmd_add_log_handler(hgobj gobj, const char* cmd, json_t* kw, hgo
             kw  // owned
         );
     }
+
+    /*-------------------------------------*
+     *      Check if already exists
+     *-------------------------------------*/
+    if(log_exist_handler(handler_name)) {
+        return msg_iev_build_webix(gobj,
+            -1,
+            json_sprintf("Handler already exists: %s", handler_name),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
     if(strcmp(handler_type, "file")==0) {
         return msg_iev_build_webix(gobj,
             -1,
