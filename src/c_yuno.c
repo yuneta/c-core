@@ -109,8 +109,7 @@ PRIVATE json_t *cmd_info_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgo
 PRIVATE json_t *cmd_get_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_get_gobj_no_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
-PRIVATE json_t *cmd_add_trace_filter(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
-PRIVATE json_t *cmd_remove_trace_filter(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_set_trace_filter(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_get_trace_filter(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE json_t *cmd_set_global_trace(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -234,20 +233,13 @@ SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value"),
 SDATA_END()
 };
 
-PRIVATE sdata_desc_t pm_add_trace_filter[] = {
+PRIVATE sdata_desc_t pm_set_trace_filter[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "gclass_name",  0,              0,          "gclass-name"),
 SDATAPM (ASN_OCTET_STR, "gclass",       0,              0,          "gclass-name"),
 SDATAPM (ASN_OCTET_STR, "attr",         0,              "",         "Attribute of gobj to filter"),
 SDATAPM (ASN_OCTET_STR, "value",        0,              "",         "Value of attribute to filer"),
-SDATA_END()
-};
-PRIVATE sdata_desc_t pm_remove_trace_filter[] = {
-/*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "gclass_name",  0,              0,          "gclass-name"),
-SDATAPM (ASN_OCTET_STR, "gclass",       0,              0,          "gclass-name"),
-SDATAPM (ASN_OCTET_STR, "attr",         0,              "",         "Attribute of gobj to filter"),
-SDATAPM (ASN_OCTET_STR, "value",        0,              "",         "Value of attribute to filer"),
+SDATAPM (ASN_OCTET_STR, "set",          0,              0,          "value"),
 SDATAPM (ASN_BOOLEAN,   "all",          0,              0,          "Remove all filters"),
 SDATA_END()
 };
@@ -412,8 +404,7 @@ SDATACM (ASN_SCHEMA,    "get-gobj-no-trace",        0,      pm_gobj_root_name, c
 SDATACM (ASN_SCHEMA,    "set-gobj-trace",           0,      pm_set_gobj_tr, cmd_set_gobj_trace,         "Set trace of a named-gobj"),
 SDATACM (ASN_SCHEMA,    "set-gobj-no-trace",        0,      pm_set_gobj_tr, cmd_set_no_gobj_trace,      "Set no-trace of a named-gobj"),
 
-SDATACM (ASN_SCHEMA,    "add-trace-filter",         0,      pm_add_trace_filter, cmd_add_trace_filter,  "Add a trace filter"),
-SDATACM (ASN_SCHEMA,    "remove-trace-filter",      0,      pm_remove_trace_filter, cmd_remove_trace_filter, "Remove a trace filter"),
+SDATACM (ASN_SCHEMA,    "set-trace-filter",         0,      pm_set_trace_filter, cmd_set_trace_filter,  "Set a gclass trace filter"),
 SDATACM (ASN_SCHEMA,    "get-trace-filter",         0,      0, cmd_get_trace_filter, "Get trace filters"),
 
 SDATACM (ASN_SCHEMA,    "reset-all-traces",         0,      pm_reset_all_tr, cmd_reset_all_traces,         "Reset all traces of a named-gobj of gclass"),
@@ -2640,7 +2631,7 @@ PRIVATE json_t *cmd_get_gobj_no_trace(hgobj gobj, const char *cmd, json_t *kw, h
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE json_t *cmd_add_trace_filter(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+PRIVATE json_t *cmd_set_trace_filter(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
 {
     const char *attr = kw_get_str(kw, "attr", 0, 0);
     const char *value = kw_get_str(kw, "value", 0, 0);
@@ -2650,74 +2641,31 @@ PRIVATE json_t *cmd_add_trace_filter(hgobj gobj, const char *cmd, json_t *kw, hg
         kw_get_str(kw, "gclass", "", 0),
         0
     );
-    GCLASS *gclass = 0;
-    gclass = gobj_find_gclass(gclass_name_, FALSE);
-    if(!gclass) {
-        gclass = _get_gclass_from_gobj(gclass_name_);
-        if(!gclass) {
-            return msg_iev_build_webix(
-                gobj,
-                -1,
-                json_sprintf(
-                    "%s: what gclass is '%s'?", gobj_short_name(gobj), gclass_name_
-                ),
-                0,
-                0,
-                kw  // owned
-            );
-        }
-    }
-
-    if(empty_string(attr)) {
-        return msg_iev_build_webix(gobj,
-            -1,
-            json_sprintf("what attr?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-    if(empty_string(value)) {
-        return msg_iev_build_webix(gobj,
-            -1,
-            json_sprintf("what value?"),
-            0,
-            0,
-            kw  // owned
-        );
-    }
-
-    int ret = gobj_add_trace_filter(gclass, attr, value);
-    save_trace_filter(gobj, gclass);
-
-    json_t *jn_filters = gobj_get_trace_filter(gclass); // Return is not YOURS
-
-    return msg_iev_build_webix(
-        gobj,
-        ret,
-        json_sprintf("Adding filter '%s':'%s' to gclass '%s' -> %s",
-            attr, value, gclass->gclass_name, ret<0?"ERROR":"Ok"
-        ),
-        0,
-        json_incref(jn_filters),
-        kw  // owned
-    );
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *cmd_remove_trace_filter(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
-{
-    const char *attr = kw_get_str(kw, "attr", 0, 0);
-    const char *value = kw_get_str(kw, "value", 0, 0);
     BOOL all = kw_get_bool(kw, "all", 0, KW_WILD_NUMBER);
-    const char *gclass_name_ = kw_get_str(
-        kw,
-        "gclass_name",
-        kw_get_str(kw, "gclass", "", 0),
-        0
-    );
+
+    const char *trace_value = kw_get_str(kw, "set", 0, 0);
+    if(empty_string(trace_value)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_sprintf(
+                "%s: set or re-set?", gobj_short_name(gobj)
+            ),
+            0,
+            0,
+            kw  // owned
+        );
+    }
+
+    BOOL set;
+    if(strcasecmp(trace_value, "true")==0 || strcasecmp(trace_value, "set")==0) {
+        set = 1;
+    } else if(strcasecmp(trace_value, "false")==0 || strcasecmp(trace_value, "reset")==0) {
+        set = 0;
+    } else {
+        set = atoi(trace_value);
+    }
+
     GCLASS *gclass = 0;
     gclass = gobj_find_gclass(gclass_name_, FALSE);
     if(!gclass) {
@@ -2736,7 +2684,7 @@ PRIVATE json_t *cmd_remove_trace_filter(hgobj gobj, const char *cmd, json_t *kw,
         }
     }
 
-    if(empty_string(attr) && !all) {
+    if(empty_string(attr) && (set || !all)) {
         return msg_iev_build_webix(gobj,
             -1,
             json_sprintf("what attr?"),
@@ -2745,7 +2693,7 @@ PRIVATE json_t *cmd_remove_trace_filter(hgobj gobj, const char *cmd, json_t *kw,
             kw  // owned
         );
     }
-    if(empty_string(value) && !all) {
+    if(empty_string(value) && (set || !all)) {
         return msg_iev_build_webix(gobj,
             -1,
             json_sprintf("what value?"),
@@ -2755,18 +2703,23 @@ PRIVATE json_t *cmd_remove_trace_filter(hgobj gobj, const char *cmd, json_t *kw,
         );
     }
 
-    // If attr is empty then remove all filters, if value is empty then remove all values of attr
-    int ret = gobj_remove_trace_filter(gclass, attr, value);
-    save_trace_filter(gobj, gclass);
+    int ret;
+    if(set) {
+        ret = gobj_add_trace_filter(gclass, attr, value);
+    } else {
+        // If attr is empty then remove all filters, if value is empty then remove all values of attr
+        ret = gobj_remove_trace_filter(gclass, attr, value);
+    }
+    if(ret == 0) {
+        save_trace_filter(gobj, gclass);
+    }
 
     json_t *jn_filters = gobj_get_trace_filter(gclass); // Return is not YOURS
 
     return msg_iev_build_webix(
         gobj,
         ret,
-        json_sprintf("Removing filter '%s':'%s' from gclass '%s' -> %s",
-            attr, value, gclass->gclass_name, ret<0?"ERROR":"Ok"
-        ),
+        json_sprintf("%s", (ret<0)? log_last_message():""),
         0,
         json_incref(jn_filters),
         kw  // owned
@@ -2856,15 +2809,16 @@ PRIVATE json_t *cmd_set_global_trace(hgobj gobj, const char *cmd, json_t *kw, hg
         trace = atoi(trace_value);
     }
 
-    if(gobj_set_global_trace(level, trace)==0) {
+    int ret = gobj_set_global_trace(level, trace);
+    if(ret==0) {
         save_global_trace(gobj, level, trace?1:0, TRUE);
     }
 
     json_t *jn_data = gobj_get_global_trace_level();
     return msg_iev_build_webix(
         gobj,
-        0,
-        0,
+        ret,
+        json_sprintf("%s", (ret<0)? log_last_message():""),
         0,
         jn_data,
         kw  // owned
@@ -2936,14 +2890,16 @@ PRIVATE json_t *cmd_set_gclass_trace(hgobj gobj, const char *cmd, json_t *kw, hg
         trace = atoi(trace_value);
     }
 
-    gobj_set_gclass_trace(gclass, level, trace);
-    save_user_trace(gobj, gclass_name_, level, trace?1:0, TRUE);
+    int ret = gobj_set_gclass_trace(gclass, level, trace);
+    if(ret == 0 || trace == 0) {
+        save_user_trace(gobj, gclass_name_, level, trace?1:0, TRUE);
+    }
 
     json_t *jn_data = gobj_get_gclass_trace_level(gclass);
     return msg_iev_build_webix(
         gobj,
-        0,
-        0,
+        ret,
+        json_sprintf("%s", (ret<0)? log_last_message():""),
         0,
         jn_data,
         kw  // owned
@@ -3114,14 +3070,15 @@ PRIVATE json_t *cmd_set_no_gclass_trace(hgobj gobj, const char *cmd, json_t *kw,
         trace = atoi(trace_value);
     }
 
-    if(gobj_set_gclass_no_trace(gclass, level, trace)==0) {
+    int ret = gobj_set_gclass_no_trace(gclass, level, trace);
+    if(ret == 0 || trace == 0) {
         save_user_no_trace(gobj, gclass_name_, level, trace?1:0, TRUE);
     }
 
     json_t *jn_data = gobj_get_gclass_no_trace_level(gclass);
     return msg_iev_build_webix(
         gobj,
-        0,
+        ret,
         0,
         0,
         jn_data,
@@ -3195,14 +3152,16 @@ PRIVATE json_t *cmd_set_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, hgob
     }
 
     KW_INCREF(kw);
-    gobj_set_gobj_trace(gobj2trace, level, trace?1:0, kw);
-    save_user_trace(gobj, gobj_name_, level, trace?1:0, TRUE);
+    int ret = gobj_set_gobj_trace(gobj2trace, level, trace?1:0, kw);
+    if(ret == 0 || trace == 0) {
+        save_user_trace(gobj, gobj_name_, level, trace?1:0, TRUE);
+    }
 
     json_t *jn_data = gobj_get_gobj_trace_level(gobj2trace);
     return msg_iev_build_webix(
         gobj,
-        0,
-        0,
+        ret,
+        json_sprintf("%s", (ret<0)? log_last_message():""),
         0,
         jn_data,
         kw  // owned
@@ -3274,15 +3233,16 @@ PRIVATE json_t *cmd_set_no_gobj_trace(hgobj gobj, const char *cmd, json_t *kw, h
         trace = atoi(trace_value);
     }
 
-    if(gobj_set_gobj_no_trace(gobj2trace, level, trace)==0) {
+    int ret = gobj_set_gobj_no_trace(gobj2trace, level, trace);
+    if(ret == 0 || trace == 0) {
         save_user_no_trace(gobj, gobj_name_, level, trace?1:0, TRUE);
     }
 
     json_t *jn_data = gobj_get_gobj_no_trace_level(gobj2trace);
     return msg_iev_build_webix(
         gobj,
-        0,
-        0,
+        ret,
+        json_sprintf("%s", (ret<0)? log_last_message():""),
         0,
         jn_data,
         kw  // owned
