@@ -97,16 +97,16 @@ PUBLIC void *dbattrs_startup(void)
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int dbattrs_load_persistent(hgobj gobj, json_t *jn_attrs_)
+PUBLIC int dbattrs_load_persistent(hgobj gobj, json_t *keys)
 {
     if(!initialized) {
-        JSON_DECREF(jn_attrs_);
+        JSON_DECREF(keys);
         return -1;
     }
 
     if(!gobj_is_unique(gobj)) {
         // silence, not unique not save
-        JSON_DECREF(jn_attrs_);
+        JSON_DECREF(keys);
         return -1;
     }
 
@@ -115,7 +115,7 @@ PUBLIC int dbattrs_load_persistent(hgobj gobj, json_t *jn_attrs_)
     if(msg) {
         json_t *attrs = kw_clone_by_keys(
             json_incref(msg),     // owned
-            jn_attrs_,   // owned
+            keys,   // owned
             FALSE
         );
 
@@ -130,7 +130,7 @@ PUBLIC int dbattrs_load_persistent(hgobj gobj, json_t *jn_attrs_)
         return ret;
 
     } else {
-        JSON_DECREF(jn_attrs_);
+        JSON_DECREF(keys);
         return -1;
     }
 }
@@ -138,16 +138,16 @@ PUBLIC int dbattrs_load_persistent(hgobj gobj, json_t *jn_attrs_)
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int dbattrs_save_persistent(hgobj gobj, json_t *jn_attrs_)
+PUBLIC int dbattrs_save_persistent(hgobj gobj, json_t *keys)
 {
     if(!initialized) {
-        JSON_DECREF(jn_attrs_);
+        JSON_DECREF(keys);
         return -1;
     }
 
     if(!gobj_is_unique(gobj)) {
         // silence, not unique not save
-        JSON_DECREF(jn_attrs_);
+        JSON_DECREF(keys);
         return -1;
     }
 
@@ -156,7 +156,7 @@ PUBLIC int dbattrs_save_persistent(hgobj gobj, json_t *jn_attrs_)
 
     json_t *attrs = kw_clone_by_keys(
         jn_attrs,   // owned
-        jn_attrs_,  // owned
+        keys,  // owned
         FALSE
     );
 
@@ -181,16 +181,16 @@ PUBLIC int dbattrs_save_persistent(hgobj gobj, json_t *jn_attrs_)
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int dbattrs_remove_persistent(hgobj gobj, json_t *jn_attrs_)
+PUBLIC int dbattrs_remove_persistent(hgobj gobj, json_t *keys)
 {
     if(!initialized) {
-        JSON_DECREF(jn_attrs_);
+        JSON_DECREF(keys);
         return -1;
     }
 
     if(!gobj_is_unique(gobj)) {
         // silence, not unique not save
-        JSON_DECREF(jn_attrs_);
+        JSON_DECREF(keys);
         return -1;
     }
 
@@ -198,12 +198,12 @@ PUBLIC int dbattrs_remove_persistent(hgobj gobj, json_t *jn_attrs_)
 
     json_t *msg = trmsg_get_active_message(persistent_attrs_list, id);
     if(!msg) {
-        JSON_DECREF(jn_attrs_);
+        JSON_DECREF(keys);
         return -1;
     }
     json_t *attrs = kw_clone_by_not_keys(
         json_incref(msg),   // owned
-        jn_attrs_,  // owned
+        keys,  // owned
         FALSE
     );
     json_object_set_new(attrs, "id", json_string(id));
@@ -220,10 +220,10 @@ PUBLIC int dbattrs_remove_persistent(hgobj gobj, json_t *jn_attrs_)
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *dbattrs_list_persistent(hgobj gobj, json_t *jn_attrs_)
+PUBLIC json_t *dbattrs_list_persistent(hgobj gobj, json_t *keys)
 {
     if(!initialized) {
-        JSON_DECREF(jn_attrs_);
+        JSON_DECREF(keys);
         return 0;
     }
 
@@ -241,13 +241,13 @@ PUBLIC json_t *dbattrs_list_persistent(hgobj gobj, json_t *jn_attrs_)
     json_t *list = trmsg_active_records(persistent_attrs_list, jn_filter);
     int idx; json_t *record;
     json_array_foreach(list, idx, record) {
-        json_t *new_record = kw_clone_by_keys(json_incref(record), json_incref(jn_attrs_), FALSE);
+        json_t *new_record = kw_clone_by_keys(json_incref(record), json_incref(keys), FALSE);
         json_object_set_new(
             new_record, "id", json_string(kw_get_str(record, "id", "", KW_REQUIRED))
         );
         json_array_append_new(new_list, new_record);
     }
-    JSON_DECREF(jn_attrs_);
+    JSON_DECREF(keys);
     JSON_DECREF(list);
     return jn_result;
 }
