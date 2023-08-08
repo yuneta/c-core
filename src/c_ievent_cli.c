@@ -831,6 +831,8 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
                 KW_DECREF(kw);
                 return 0;
             }
+            KW_DECREF(kw);
+            return -1;
         }
         log_error(0,
             "gobj",         "%s", gobj_full_name(gobj),
@@ -841,8 +843,9 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
             NULL
         );
         gobj_send_event(get_bottom_gobj(gobj), "EV_DROP", 0, gobj);
+        KW_DECREF(iev_kw);
         KW_DECREF(kw);
-        return 0;
+        return -1;
     }
 
     /*------------------------------------*
@@ -987,14 +990,14 @@ PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
             if(gobj_event_in_input_event_list(gobj_service, iev_event, EVF_PUBLIC_EVENT)) {
                 gobj_send_event(gobj_service, iev_event, iev_kw, gobj);
             } else {
-                gobj_publish_event( /* NOTE original behaviour */
+                gobj_publish_event( /* NOTE original behavior */
                     gobj,
                     iev_event,
                     iev_kw
                 );
             }
         } else {
-            gobj_publish_event( /* NOTE original behaviour */
+            gobj_publish_event( /* NOTE original behavior */
                 gobj,
                 iev_event,
                 iev_kw
