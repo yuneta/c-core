@@ -140,7 +140,7 @@ PRIVATE int _translate_mask(char *new_time, int new_time_size, const char *time_
 {
     time_t t;
     struct tm *tm;
-    char sfechahora[32];
+    char sfechahora[64];
 
     time(&t);
     tm = localtime(&t);
