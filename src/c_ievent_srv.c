@@ -51,8 +51,8 @@ SDATA (ASN_OCTET_STR,   "this_service",         SDF_RD, 0, "dst_service at ident
 SDATA (ASN_POINTER,     "gobj_service",         0,      0, "gobj of identity_card dst_service"),
 
 SDATA (ASN_BOOLEAN,     "authenticated",        SDF_RD, 0, "True if entry was authenticated"),
-SDATA (ASN_JSON,        "jwt_payload",          SDF_RD, 0, "JWT payload (decoded user data) of authenticated user"),
-SDATA (ASN_OCTET_STR,   "__username__",         SDF_RD, "", "Username"),
+SDATA (ASN_JSON,        "jwt_payload",          SDF_RD, 0, "JWT payload (decoded user data) of authenticated user, WARNING set by c_authz"),
+SDATA (ASN_OCTET_STR,   "__username__",         SDF_RD, "", "Username, WARNING set by c_authz"),
 SDATA (ASN_JSON,        "identity_card",        SDF_RD, "", "Identity Card of clisrv"),
 
 // TODO available_services for this gate
@@ -769,8 +769,13 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
 
     gobj_write_str_attr(gobj, "this_service", iev_dst_service);
     gobj_write_pointer_attr(gobj, "gobj_service", gobj_service);
-    gobj_write_str_attr(gobj, "__username__", kw_get_str(jn_resp, "username", "", 0));
-    json_object_set(kw, "jwt", kw_get_dict_value(jn_resp, "jwt_payload", json_null(), KW_REQUIRED)); // HACK delete original jwt
+
+    // HACK comment next sentence, already set by gobj_authenticate(), 24-Oct-2023
+    // gobj_write_str_attr(gobj, "__username__", kw_get_str(jn_resp, "username", "", KW_REQUIRED));
+
+    // json_object_set(kw, "jwt", kw_get_dict_value(jn_resp, "jwt_payload", json_null(), KW_REQUIRED)); // HACK delete original jwt
+
+    json_object_set(kw, "jwt", gobj_read_json_attr(gobj, "jwt_payload")); // HACK delete original jwt
     gobj_write_json_attr(gobj, "identity_card", kw);
 
     /*----------------------------------------------*
@@ -806,7 +811,7 @@ PRIVATE int ac_identity_card(hgobj gobj, const char *event, json_t *kw, hgobj sr
             "client_yuno_name", gobj_read_str_attr(gobj, "client_yuno_name"),
             "client_yuno_role", gobj_read_str_attr(gobj, "client_yuno_role"),
             "client_yuno_service", gobj_read_str_attr(gobj, "client_yuno_service"),
-            "identity_card", kw // REQUIRED for agent!!
+            "identity_card", kw // REQUIRED for controlcenter, agent!!
         );
         kw_set_subdict_value(
             kw_on_open,
