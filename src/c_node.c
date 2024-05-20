@@ -3373,7 +3373,7 @@ PRIVATE json_t *cmd_import_db(hgobj gobj, const char *cmd, json_t *kw, hgobj src
         "added", new,
         "overwrite", overwrite,
         "ignored", ignored,
-        "failule", failure,
+        "failure", failure,
         "link failure", link_failure,
         "errores", jn_errores
     );
