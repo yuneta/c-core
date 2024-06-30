@@ -904,6 +904,7 @@ PRIVATE int build_new_treedb_schema(
             }
             const char *header = kw_get_str(jn_col, "header", col_name, 0);
             json_int_t fillspace = kw_get_int(jn_col, "fillspace", 10, 0);
+            const char *placeholder = kw_get_str(jn_col, "placeholder", "", 0);
             const char *type = kw_get_str(jn_col, "type", "", KW_REQUIRED);
             if(empty_string(type)) {
                 continue;
@@ -914,10 +915,11 @@ PRIVATE int build_new_treedb_schema(
             const char *description = kw_get_str(jn_col, "description", 0, 0);
             json_t *properties_ = kw_get_dict_value(jn_col, "properties", 0, 0);
 
-            json_t *kw_col = json_pack("{s:s, s:s, s:I, s:s, s:O}",
+            json_t *kw_col = json_pack("{s:s, s:s, s:I, s:s, s:s, s:O}",
                 "value", col_name,
                 "header", header,
                 "fillspace", (json_int_t)fillspace,
+                "placeholder", placeholder,
                 "type", type,
                 "flag", flag_
             );
